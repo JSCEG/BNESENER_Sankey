@@ -101,6 +101,7 @@ class StyleManager {
             generacion:     ['#FFD700', '#FFF59D'], // Amarillo → Amarillo pálido
             distribucion:   ['#607D8B', '#90A4AE'], // Gris azulado → Plata
             perdidas:       ['#8B4513', '#D2B48C'], // Marrón → Tostado
+            noAprovechada:  ['#778899', '#B0C4DE'], // Gris pizarra claro → Acero claro
             exportacion:    ['#8FBC8F', '#C1E1C1'], // Verde gris → Verde nieve
             default:        ['#696969', '#A9A9A9']  // Gris → Gris claro
         };

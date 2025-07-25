@@ -469,7 +469,8 @@ class NodeFactory {
         if (name.includes('producción')) return 'produccion';
         if (name.includes('importación')) return 'importacion';
         if (name.includes('exportación')) return 'exportacion';
-        if (name.includes('pérdidas') || name.includes('no aprovechada')) return 'perdidas';
+        if (name.includes('no aprovechada')) return 'noAprovechada';
+        if (name.includes('pérdidas')) return 'perdidas';
         if (name.includes('variación')) return 'distribucion';
 
         // Mapeo directo de tipo a categoría para nodos estructurales

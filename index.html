@@ -1310,9 +1310,9 @@
              const variacionIndex = addNode(String('Variación de inventarios de Energéticos primarios'), nodeData.variacion.color);
              const produccionIndex = addNode(String('Producción'), nodeData.produccion.color);
             const primariosHubIndex = addNode(String('Oferta Total'), nodeData.ofertaTotal.color);
-            // const ofertaInternaBrutaIndex = addNode(String('Oferta Interna Bruta'), nodeData.ofertaInternaBruta.color);
-            // const exportacionIndex = addNode(String('Exportación'), nodeData.exportacion.color);
-            // const energiaNoAprovechadaIndex = addNode(String('Energía No Aprovechada'), nodeData.energiaNoAprovechada.color);
+            const ofertaInternaBrutaIndex = addNode(String('Oferta Interna Bruta'), nodeData.ofertaInternaBruta.color);
+            const exportacionIndex = addNode(String('Exportación'), nodeData.exportacion.color);
+            const energiaNoAprovechadaIndex = addNode(String('Energía No Aprovechada'), nodeData.energiaNoAprovechada.color);
             // const consumoPropioIndex = addNode(String('Consumo Propio del Sector'), nodeData.consumoPropio.color);
             // const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
             // const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
@@ -1422,115 +1422,121 @@
             }
 
             // --- 4. Procesar Flujos (Oferta Total -> Oferta Interna Bruta) ---
-            // const oibBreakdown = {};
-            // let oibTotal = 0;
-            // nodeData.ofertaInternaBruta['Nodos Hijo'].forEach(child => {
-            //     const flowValue = child[year];
-            //     if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-            //         const childName = child['Nodo Hijo'];
-            //         const childColor = child.color;
+            const oibBreakdown = {};
+            let oibTotal = 0;
+            nodeData.ofertaInternaBruta['Nodos Hijo'].forEach(child => {
+                const flowValue = child[year];
+                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
+                    const childName = child['Nodo Hijo'];
+                    const energyNodeIndex = nodeMap.get(childName);
+                    if (energyNodeIndex === undefined) return;
 
-            //         source.push(primariosHubIndex);
-            //         target.push(ofertaInternaBrutaIndex);
-            //         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //         const validatedColor = typeof childColor === 'string' ? childColor : '#888';
-            //         linkColors.push(validatedColor);
+                    const link_color = nodeColors[energyNodeIndex];
 
-            //         // Usar PopupManager para generar popup de enlace mejorado
-            //         if (popupManager) {
-            //             const linkPopup = popupManager.generateLinkPopup(
-            //                 childName,
-            //                 flowValue,
-            //                 'Oferta Total (Hub)',
-            //                 'Oferta Interna Bruta',
-            //                 validatedColor,
-            //                 year,
-            //                 { flowType: 'hub_distribution' }
-            //             );
-            //             linkCustomdata.push(linkPopup);
-            //         } else {
-            //             // Fallback al formato anterior
-            //             linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //         }
-            //         oibBreakdown[childName] = (oibBreakdown[childName] || 0) + flowValue;
-            //         oibTotal += flowValue;
-            //     }
-            // });
-            // secondaryNodeBreakdowns.set('Oferta Interna Bruta', { breakdown: oibBreakdown, total: oibTotal });
+                    source.push(primariosHubIndex);
+                    target.push(ofertaInternaBrutaIndex);
+                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                    linkColors.push(link_color);
+
+                    // Usar PopupManager para generar popup de enlace mejorado
+                    if (popupManager) {
+                        const linkPopup = popupManager.generateLinkPopup(
+                            childName,
+                            flowValue,
+                            'Oferta Total',
+                            'Oferta Interna Bruta',
+                            link_color,
+                            year,
+                            { flowType: 'hub_distribution' }
+                        );
+                        linkCustomdata.push(linkPopup);
+                    } else {
+                        // Fallback al formato anterior
+                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                    }
+                    oibBreakdown[childName] = (oibBreakdown[childName] || 0) + flowValue;
+                    oibTotal += flowValue;
+                }
+            });
+            secondaryNodeBreakdowns.set('Oferta Interna Bruta', { breakdown: oibBreakdown, total: oibTotal });
 
             // --- 5. Procesar Flujos de Salida (Oferta Total -> Exportación) ---
-            // const exportacionBreakdown = {};
-            // let exportacionTotal = 0;
-            // nodeData.exportacion['Nodos Hijo'].forEach(child => {
-            //     const flowValue = child[year];
-            //     if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-            //         const childName = child['Nodo Hijo'];
-            //         const childColor = child.color;
+            const exportacionBreakdown = {};
+            let exportacionTotal = 0;
+            nodeData.exportacion['Nodos Hijo'].forEach(child => {
+                const flowValue = child[year];
+                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
+                    const childName = child['Nodo Hijo'];
+                    const energyNodeIndex = nodeMap.get(childName);
+                    if (energyNodeIndex === undefined) return;
 
-            //         source.push(primariosHubIndex);
-            //         target.push(exportacionIndex);
-            //         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //         const validatedColor = typeof childColor === 'string' ? childColor : '#888';
-            //         linkColors.push(validatedColor);
+                    const link_color = nodeColors[energyNodeIndex];
 
-            //         // Usar PopupManager para generar popup de enlace mejorado
-            //         if (popupManager) {
-            //             const linkPopup = popupManager.generateLinkPopup(
-            //                 childName,
-            //                 flowValue,
-            //                 'Oferta Total (Hub)',
-            //                 'Exportación',
-            //                 validatedColor,
-            //                 year,
-            //                 { flowType: 'hub_distribution' }
-            //             );
-            //             linkCustomdata.push(linkPopup);
-            //         } else {
-            //             // Fallback al formato anterior
-            //             linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //         }
-            //         exportacionBreakdown[childName] = (exportacionBreakdown[childName] || 0) + flowValue;
-            //         exportacionTotal += flowValue;
-            //     }
-            // });
-            // secondaryNodeBreakdowns.set('Exportación', { breakdown: exportacionBreakdown, total: exportacionTotal });
+                    source.push(primariosHubIndex);
+                    target.push(exportacionIndex);
+                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                    linkColors.push(link_color);
+
+                    // Usar PopupManager para generar popup de enlace mejorado
+                    if (popupManager) {
+                        const linkPopup = popupManager.generateLinkPopup(
+                            childName,
+                            flowValue,
+                            'Oferta Total',
+                            'Exportación',
+                            link_color,
+                            year,
+                            { flowType: 'hub_distribution' }
+                        );
+                        linkCustomdata.push(linkPopup);
+                    } else {
+                        // Fallback al formato anterior
+                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                    }
+                    exportacionBreakdown[childName] = (exportacionBreakdown[childName] || 0) + flowValue;
+                    exportacionTotal += flowValue;
+                }
+            });
+            secondaryNodeBreakdowns.set('Exportación', { breakdown: exportacionBreakdown, total: exportacionTotal });
 
             // --- 6. Procesar Flujos de Salida (Oferta Total -> Energía No Aprovechada) ---
-            // const enaBreakdown = {};
-            // let enaTotal = 0;
-            // nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
-            //     const flowValue = child[year];
-            //     if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-            //         const childName = child['Nodo Hijo'];
-            //         const childColor = child.color;
+            const enaBreakdown = {};
+            let enaTotal = 0;
+            nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
+                const flowValue = child[year];
+                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
+                    const childName = child['Nodo Hijo'];
+                    const energyNodeIndex = nodeMap.get(childName);
+                    if (energyNodeIndex === undefined) return;
 
-            //         source.push(primariosHubIndex);
-            //         target.push(energiaNoAprovechadaIndex);
-            //         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //         const validatedColor = typeof childColor === 'string' ? childColor : '#888';
-            //         linkColors.push(validatedColor);
+                    const link_color = nodeColors[energyNodeIndex];
 
-            //         // Usar PopupManager para generar popup de enlace mejorado
-            //         if (popupManager) {
-            //             const linkPopup = popupManager.generateLinkPopup(
-            //                 childName,
-            //                 flowValue,
-            //                 'Oferta Total (Hub)',
-            //                 'Energía No Aprovechada',
-            //                 validatedColor,
-            //                 year,
-            //                 { flowType: 'hub_distribution' }
-            //             );
-            //             linkCustomdata.push(linkPopup);
-            //         } else {
-            //             // Fallback al formato anterior
-            //             linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //         }
-            //         enaBreakdown[childName] = (enaBreakdown[childName] || 0) + flowValue;
-            //         enaTotal += flowValue;
-            //     }
-            // });
-            // secondaryNodeBreakdowns.set('Energía No Aprovechada', { breakdown: enaBreakdown, total: enaTotal });
+                    source.push(primariosHubIndex);
+                    target.push(energiaNoAprovechadaIndex);
+                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                    linkColors.push(link_color);
+
+                    // Usar PopupManager para generar popup de enlace mejorado
+                    if (popupManager) {
+                        const linkPopup = popupManager.generateLinkPopup(
+                            childName,
+                            flowValue,
+                            'Oferta Total',
+                            'Energía No Aprovechada',
+                            link_color,
+                            year,
+                            { flowType: 'hub_distribution' }
+                        );
+                        linkCustomdata.push(linkPopup);
+                    } else {
+                        // Fallback al formato anterior
+                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                    }
+                    enaBreakdown[childName] = (enaBreakdown[childName] || 0) + flowValue;
+                    enaTotal += flowValue;
+                }
+            });
+            secondaryNodeBreakdowns.set('Energía No Aprovechada', { breakdown: enaBreakdown, total: enaTotal });
 
             // --- 7. Procesar Flujos (Oferta Interna Bruta -> Coquizadoras y Hornos) ---
             // nodeData.coquizadorasHornos['Nodos Hijo'].forEach(child => {

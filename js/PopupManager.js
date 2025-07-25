@@ -84,6 +84,20 @@ class PopupManager {
             footer: 'Tipos de energía: %{energy_types_text} • Año: %{year}'
         };
 
+        // === TEMPLATE PARA VARIACIÓN DE INVENTARIOS ===
+        const inventoryVariationTemplate = {
+            title: '%{label}',
+            sections: [
+                {
+                    title: '',
+                    fields: [
+                        { key: 'variacion_positiva', label: 'Incremento', value: '%{variacion_positiva}', format: 'number', unit: 'PJ', highlight: true, condition: 'hasPositiveVariation' },
+                        { key: 'variacion_negativa', label: 'Disminución', value: '%{variacion_negativa}', format: 'number', unit: 'PJ', highlight: true, condition: 'hasNegativeVariation' }
+                    ]
+                }
+            ]
+        };
+
         // === TEMPLATE SIMPLIFICADO PARA HUBS ===
         const hubTemplate = {
             title: '%{label}',
@@ -103,6 +117,7 @@ class PopupManager {
         this.nodeTemplates.set('transformation', dynamicTemplate);
         this.nodeTemplates.set('generation', dynamicTemplate);
         this.nodeTemplates.set('hub', hubTemplate); // Usar el nuevo template para hubs
+        this.nodeTemplates.set('inventory_variation', inventoryVariationTemplate);
         this.nodeTemplates.set('consumption', dynamicTemplate);
         this.nodeTemplates.set('default', dynamicTemplate);
 
@@ -159,7 +174,9 @@ class PopupManager {
         const simpleSourceNodes = [
             'Producción',
             'Importación de energéticos primarios',
-            'Variación de inventarios de Energéticos primarios',
+            'Oferta Interna Bruta',
+            'Exportación',
+            'Energía No Aprovechada',
             'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
             'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
             'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña',
@@ -198,9 +215,8 @@ class PopupManager {
             'Consumo Propio del Sector': 'consumption',
 
             // Nodos de flujo
-            'Exportación': 'consumption',
             'Importación de energéticos primarios': 'consumption',
-            'Variación de inventarios de Energéticos primarios': 'consumption'
+            'Variación de inventarios de Energéticos primarios': 'inventory_variation'
         };
 
         // Verificar mapeo directo
@@ -255,6 +271,15 @@ class PopupManager {
             ...additionalData
         };
 
+        // Añadir condiciones para el template de variación de inventarios.
+        // Se hace aquí para que aplique sin importar si el nodo tiene hijos o no,
+        // ya que los datos relevantes vienen en `additionalData`.
+        if (additionalData.variacion_positiva !== undefined) {
+            templateData.hasPositiveVariation = additionalData.variacion_positiva > 0;
+        }
+        if (additionalData.variacion_negativa !== undefined) {
+            templateData.hasNegativeVariation = additionalData.variacion_negativa < 0;
+        }
         // Procesar datos específicos según el tipo de nodo
         if (nodeData && nodeData['Nodos Hijo']) {
             const breakdown = this.calculateNodeBreakdown(nodeData, year);
