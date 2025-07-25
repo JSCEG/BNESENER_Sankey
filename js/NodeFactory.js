@@ -423,23 +423,65 @@ class NodeFactory {
      * @returns {string} Color resuelto
      */
     resolveNodeColor(nodeConfig, typeConfig) {
-        // Prioridad: color específico > color por energético > color por tipo
+        // 1. Prioridad: color específico en la configuración del nodo
         if (nodeConfig.color) {
             return this.styleManager ? 
                 this.styleManager.validateColor(nodeConfig.color) : 
                 nodeConfig.color;
         }
 
-        // Intentar obtener color por nombre de energético
-        if (this.styleManager && nodeConfig.name) {
-            const energyColor = this.styleManager.getEnergyColor(nodeConfig.name, typeConfig.category);
-            if (energyColor !== this.styleManager.getNodeTypeColor('default')) {
-                return energyColor;
+        if (this.styleManager) {
+            // 2. Intentar obtener color como si fuera un nodo estructural.
+            // mapNodeTypeToColorCategory es inteligente y devolverá una categoría específica
+            // para nodos como 'Producción', 'Importación', etc.
+            const colorCategory = this.mapNodeTypeToColorCategory(typeConfig.typeName, nodeConfig.name);
+            const structuralColor = this.styleManager.getNodeTypeColor(colorCategory);
+
+            // 3. Si el color estructural NO es el por defecto, lo usamos.
+            // Esto funciona para 'Producción', 'Importación', 'Hubs', etc.
+            if (structuralColor !== this.styleManager.getNodeTypeColor('default')) {
+                return structuralColor;
+            }
+
+            // 4. Si el color fue el por defecto, es probable que sea un energético.
+            // Intentamos obtener el color por su nombre.
+            // Esto funcionará para 'Petróleo Crudo', 'Carbón Mineral', etc.
+            if (nodeConfig.name) {
+                const fallbackCategory = typeConfig.category || 'default';
+                return this.styleManager.getEnergyColor(nodeConfig.name, fallbackCategory);
             }
         }
 
-        // Usar color por defecto del tipo
+        // 5. Usar color por defecto del tipo de nodo como último recurso.
         return typeConfig.defaultColor;
+    }
+
+    /**
+     * Mapea el tipo de nodo del NodeFactory a una categoría de color del StyleManager
+     * @param {string} nodeType - Tipo de nodo de NodeFactory (e.g., 'flow', 'hub')
+     * @param {string} nodeName - Nombre del nodo para desambiguar tipos genéricos
+     * @returns {string} Categoría de color para StyleManager (e.g., 'importacion', 'hub')
+     */
+    mapNodeTypeToColorCategory(nodeType, nodeName) {
+        const name = nodeName.toLowerCase();
+        
+        // Reglas específicas por nombre para desambiguar
+        if (name.includes('producción')) return 'produccion';
+        if (name.includes('importación')) return 'importacion';
+        if (name.includes('exportación')) return 'exportacion';
+        if (name.includes('pérdidas') || name.includes('no aprovechada')) return 'perdidas';
+        if (name.includes('variación')) return 'distribucion';
+
+        // Mapeo directo de tipo a categoría para nodos estructurales
+        const directMap = {
+            'hub': 'hub',
+            'transformation': 'transformation',
+            'generation': 'generacion',
+            'consumption': 'consumo'
+            // 'flow' y 'source' se manejan por nombre arriba o caen al default
+        };
+
+        return directMap[nodeType] || 'default'; // Devolver 'default' si no hay regla
     }
 
     /**
@@ -845,7 +887,7 @@ class NodeFactory {
             
             // Hubs
             'Oferta Total': 'hub',
-            'Oferta Total (Hub)': 'hub',
+            'Oferta Total': 'hub',
             'Oferta Interna Bruta': 'hub',
             
             // Flujos especiales
@@ -1296,7 +1338,7 @@ class NodeFactory {
     getConnectionsByCategory(category) {
         const categoryConnections = {
             'fuente': [
-                { target: 'Oferta Total (Hub)', type: 'supply' }
+                { target: 'Oferta Total', type: 'supply' }
             ],
             'transformacion': [
                 { source: 'Oferta Interna Bruta', type: 'input' },

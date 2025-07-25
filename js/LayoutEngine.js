@@ -27,12 +27,12 @@ class LayoutEngine {
         this.columnSpacing = options.columnSpacing || 0.2;
         this.marginTop = options.marginTop || 0.03; // Reduced top margin
         this.marginBottom = options.marginBottom || 0.03; // Reduced bottom margin
-        
+
         // Definiciones de columnas lógicas
         this.columnDefinitions = new Map();
         this.nodeGroups = new Map();
         this.nodePositions = new Map();
-        
+
         // Configuración por defecto de columnas
         this.initializeDefaultColumns();
     }
@@ -44,23 +44,40 @@ class LayoutEngine {
         // Definir columnas lógicas del flujo energético con mejor distribución horizontal
         // para aprovechar el canvas expandido al 95% del ancho
         this.defineColumn('fuentes', {
-            x: 0.08,
+            x: 0.05,
             title: 'Fuentes',
             width: 0.15,
             nodes: ['Producción', 'Importación de energéticos primarios', 'Variación de inventarios de Energéticos primarios'],
-            verticalDistribution: 'spread'
+            verticalDistribution: 'spread', // Agrupa los nodos verticalmente
+            minY: 0.3, // Aumentado para bajar y compactar más el bloque
+            maxY: 0.7  // Reducido para subir y compactar más el bloque
+        });
+
+        this.defineColumn('energia-primaria', {
+            x: 0.15, // Movido a la derecha para mejor espaciado
+            title: 'Energéticos Primarios',
+            width: 0.15,
+            nodes: [
+                'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
+                'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica', 
+                'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña', 
+                'Leña', 'Biogás'
+            ],
+            verticalDistribution: 'compact', // Agrupa los nodos verticalmente
+            minY: 0.4, // Aumentado para bajar y compactar más el bloque
+            maxY: 0.7  // Reducido para subir y compactar más el bloque
         });
 
         this.defineColumn('hub-primario', {
-            x: 0.28,
+            x: 0.25, // Movido a la derecha para mejor espaciado
             title: 'Hub Primario',
             width: 0.1,
-            nodes: ['Oferta Total (Hub)'],
+            nodes: ['Oferta Total'],
             verticalDistribution: 'center'
         });
 
         this.defineColumn('distribucion', {
-            x: 0.45,
+            x: 0.62, // Ajustado para mejor espaciado
             title: 'Distribución',
             width: 0.15,
             nodes: ['Oferta Interna Bruta', 'Exportación', 'Energía No Aprovechada', 'Consumo Propio del Sector'],
@@ -68,7 +85,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('transformacion', {
-            x: 0.65,
+            x: 0.78, // Ajustado para mejor espaciado
             title: 'Transformación',
             width: 0.15,
             nodes: ['Refinerías y Despuntadoras', 'Plantas de Gas y Fraccionadoras', 'Coquizadoras y Hornos'],
@@ -76,11 +93,11 @@ class LayoutEngine {
         });
 
         this.defineColumn('generacion', {
-            x: 0.82,
+            x: 0.90, // Ajustado para mejor espaciado
             title: 'Generación',
             width: 0.15,
             nodes: [
-                'Carboeléctrica', 'Térmica Convencional', 'Combustión Interna', 
+                'Carboeléctrica', 'Térmica Convencional', 'Combustión Interna',
                 'Turbogás', 'Ciclo Combinado', 'Nucleoeléctrica', 'Cogeneración',
                 'Geotérmica', 'Eólica', 'Solar Fotovoltaica'
             ],
@@ -88,7 +105,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('centrales', {
-            x: 0.95,
+            x: 0.98, // Mantenido en el borde derecho
             title: 'Centrales',
             width: 0.05,
             nodes: ['Centrales Eléctricas'],
@@ -124,26 +141,26 @@ class LayoutEngine {
      */
     calculatePositions(nodeNames, nodeData = {}) {
         this.nodePositions.clear();
-        
+
         // Organizar nodos por columnas
         const nodesByColumn = this.organizeNodesByColumns(nodeNames);
-        
+
         // Calcular posiciones para cada columna
         for (const [columnName, columnNodes] of nodesByColumn.entries()) {
             const columnConfig = this.columnDefinitions.get(columnName);
             if (!columnConfig) continue;
-            
+
             const positions = this.calculateColumnPositions(columnNodes, columnConfig, nodeData);
-            
+
             // Almacenar posiciones calculadas
             for (const [nodeName, position] of positions.entries()) {
                 this.nodePositions.set(nodeName, position);
             }
         }
-        
+
         // Manejar nodos no asignados a columnas
         this.handleUnassignedNodes(nodeNames);
-        
+
         return new Map(this.nodePositions);
     }
 
@@ -155,29 +172,29 @@ class LayoutEngine {
     organizeNodesByColumns(nodeNames) {
         const nodesByColumn = new Map();
         const assignedNodes = new Set();
-        
+
         // Asignar nodos a columnas definidas
         for (const [columnName, columnConfig] of this.columnDefinitions.entries()) {
             const columnNodes = [];
-            
+
             for (const nodeName of nodeNames) {
                 if (columnConfig.nodes.includes(nodeName)) {
                     columnNodes.push(nodeName);
                     assignedNodes.add(nodeName);
                 }
             }
-            
+
             if (columnNodes.length > 0) {
                 nodesByColumn.set(columnName, columnNodes);
             }
         }
-        
+
         // Crear columna para nodos no asignados
         const unassignedNodes = nodeNames.filter(name => !assignedNodes.has(name));
         if (unassignedNodes.length > 0) {
             nodesByColumn.set('unassigned', unassignedNodes);
         }
-        
+
         return nodesByColumn;
     }
 
@@ -191,17 +208,17 @@ class LayoutEngine {
     calculateColumnPositions(nodes, columnConfig, nodeData) {
         const positions = new Map();
         const nodeCount = nodes.length;
-        
+
         if (nodeCount === 0) return positions;
-        
+
         const availableHeight = columnConfig.maxY - columnConfig.minY;
-        
+
         switch (columnConfig.verticalDistribution) {
             case 'center':
                 // Centrar nodos verticalmente
                 const centerY = columnConfig.minY + (availableHeight / 2);
                 const centerSpacing = Math.min(this.minNodeSpacing, availableHeight / Math.max(nodeCount, 1));
-                
+
                 nodes.forEach((nodeName, index) => {
                     const offsetY = (index - (nodeCount - 1) / 2) * centerSpacing;
                     positions.set(nodeName, {
@@ -211,11 +228,11 @@ class LayoutEngine {
                     });
                 });
                 break;
-                
+
             case 'compact':
                 // Distribución compacta desde arriba
                 const compactSpacing = Math.min(this.minNodeSpacing, availableHeight / nodeCount);
-                
+
                 nodes.forEach((nodeName, index) => {
                     positions.set(nodeName, {
                         x: columnConfig.x,
@@ -224,7 +241,7 @@ class LayoutEngine {
                     });
                 });
                 break;
-                
+
             case 'spread':
             default:
                 // Distribución uniforme en toda la altura disponible
@@ -236,7 +253,7 @@ class LayoutEngine {
                     });
                 } else {
                     const spreadSpacing = availableHeight / (nodeCount - 1);
-                    
+
                     nodes.forEach((nodeName, index) => {
                         positions.set(nodeName, {
                             x: columnConfig.x,
@@ -247,7 +264,7 @@ class LayoutEngine {
                 }
                 break;
         }
-        
+
         return positions;
     }
 
@@ -258,16 +275,16 @@ class LayoutEngine {
     handleUnassignedNodes(nodeNames) {
         const assignedNodes = new Set(this.nodePositions.keys());
         const unassignedNodes = nodeNames.filter(name => !assignedNodes.has(name));
-        
+
         if (unassignedNodes.length === 0) return;
-        
+
         console.warn('Nodos no asignados a columnas:', unassignedNodes);
-        
+
         // Crear posiciones por defecto para nodos no asignados
         const defaultX = 0.5; // Centro horizontal
         const availableHeight = 1.0 - this.marginTop - this.marginBottom;
         const spacing = availableHeight / Math.max(unassignedNodes.length, 1);
-        
+
         unassignedNodes.forEach((nodeName, index) => {
             this.nodePositions.set(nodeName, {
                 x: defaultX,
@@ -284,10 +301,10 @@ class LayoutEngine {
      */
     optimizePositions(positions) {
         const optimizedPositions = new Map(positions);
-        
+
         // Agrupar nodos por columna para optimización
         const nodesByColumn = new Map();
-        
+
         for (const [nodeName, position] of positions.entries()) {
             const columnName = position.column || 'default';
             if (!nodesByColumn.has(columnName)) {
@@ -295,16 +312,16 @@ class LayoutEngine {
             }
             nodesByColumn.get(columnName).push({ name: nodeName, position: position });
         }
-        
+
         // Optimizar cada columna por separado
         for (const [columnName, columnNodes] of nodesByColumn.entries()) {
             const optimizedColumnPositions = this.optimizeColumnPositions(columnNodes);
-            
+
             for (const { name, position } of optimizedColumnPositions) {
                 optimizedPositions.set(name, position);
             }
         }
-        
+
         return optimizedPositions;
     }
 
@@ -315,23 +332,23 @@ class LayoutEngine {
      */
     optimizeColumnPositions(columnNodes) {
         if (columnNodes.length <= 1) return columnNodes;
-        
+
         // Ordenar nodos por posición Y
         columnNodes.sort((a, b) => a.position.y - b.position.y);
-        
+
         // Detectar y resolver solapamientos
         for (let i = 1; i < columnNodes.length; i++) {
             const currentNode = columnNodes[i];
             const previousNode = columnNodes[i - 1];
-            
+
             const minDistance = this.minNodeSpacing;
             const actualDistance = currentNode.position.y - previousNode.position.y;
-            
+
             if (actualDistance < minDistance) {
                 // Ajustar posición para evitar solapamiento
                 const adjustment = minDistance - actualDistance;
                 currentNode.position.y += adjustment;
-                
+
                 // Asegurar que no exceda los límites
                 if (currentNode.position.y > (1.0 - this.marginBottom)) {
                     // Si excede el límite inferior, redistribuir todos los nodos
@@ -340,7 +357,7 @@ class LayoutEngine {
                 }
             }
         }
-        
+
         return columnNodes;
     }
 
@@ -351,18 +368,18 @@ class LayoutEngine {
     redistributeColumnNodes(columnNodes) {
         const availableHeight = (1.0 - this.marginBottom) - this.marginTop;
         const totalSpacingNeeded = (columnNodes.length - 1) * this.minNodeSpacing;
-        
+
         if (totalSpacingNeeded >= availableHeight) {
             // Espacio insuficiente, usar espaciado mínimo posible
             const actualSpacing = availableHeight / Math.max(columnNodes.length - 1, 1);
-            
+
             columnNodes.forEach((node, index) => {
                 node.position.y = this.marginTop + (index * actualSpacing);
             });
         } else {
             // Redistribuir uniformemente
             const spacing = availableHeight / Math.max(columnNodes.length - 1, 1);
-            
+
             columnNodes.forEach((node, index) => {
                 node.position.y = this.marginTop + (index * spacing);
             });

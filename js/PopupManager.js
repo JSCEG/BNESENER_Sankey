@@ -159,7 +159,7 @@ class PopupManager {
             'Solar Fotovoltaica': 'generation',
 
             // Nodos hub
-            'Oferta Total (Hub)': 'hub',
+            'Oferta Total': 'hub',
 
             // Nodos de consumo
             'Consumo Final': 'consumption',
@@ -756,11 +756,11 @@ class PopupManager {
         const flowPatterns = {
             'primary_supply': {
                 sources: ['Producción', 'Importación de energéticos primarios', 'Variación de inventarios de Energéticos primarios'],
-                targets: ['Oferta Total (Hub)'],
+                targets: ['Oferta Total'],
                 description: 'Suministro de energía primaria'
             },
             'hub_distribution': {
-                sources: ['Oferta Total (Hub)'],
+                sources: ['Oferta Total'],
                 targets: ['Oferta Interna Bruta', 'Exportación', 'Energía No Aprovechada'],
                 description: 'Distribución desde hub central'
             },
@@ -879,24 +879,9 @@ class PopupManager {
      * @returns {string} Texto plano renderizado
      */
     renderLinkTemplateAsText(data) {
-        let text = `${data.energyType}\n`;
-        
-        // Valor principal con formato mejorado
-        text += `\n• Valor: ${data.formattedValue} ${data.unit}`;
-        if (data.isNegative) {
-            text += ` (${data.direction})`;
-        }
-        text += `\n`;
-
-        // Información del flujo
-        text += `• Tipo: ${data.flowDescription}\n`;
-        text += `• Origen: ${data.sourceNode}\n`;
-        text += `• Destino: ${data.targetNode}\n`;
-        
-        // Footer
-        text += `\nAño: ${data.year}`;
-
-        return text;
+        // Formato simplificado: Nombre del flujo y su valor.
+        // Se usa data.value para preservar el signo (ej. en Variación de Inventarios).
+        return `${data.energyType}: ${this.formatNumber(data.value)} ${data.unit}`;
     }
 
     /**

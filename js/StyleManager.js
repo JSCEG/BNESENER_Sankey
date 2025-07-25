@@ -62,8 +62,8 @@ class StyleManager {
         // Diseñada para máximo contraste y legibilidad en diagramas de Sankey
         this.baseEnergyColors = [
             // --- Energéticos Primarios ---
-            '#2C3E50', // Carbón mineral
-            '#8B4513', // Petróleo crudo
+            '#000000ff', // Carbón mineral
+            '#696969', // Petróleo crudo
             '#6A5ACD', // Condensados
             '#1E6091', // Gas natural
             '#CD853F', // Nuclear
@@ -74,7 +74,7 @@ class StyleManager {
             '#D2691E', // Bagazo de caña
             '#8B4513', // Leña
             '#9ACD32', // Biogás
-    
+
             // --- Energéticos Secundarios ---
             '#2F4F4F', // Coque de carbón
             '#36454F', // Coque de petróleo
@@ -87,22 +87,28 @@ class StyleManager {
             '#20B2AA', // Gas natural seco
             '#FFD700'  // Energía eléctrica
         ];
-    
-        // === Colores para tipos de nodos ===
+
+        // === Degradados para tipos de nodos ===
         // Elegantes, con contraste y semántica visual clara
-        this.nodeTypeColors = {
-            oferta:       '#2E8B57', // Verde mar: recursos disponibles
-            transformacion:'#CD5C5C', // Rojo indio: procesos de conversión
-            consumo:      '#4682B4', // Azul acero: destino final
-            hub:          '#483D8B', // Azul pizarra: nodo central
-            generacion:   '#DAA520', // Dorado: generación eléctrica
-            distribucion: '#708090', // Gris pizarra: redes
-            perdidas:     '#A0522D', // Marrón: pérdidas del sistema
-            exportacion:  '#8FBC8F', // Verde gris: exportaciones
-            importacion:  '#87CEEB', // Azul cielo: importaciones
-            default:      '#696969'  // Gris tenue
+        this.nodeTypeGradients = {
+            importacion:    ['#065084', '#B0E0E6'], // Azul cielo → Azul hielo
+            variacion:    ['#87CEEB', '#B0E0E6'], // Azul cielo → Azul hielo
+            produccion:     ['#065084', '#FFE082'], // Dorado → Dorado claro
+            oferta:         ['#2E8B57', '#3CB371'], // Verde mar → Verde medio
+            transformacion: ['#CD5C5C', '#E57373'], // Rojo indio → Rosa suave
+            consumo:        ['#4169E1', '#5F9EA0'], // Azul royal → Azul cadete
+            hub:            ['#483D8B', '#6A5ACD'], // Azul pizarra → Lavanda
+            generacion:     ['#FFD700', '#FFF59D'], // Amarillo → Amarillo pálido
+            distribucion:   ['#607D8B', '#90A4AE'], // Gris azulado → Plata
+            perdidas:       ['#8B4513', '#D2B48C'], // Marrón → Tostado
+            exportacion:    ['#8FBC8F', '#C1E1C1'], // Verde gris → Verde nieve
+            default:        ['#696969', '#A9A9A9']  // Gris → Gris claro
         };
+        
+        
         this.initializeColorPalette();
+
+
     }
 
     /**
@@ -111,20 +117,20 @@ class StyleManager {
     initializeColorPalette() {
         // Mapear energéticos específicos a colores profesionales mejorados
         const energyMappings = {
-            // === ENERGÉTICOS PRIMARIOS - TONOS NATURALES ELEGANTES ===
-            'Carbón mineral': '#2C3E50',        // Azul carbón profundo - elegante y profesional
-            'Petróleo crudo': '#8B4513',        // Marrón tierra rico - representa petróleo natural
-            'Condensados': '#6A5ACD',           // Púrpura slate - sofisticado para hidrocarburos ligeros
-            'Gas natural': '#1E6091',           // Azul océano profundo - limpio y natural
-            'Energía Nuclear': '#CD853F',       // Dorado bronce - energía poderosa y controlada
-            'Energia Hidraúlica': '#4682B4',    // Azul acero - agua limpia y fluida
-            'Energía Hidráulica': '#4682B4',    // Consistencia para ambas variantes
-            'Geoenergía': '#DC143C',            // Rojo carmesí - calor del interior terrestre
-            'Energía solar': '#FF8C00',         // Naranja solar vibrante - energía del sol
-            'Energía eólica': '#228B22',        // Verde bosque - naturaleza y sostenibilidad
-            'Bagazo de caña': '#D2691E',        // Chocolate claro - biomasa natural
-            'Leña': '#8B4513',                  // Marrón silla de montar - madera natural
-            'Biogás': '#9ACD32',                // Verde amarillento - gas orgánico
+            // === ENERGÉTICOS PRIMARIOS ===y
+    'Carbón mineral':     '#696969',  // Gris acero profundo – sólido y sobrio
+    'Petróleo crudo':     '#2C3E50',  // Azul petróleo – fuerza, elegancia y estabilidad
+    'Condensados':        '#065084',  // Púrpura slate – sofisticado y técnico
+    'Gas natural':        '#78B9B5',  // Azul océano – limpio y confiable
+    'Energía Nuclear':    '#932F67',  // Bronce dorado – poder y control
+    'Energía Hidráulica': '#00809D',  // Azul acero – agua, fluidez y equilibrio
+    'Energia Hidraúlica': '#00809D',  // Variante repetida para consistencia semántica
+    'Geoenergía':         '#DC143C',  // Rojo carmesí – energía del interior de la Tierra
+    'Energía solar':      '#FFD700',  // Naranja vibrante – radiación solar intensa
+    'Energía eólica':     '#437057',  // Verde bosque – aire limpio y naturaleza
+    'Bagazo de caña':     '#97B067',  // Marrón claro – biomasa de origen vegetal
+    'Leña':               '#B1AB86',  // Marrón silla – recurso tradicional
+    'Biogás':             '#9ACD32',  // Verde lima – gas renovable y biológico
 
             // === ENERGÉTICOS SECUNDARIOS - TONOS INDUSTRIALES REFINADOS ===
             'Coque de carbón': '#2F4F4F',       // Gris pizarra oscuro - industrial pero elegante
@@ -180,7 +186,8 @@ class StyleManager {
      * @returns {string} Color hexadecimal
      */
     getNodeTypeColor(nodeType) {
-        return this.nodeTypeColors[nodeType] || this.nodeTypeColors.default;
+        const gradient = this.nodeTypeGradients[nodeType] || this.nodeTypeGradients.default;
+        return gradient[0]; // Devolver el color principal del degradado
     }
 
     /**
@@ -243,7 +250,7 @@ class StyleManager {
      */
     validateColor(color) {
         if (!color || typeof color !== 'string') {
-            return this.nodeTypeColors.default;
+            return this.nodeTypeGradients.default[0];
         }
 
         // Verificar formato hexadecimal
@@ -266,7 +273,7 @@ class StyleManager {
         }
 
         console.warn(`Color inválido "${color}", usando color por defecto`);
-        return this.nodeTypeColors.default;
+        return this.nodeTypeGradients.default[0];
     }
 
     /**
@@ -634,7 +641,7 @@ class StyleManager {
         const stats = {
             totalEnergyColors: this.energyTypeColors.size,
             totalCustomColors: this.customColors.size,
-            totalNodeTypeColors: Object.keys(this.nodeTypeColors).length,
+            totalNodeTypeColors: Object.keys(this.nodeTypeGradients).length,
             currentTheme: this.currentTheme,
             availableThemes: this.getAvailableThemes().length,
             colorDistribution: {
@@ -654,7 +661,7 @@ class StyleManager {
             }
         }
 
-        stats.colorDistribution.nodeTypes = Object.keys(this.nodeTypeColors).length;
+        stats.colorDistribution.nodeTypes = Object.keys(this.nodeTypeGradients).length;
 
         return stats;
     }

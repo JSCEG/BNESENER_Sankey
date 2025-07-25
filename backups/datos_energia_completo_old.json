@@ -1474,7 +1474,7 @@
       ],
       "descripcion": "Se define como la energía extraída de reservas fósiles y fuentes de biocombustibles, así como la captación y aprovechamiento de energías renovables, técnica y económicamente utilizables o comercializables, producidas dentro del territorio nacional.",
       "id_padre": 3,
-      "color": ""
+      "color": "#76B7B2"
     },
     {
       "Nodo Padre": "Importación",
@@ -2062,7 +2062,7 @@
       ],
       "descripcion": "Contabiliza la diferencia entre la existencia inicial y la existencia final de productos almacenados. Una variación positiva indica un aumento en la oferta total de energía, mientras que una negativa representa una disminución.",
       "id_padre": 5,
-      "color": ""
+      "color": "#BAB0AC"
     },
     {
       "Nodo Padre": "Exportación",
@@ -2158,7 +2158,7 @@
       ],
       "descripcion": "Es la cantidad de energía primaria y secundaria que se destina para su uso fuera del territorio nacional.",
       "id_padre": 6,
-      "color": ""
+      "color": "#E45756"
     },
     {
       "Nodo Padre": "Energía No Aprovechada",

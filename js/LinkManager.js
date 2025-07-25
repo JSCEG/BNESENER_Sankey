@@ -82,14 +82,14 @@ class LinkManager {
 
         // === MAPEO FUENTES -> HUB PRIMARIO ===
         this.registerConnectionMap('sources-to-hub', new Map([
-            ['Producción', ['Oferta Total (Hub)']],
-            ['Importación de energéticos primarios', ['Oferta Total (Hub)']],
-            ['Variación de inventarios de Energéticos primarios', ['Oferta Total (Hub)']]
+            ['Producción', ['Oferta Total']],
+            ['Importación de energéticos primarios', ['Oferta Total']],
+            ['Variación de inventarios de Energéticos primarios', ['Oferta Total']]
         ]));
 
         // === MAPEO HUB -> DISTRIBUCIÓN ===
         this.registerConnectionMap('hub-to-distribution', new Map([
-            ['Oferta Total (Hub)', [
+            ['Oferta Total', [
                 'Oferta Interna Bruta',
                 'Exportación',
                 'Energía No Aprovechada'
