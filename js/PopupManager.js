@@ -84,15 +84,32 @@ class PopupManager {
             footer: 'Tipos de energía: %{energy_types_text} • Año: %{year}'
         };
 
+        // === TEMPLATE SIMPLIFICADO PARA HUBS ===
+        const hubTemplate = {
+            title: '%{label}',
+            sections: [
+                {
+                    title: '',
+                    fields: [
+                        { key: 'total_input', label: 'Total', value: '%{total_input}', format: 'number', unit: 'PJ', highlight: true }
+                    ]
+                }
+            ],
+            footer: 'Año: %{year}'
+        };
+
         // Usar el mismo template dinámico para todos los tipos
         this.nodeTemplates.set('primary_energy', dynamicTemplate);
         this.nodeTemplates.set('transformation', dynamicTemplate);
         this.nodeTemplates.set('generation', dynamicTemplate);
-        this.nodeTemplates.set('hub', dynamicTemplate);
+        this.nodeTemplates.set('hub', hubTemplate); // Usar el nuevo template para hubs
         this.nodeTemplates.set('consumption', dynamicTemplate);
         this.nodeTemplates.set('default', dynamicTemplate);
 
-        console.log(`Inicializados ${this.nodeTemplates.size} templates dinámicos de nodos`);
+        // Template simple para nodos de fuente (solo es un marcador)
+        this.nodeTemplates.set('simple_source', { type: 'simple_source' });
+
+        console.log(`Inicializados ${this.nodeTemplates.size} templates de nodos`);
     }
 
     /**
@@ -138,6 +155,21 @@ class PopupManager {
      * @returns {string} Tipo de template
      */
     determineNodeTemplateType(nodeName, nodeData) {
+        // Lista de nodos que usarán el popup simplificado
+        const simpleSourceNodes = [
+            'Producción',
+            'Importación de energéticos primarios',
+            'Variación de inventarios de Energéticos primarios',
+            'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
+            'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
+            'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña',
+            'Leña', 'Biogás'
+        ];
+
+        if (simpleSourceNodes.includes(nodeName)) {
+            return 'simple_source';
+        }
+
         // Mapeo de nombres de nodos a tipos de template
         const nodeTypeMapping = {
             // Nodos de transformación
@@ -427,6 +459,12 @@ class PopupManager {
      * @returns {string} Texto plano renderizado
      */
     renderNodeTemplateAsText(template, data) {
+        // Lógica especial para el template simplificado de nodos fuente
+        if (template.type === 'simple_source') {
+            const totalValue = data.total_input ?? data.total ?? 0;
+            return `${data.label}: ${this.formatNumber(totalValue)} ${data.unit || 'PJ'}`;
+        }
+
         let text = `${this.interpolateTemplate(template.title, data)}\n`;
 
         // Renderizar secciones

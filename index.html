@@ -2003,9 +2003,8 @@
             });
 
             // Usar un solo string para hovertemplate de nodos
-            const customNodeHover =
-                '%{label}<br>%{customdata}' +
-                '<extra></extra>';
+            // El PopupManager ya incluye el título, así que solo usamos customdata.
+            const customNodeHover = '%{customdata}<extra></extra>';
 
             // Preparar customdata para cada nodo usando PopupManager
             let ofertaTotalHubValue = 0;
@@ -2145,7 +2144,7 @@
             };
 
             const layout = {
-                title: `Flujo de Fuentes a Oferta Total y Salidas - ${year} (Valores en PJ)`,
+                title: `Balance Nacional de Energía - ${year} (Valores en PJ)`,
                 font: { size: 12 },
                 margin: { l: 10, r: 10, t: 50, b: 10 },
                 autosize: true
