@@ -1314,8 +1314,8 @@
             const exportacionIndex = addNode(String('Exportación'), nodeData.exportacion.color);
             const energiaNoAprovechadaIndex = addNode(String('Energía No Aprovechada'), nodeData.energiaNoAprovechada.color);
             // const consumoPropioIndex = addNode(String('Consumo Propio del Sector'), nodeData.consumoPropio.color);
-            // const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
-            // const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
+             const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
+           //  const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
             // const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
             // const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
             // const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
@@ -1539,35 +1539,35 @@
             secondaryNodeBreakdowns.set('Energía No Aprovechada', { breakdown: enaBreakdown, total: enaTotal });
 
             // --- 7. Procesar Flujos (Oferta Interna Bruta -> Coquizadoras y Hornos) ---
-            // nodeData.coquizadorasHornos['Nodos Hijo'].forEach(child => {
-            //     const flowValue = child[year];
-            //     // Asumimos que Carbón mineral es el input principal de OIB a Coquizadoras y Hornos
-            //     if (child['Nodo Hijo'] === 'Carbón mineral' && flowValue !== undefined && flowValue !== 0) {
-            //         const childColor = child.color;
-            //         source.push(ofertaInternaBrutaIndex);
-            //         target.push(coquizadorasHornosIndex);
-            //         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //         const validatedColor = typeof childColor === 'string' ? childColor : '#888';
-            //         linkColors.push(validatedColor);
+            nodeData.coquizadorasHornos['Nodos Hijo'].forEach(child => {
+                const flowValue = child[year];
+                // Asumimos que Carbón mineral es el input principal de OIB a Coquizadoras y Hornos
+                if (child['Nodo Hijo'] === 'Carbón mineral' && flowValue !== undefined && flowValue !== 0) {
+                    const childColor = child.color;
+                    source.push(ofertaInternaBrutaIndex);
+                    target.push(coquizadorasHornosIndex);
+                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                    const validatedColor = typeof childColor === 'string' ? childColor : '#888';
+                    linkColors.push(validatedColor);
 
-            //         // Usar PopupManager para generar popup de enlace mejorado
-            //         if (popupManager) {
-            //             const linkPopup = popupManager.generateLinkPopup(
-            //                 child['Nodo Hijo'],
-            //                 flowValue,
-            //                 'Oferta Interna Bruta',
-            //                 'Coquizadoras y Hornos',
-            //                 validatedColor,
-            //                 year,
-            //                 { flowType: 'transformation_input' }
-            //             );
-            //             linkCustomdata.push(linkPopup);
-            //         } else {
-            //             // Fallback al formato anterior
-            //             linkCustomdata.push(`${child['Nodo Hijo']}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //         }
-            //     }
-            // });
+                    // Usar PopupManager para generar popup de enlace mejorado
+                    if (popupManager) {
+                        const linkPopup = popupManager.generateLinkPopup(
+                            child['Nodo Hijo'],
+                            flowValue,
+                            'Oferta Interna Bruta',
+                            'Coquizadoras y Hornos',
+                            validatedColor,
+                            year,
+                            { flowType: 'transformation_input' }
+                        );
+                        linkCustomdata.push(linkPopup);
+                    } else {
+                        // Fallback al formato anterior
+                        linkCustomdata.push(`${child['Nodo Hijo']}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                    }
+                }
+            });
 
             // --- 7. Procesar Flujos (Oferta Interna Bruta -> Refinerías y Despuntadoras) ---
             // nodeData.refineriasDespuntadoras['Nodos Hijo'].forEach(child => {

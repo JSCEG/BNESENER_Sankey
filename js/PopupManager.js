@@ -176,6 +176,9 @@ class PopupManager {
             'Importación de energéticos primarios',
             'Oferta Interna Bruta',
             'Exportación',
+            'Consumo Propio del Sector',
+            'Coquizadoras y Hornos',
+            'Refinerías y Despuntadoras',
             'Energía No Aprovechada',
             'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
             'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
@@ -190,9 +193,7 @@ class PopupManager {
         // Mapeo de nombres de nodos a tipos de template
         const nodeTypeMapping = {
             // Nodos de transformación
-            'Refinerías y Despuntadoras': 'transformation',
             'Plantas de Gas y Fraccionadoras': 'transformation',
-            'Coquizadoras y Hornos': 'transformation',
 
             // Nodos de generación eléctrica
             'Centrales Eléctricas': 'generation',
@@ -212,7 +213,6 @@ class PopupManager {
 
             // Nodos de consumo
             'Consumo Final': 'consumption',
-            'Consumo Propio del Sector': 'consumption',
 
             // Nodos de flujo
             'Importación de energéticos primarios': 'consumption',

@@ -110,14 +110,36 @@ class LayoutEngine {
             maxY: 0.95
         });
 
-        this.defineColumn('transformacion', {
-            x: 0.3, // Ajustado para mejor espaciado
+        // Dividir la columna de transformación para control individual
+        this.defineColumn('transformacion-refinerias', {
+            x: 0.78, // Corregido y ajustado para mejor espaciado
             title: 'Transformación',
             width: 0.15,
-            nodes: ['Refinerías y Despuntadoras', 'Plantas de Gas y Fraccionadoras', 'Coquizadoras y Hornos'],
-            verticalDistribution: 'spread'
+            nodes: ['Refinerías y Despuntadoras'],
+            verticalDistribution: 'center',
+            minY: 0.3, // Posiciona este grupo en la parte superior-media
+            maxY: 0.4
         });
 
+        this.defineColumn('transformacion-coquizadoras', {
+            x: 0.4,
+            title: 'Transformación',
+            width: 0.15,
+            nodes: ['Coquizadoras y Hornos'],
+            verticalDistribution: 'spread',
+            minY: -0.45, // Posiciona este grupo en la parte inferior-media
+            maxY: 0.9
+        });
+        //Plantas de Gas y Fraccionadoras
+        this.defineColumn('transformacion-Palntas de Gas', {
+            x: 0.78,
+            title: 'Transformación',
+            width: 0.15,
+            nodes: ['Plantas de Gas y Fraccionadoras'],
+            verticalDistribution: 'center',
+            minY: 0.6, // Posiciona este grupo en la parte inferior-media
+            maxY: 0.7
+        });
         this.defineColumn('generacion', {
             x: 0.90, // Ajustado para mejor espaciado
             title: 'Generación',
