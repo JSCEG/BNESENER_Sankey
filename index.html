@@ -2155,6 +2155,11 @@
                 }
             });
 
+            // Convertir los colores de los enlaces para que tengan transparencia
+            const transparentLinkColors = linkColors.map(hex =>
+                styleManager ? styleManager.hexToRgba(hex, 0.5) : hex // Ajusta este valor (0.0 a 1.0)
+            );
+
             const data = {
                 type: "sankey",
                 orientation: "h",
@@ -2170,7 +2175,13 @@
                     y: nodeY,
                     font: { size: 6 } // Reducir el tamaño de la fuente aún más
                 },
-                link: { source: source, target: target, value: value, color: linkColors, customdata: linkCustomdata, hovertemplate: '%{customdata}<extra></extra>' }
+                link: { 
+                    source: source, 
+                    target: target, 
+                    value: value, 
+                    color: transparentLinkColors, 
+                    customdata: linkCustomdata, 
+                    hovertemplate: '%{customdata}<extra></extra>' }
             };
 
             const layout = {

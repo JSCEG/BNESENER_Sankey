@@ -327,6 +327,22 @@ class StyleManager {
     }
 
     /**
+     * Convierte un color hexadecimal a formato RGBA con opacidad.
+     * @param {string} hex - Color en formato hexadecimal (e.g., '#RRGGBB').
+     * @param {number} opacity - Nivel de opacidad (0.0 a 1.0).
+     * @returns {string} Color en formato RGBA (e.g., 'rgba(r,g,b,a)').
+     */
+    hexToRgba(hex, opacity = 0.4) {
+        const validHex = this.validateColor(hex);
+        const rgb = this.hexToRgb(validHex);
+        if (!rgb) {
+            // Fallback si el color hex es inválido
+            return validHex; 
+        }
+        return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+    }
+
+    /**
      * Convierte hexadecimal a RGB
      * @param {string} hex - Color hexadecimal
      * @returns {Object|null} Objeto RGB o null si es inválido
