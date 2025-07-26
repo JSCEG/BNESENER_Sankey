@@ -1317,17 +1317,17 @@
              const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
              const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
             const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
-            // const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
-            // const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
-            // const termicaConvencionalIndex = addNode(String('Térmica Convencional'), nodeData.termicaConvencional.color);
-            // const combustionInternaIndex = addNode(String('Combustión Interna'), nodeData.combustionInterna.color);
-            // const turbogasIndex = addNode(String('Turbogás'), nodeData.turbogas.color);
-            // const cicloCombinadoIndex = addNode(String('Ciclo Combinado'), nodeData.cicloCombinado.color);
-            // const nucleoelectricaIndex = addNode(String('Nucleoeléctrica'), nodeData.nucleoelectrica.color);
-            // const cogeneracionIndex = addNode(String('Cogeneración'), nodeData.cogeneracion.color);
-            // const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
-            // const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
-            // const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
+            const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
+            const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
+            const termicaConvencionalIndex = addNode(String('Térmica Convencional'), nodeData.termicaConvencional.color);
+            const combustionInternaIndex = addNode(String('Combustión Interna'), nodeData.combustionInterna.color);
+            const turbogasIndex = addNode(String('Turbogás'), nodeData.turbogas.color);
+            const cicloCombinadoIndex = addNode(String('Ciclo Combinado'), nodeData.cicloCombinado.color);
+            const nucleoelectricaIndex = addNode(String('Nucleoeléctrica'), nodeData.nucleoelectrica.color);
+            const cogeneracionIndex = addNode(String('Cogeneración'), nodeData.cogeneracion.color);
+            const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
+            const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
+            const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
             // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
             const linkSigns = [];
             const processParentNode = (nodeData, parentIndex, parentName, allowNegatives = false) => {
@@ -1657,297 +1657,297 @@
 
             // --- 9. Procesar Flujos (Fuentes de Energía -> Tecnologías de Generación) ---
             // Usar LinkManager para mapeo automático de conexiones
-            // if (linkManager) {
-            //     try {
-            //         // Generar enlaces usando LinkManager
-            //         const fuelToGenerationLinks = linkManager.generateDataLinks(
-            //             nodeMap,
-            //             nodeColors,
-            //             nodeData,
-            //             year,
-            //             {
-            //                 mapTypes: ['fuel-to-generation'],
-            //                 excludeEnergyTypes: ['Energía eléctrica']
-            //             }
-            //         );
+            if (linkManager) {
+                try {
+                    // Generar enlaces usando LinkManager
+                    const fuelToGenerationLinks = linkManager.generateDataLinks(
+                        nodeMap,
+                        nodeColors,
+                        nodeData,
+                        year,
+                        {
+                            mapTypes: ['fuel-to-generation'],
+                            excludeEnergyTypes: ['Energía eléctrica']
+                        }
+                    );
 
-            //         // Agregar enlaces generados a los arrays principales
-            //         source.push(...fuelToGenerationLinks.source);
-            //         target.push(...fuelToGenerationLinks.target);
-            //         value.push(...fuelToGenerationLinks.value);
-            //         linkColors.push(...fuelToGenerationLinks.linkColors);
-            //         linkCustomdata.push(...fuelToGenerationLinks.linkCustomdata);
+                    // Agregar enlaces generados a los arrays principales
+                    source.push(...fuelToGenerationLinks.source);
+                    target.push(...fuelToGenerationLinks.target);
+                    value.push(...fuelToGenerationLinks.value);
+                    linkColors.push(...fuelToGenerationLinks.linkColors);
+                    linkCustomdata.push(...fuelToGenerationLinks.linkCustomdata);
 
-            //         console.log(`LinkManager generó ${fuelToGenerationLinks.source.length} enlaces fuel-to-generation`);
-            //     } catch (error) {
-            //         console.warn('Error usando LinkManager para mapeo automático:', error);
+                    console.log(`LinkManager generó ${fuelToGenerationLinks.source.length} enlaces fuel-to-generation`);
+                } catch (error) {
+                    console.warn('Error usando LinkManager para mapeo automático:', error);
 
-            //         // Fallback al método manual
-            //         const generationNodesForInput = [
-            //             { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-            //             { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-            //             { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-            //             { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-            //             { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-            //             { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-            //             { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-            //             { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-            //             { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-            //             { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
-            //         ];
+                    // Fallback al método manual
+                    const generationNodesForInput = [
+                        { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
+                        { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
+                        { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
+                        { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
+                        { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
+                        { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
+                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
+                        { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
+                        { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
+                        { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                    ];
 
-            //         generationNodesForInput.forEach(genNode => {
-            //             if (genNode.data && genNode.data['Nodos Hijo']) {
-            //                 genNode.data['Nodos Hijo'].forEach(fuel => {
-            //                     const fuelName = fuel['Nodo Hijo'];
-            //                     const fuelColor = fuel.color;
-            //                     const flowValue = fuel[year];
-            //                     if (flowValue !== undefined && flowValue !== 0 && fuelName !== 'Energía eléctrica') {
-            //                         const targetIndex = genNode.index;
+                    generationNodesForInput.forEach(genNode => {
+                        if (genNode.data && genNode.data['Nodos Hijo']) {
+                            genNode.data['Nodos Hijo'].forEach(fuel => {
+                                const fuelName = fuel['Nodo Hijo'];
+                                const fuelColor = fuel.color;
+                                const flowValue = fuel[year];
+                                if (flowValue !== undefined && flowValue !== 0 && fuelName !== 'Energía eléctrica') {
+                                    const targetIndex = genNode.index;
 
-            //                         let sourceIndex;
-            //                         if (fuel.tipo === 'Energía Primaria') {
-            //                             sourceIndex = ofertaInternaBrutaIndex;
-            //                         } else { // Energía Secundaria
-            //                             if (fuelName === 'Coque de carbón') {
-            //                                 sourceIndex = coquizadorasHornosIndex;
-            //                             } else if (fuelName === 'Gas natural seco') {
-            //                                 sourceIndex = nodeData.plantasGasFraccionadoras ? plantasGasFraccionadorasIndex : refineriasDespuntadorasIndex;
-            //                             } else {
-            //                                 sourceIndex = refineriasDespuntadorasIndex;
-            //                             }
-            //                         }
+                                    let sourceIndex;
+                                    if (fuel.tipo === 'Energía Primaria') {
+                                        sourceIndex = ofertaInternaBrutaIndex;
+                                    } else { // Energía Secundaria
+                                        if (fuelName === 'Coque de carbón') {
+                                            sourceIndex = coquizadorasHornosIndex;
+                                        } else if (fuelName === 'Gas natural seco') {
+                                            sourceIndex = nodeData.plantasGasFraccionadoras ? plantasGasFraccionadorasIndex : refineriasDespuntadorasIndex;
+                                        } else {
+                                            sourceIndex = refineriasDespuntadorasIndex;
+                                        }
+                                    }
 
-            //                         if (sourceIndex !== undefined) {
-            //                             source.push(sourceIndex);
-            //                             target.push(targetIndex);
-            //                             value.push(Math.log10(Math.abs(flowValue) + 1));
-            //                             const validatedColor = typeof fuelColor === 'string' ? fuelColor : '#888';
-            //                             linkColors.push(validatedColor);
+                                    if (sourceIndex !== undefined) {
+                                        source.push(sourceIndex);
+                                        target.push(targetIndex);
+                                        value.push(Math.log10(Math.abs(flowValue) + 1));
+                                        const validatedColor = typeof fuelColor === 'string' ? fuelColor : '#888';
+                                        linkColors.push(validatedColor);
 
-            //                             // Usar PopupManager para generar popup de enlace mejorado
-            //                             if (popupManager) {
-            //                                 const sourceNodeName = sourceIndex === ofertaInternaBrutaIndex ? 'Oferta Interna Bruta' :
-            //                                     sourceIndex === coquizadorasHornosIndex ? 'Coquizadoras y Hornos' :
-            //                                         sourceIndex === plantasGasFraccionadorasIndex ? 'Plantas de Gas y Fraccionadoras' :
-            //                                             'Refinerías y Despuntadoras';
-            //                                 const linkPopup = popupManager.generateLinkPopup(
-            //                                     fuelName,
-            //                                     flowValue,
-            //                                     sourceNodeName,
-            //                                     genNode.name,
-            //                                     validatedColor,
-            //                                     year,
-            //                                     { flowType: 'fuel_to_generation' }
-            //                                 );
-            //                                 linkCustomdata.push(linkPopup);
-            //                             } else {
-            //                                 // Fallback al formato anterior
-            //                                 linkCustomdata.push(`${fuelName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //                             }
-            //                         }
-            //                     }
-            //                 });
-            //             }
-            //         });
-            //     }
-            // } else {
-            //     console.warn('LinkManager no está disponible, usando método manual');
+                                        // Usar PopupManager para generar popup de enlace mejorado
+                                        if (popupManager) {
+                                            const sourceNodeName = sourceIndex === ofertaInternaBrutaIndex ? 'Oferta Interna Bruta' :
+                                                sourceIndex === coquizadorasHornosIndex ? 'Coquizadoras y Hornos' :
+                                                    sourceIndex === plantasGasFraccionadorasIndex ? 'Plantas de Gas y Fraccionadoras' :
+                                                        'Refinerías y Despuntadoras';
+                                            const linkPopup = popupManager.generateLinkPopup(
+                                                fuelName,
+                                                flowValue,
+                                                sourceNodeName,
+                                                genNode.name,
+                                                validatedColor,
+                                                year,
+                                                { flowType: 'fuel_to_generation' }
+                                            );
+                                            linkCustomdata.push(linkPopup);
+                                        } else {
+                                            // Fallback al formato anterior
+                                            linkCustomdata.push(`${fuelName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            } else {
+                console.warn('LinkManager no está disponible, usando método manual');
 
-            //     // Método manual como fallback completo
-            //     const generationNodesForInput = [
-            //         { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-            //         { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-            //         { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-            //         { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-            //         { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-            //         { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-            //         { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-            //         { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-            //         { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-            //         { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
-            //     ];
+                // Método manual como fallback completo
+                const generationNodesForInput = [
+                    { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
+                    { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
+                    { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
+                    { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
+                    { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
+                    { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
+                    { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
+                    { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
+                    { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
+                    { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                ];
 
-            //     generationNodesForInput.forEach(genNode => {
-            //         if (genNode.data && genNode.data['Nodos Hijo']) {
-            //             genNode.data['Nodos Hijo'].forEach(fuel => {
-            //                 const fuelName = fuel['Nodo Hijo'];
-            //                 const fuelColor = fuel.color;
-            //                 const flowValue = fuel[year];
-            //                 if (flowValue !== undefined && flowValue !== 0 && fuelName !== 'Energía eléctrica') {
-            //                     const targetIndex = genNode.index;
+                generationNodesForInput.forEach(genNode => {
+                    if (genNode.data && genNode.data['Nodos Hijo']) {
+                        genNode.data['Nodos Hijo'].forEach(fuel => {
+                            const fuelName = fuel['Nodo Hijo'];
+                            const fuelColor = fuel.color;
+                            const flowValue = fuel[year];
+                            if (flowValue !== undefined && flowValue !== 0 && fuelName !== 'Energía eléctrica') {
+                                const targetIndex = genNode.index;
 
-            //                     let sourceIndex;
-            //                     if (fuel.tipo === 'Energía Primaria') {
-            //                         sourceIndex = ofertaInternaBrutaIndex;
-            //                     } else { // Energía Secundaria
-            //                         if (fuelName === 'Coque de carbón') {
-            //                             sourceIndex = coquizadorasHornosIndex;
-            //                         } else if (fuelName === 'Gas natural seco') {
-            //                             sourceIndex = nodeData.plantasGasFraccionadoras ? plantasGasFraccionadorasIndex : refineriasDespuntadorasIndex;
-            //                         } else {
-            //                             sourceIndex = refineriasDespuntadorasIndex;
-            //                         }
-            //                     }
+                                let sourceIndex;
+                                if (fuel.tipo === 'Energía Primaria') {
+                                    sourceIndex = ofertaInternaBrutaIndex;
+                                } else { // Energía Secundaria
+                                    if (fuelName === 'Coque de carbón') {
+                                        sourceIndex = coquizadorasHornosIndex;
+                                    } else if (fuelName === 'Gas natural seco') {
+                                        sourceIndex = nodeData.plantasGasFraccionadoras ? plantasGasFraccionadorasIndex : refineriasDespuntadorasIndex;
+                                    } else {
+                                        sourceIndex = refineriasDespuntadorasIndex;
+                                    }
+                                }
 
-            //                     if (sourceIndex !== undefined) {
-            //                         source.push(sourceIndex);
-            //                         target.push(targetIndex);
-            //                         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //                         const validatedColor = typeof fuelColor === 'string' ? fuelColor : '#888';
-            //                         linkColors.push(validatedColor);
+                                if (sourceIndex !== undefined) {
+                                    source.push(sourceIndex);
+                                    target.push(targetIndex);
+                                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                                    const validatedColor = typeof fuelColor === 'string' ? fuelColor : '#888';
+                                    linkColors.push(validatedColor);
 
-            //                         // Usar PopupManager para generar popup de enlace mejorado
-            //                         if (popupManager) {
-            //                             const sourceNodeName = sourceIndex === ofertaInternaBrutaIndex ? 'Oferta Interna Bruta' :
-            //                                 sourceIndex === coquizadorasHornosIndex ? 'Coquizadoras y Hornos' :
-            //                                     sourceIndex === plantasGasFraccionadorasIndex ? 'Plantas de Gas y Fraccionadoras' :
-            //                                         'Refinerías y Despuntadoras';
-            //                             const linkPopup = popupManager.generateLinkPopup(
-            //                                 fuelName,
-            //                                 flowValue,
-            //                                 sourceNodeName,
-            //                                 genNode.name,
-            //                                 validatedColor,
-            //                                 year,
-            //                                 { flowType: 'fuel_to_generation' }
-            //                             );
-            //                             linkCustomdata.push(linkPopup);
-            //                         } else {
-            //                             // Fallback al formato anterior
-            //                             linkCustomdata.push(`${fuelName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //                         }
-            //                     }
-            //                 }
-            //             });
-            //         }
-            //     });
-            // }
+                                    // Usar PopupManager para generar popup de enlace mejorado
+                                    if (popupManager) {
+                                        const sourceNodeName = sourceIndex === ofertaInternaBrutaIndex ? 'Oferta Interna Bruta' :
+                                            sourceIndex === coquizadorasHornosIndex ? 'Coquizadoras y Hornos' :
+                                                sourceIndex === plantasGasFraccionadorasIndex ? 'Plantas de Gas y Fraccionadoras' :
+                                                    'Refinerías y Despuntadoras';
+                                        const linkPopup = popupManager.generateLinkPopup(
+                                            fuelName,
+                                            flowValue,
+                                            sourceNodeName,
+                                            genNode.name,
+                                            validatedColor,
+                                            year,
+                                            { flowType: 'fuel_to_generation' }
+                                        );
+                                        linkCustomdata.push(linkPopup);
+                                    } else {
+                                        // Fallback al formato anterior
+                                        linkCustomdata.push(`${fuelName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            }
 
             // --- 10. Procesar Flujos (Tecnologías de Generación -> Centrales Eléctricas) ---
             // Usar LinkManager para generar enlaces de generación a centrales
-            // if (linkManager) {
-            //     try {
-            //         const generationToCentralesLinks = linkManager.generateDataLinks(
-            //             nodeMap,
-            //             nodeColors,
-            //             nodeData,
-            //             year,
-            //             {
-            //                 mapTypes: ['generation-to-centrales']
-            //             }
-            //         );
+            if (linkManager) {
+                try {
+                    const generationToCentralesLinks = linkManager.generateDataLinks(
+                        nodeMap,
+                        nodeColors,
+                        nodeData,
+                        year,
+                        {
+                            mapTypes: ['generation-to-centrales']
+                        }
+                    );
 
-            //         // Agregar enlaces generados a los arrays principales
-            //         source.push(...generationToCentralesLinks.source);
-            //         target.push(...generationToCentralesLinks.target);
-            //         value.push(...generationToCentralesLinks.value);
-            //         linkColors.push(...generationToCentralesLinks.linkColors);
-            //         linkCustomdata.push(...generationToCentralesLinks.linkCustomdata);
+                    // Agregar enlaces generados a los arrays principales
+                    source.push(...generationToCentralesLinks.source);
+                    target.push(...generationToCentralesLinks.target);
+                    value.push(...generationToCentralesLinks.value);
+                    linkColors.push(...generationToCentralesLinks.linkColors);
+                    linkCustomdata.push(...generationToCentralesLinks.linkCustomdata);
 
-            //         console.log(`LinkManager generó ${generationToCentralesLinks.source.length} enlaces generation-to-centrales`);
-            //     } catch (error) {
-            //         console.warn('Error usando LinkManager para enlaces generation-to-centrales:', error);
+                    console.log(`LinkManager generó ${generationToCentralesLinks.source.length} enlaces generation-to-centrales`);
+                } catch (error) {
+                    console.warn('Error usando LinkManager para enlaces generation-to-centrales:', error);
 
-            //         // Fallback al método manual
-            //         const generationNodes = [
-            //             { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-            //             { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-            //             { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-            //             { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-            //             { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-            //             { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-            //             { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-            //             { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-            //             { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-            //             { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
-            //         ];
+                    // Fallback al método manual
+                    const generationNodes = [
+                        { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
+                        { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
+                        { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
+                        { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
+                        { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
+                        { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
+                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
+                        { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
+                        { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
+                        { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                    ];
 
-            //         generationNodes.forEach(genNode => {
-            //             if (genNode.data && genNode.data['Nodos Hijo']) {
-            //                 genNode.data['Nodos Hijo'].forEach(child => {
-            //                     if (child['Nodo Hijo'] === 'Energía eléctrica') {
-            //                         const flowValue = child[year];
-            //                         if (flowValue !== undefined && flowValue !== 0) {
-            //                             source.push(genNode.index);
-            //                             target.push(centralesElectricasIndex);
-            //                             value.push(Math.log10(Math.abs(flowValue) + 1));
-            //                             const validatedColor = typeof child.color === 'string' ? child.color : '#888';
-            //                             linkColors.push(validatedColor);
+                    generationNodes.forEach(genNode => {
+                        if (genNode.data && genNode.data['Nodos Hijo']) {
+                            genNode.data['Nodos Hijo'].forEach(child => {
+                                if (child['Nodo Hijo'] === 'Energía eléctrica') {
+                                    const flowValue = child[year];
+                                    if (flowValue !== undefined && flowValue !== 0) {
+                                        source.push(genNode.index);
+                                        target.push(centralesElectricasIndex);
+                                        value.push(Math.log10(Math.abs(flowValue) + 1));
+                                        const validatedColor = typeof child.color === 'string' ? child.color : '#888';
+                                        linkColors.push(validatedColor);
 
-            //                             // Usar PopupManager para generar popup de enlace mejorado
-            //                             if (popupManager) {
-            //                                 const linkPopup = popupManager.generateLinkPopup(
-            //                                     'Energía eléctrica',
-            //                                     flowValue,
-            //                                     genNode.name,
-            //                                     'Centrales Eléctricas',
-            //                                     validatedColor,
-            //                                     year,
-            //                                     { flowType: 'generation_to_grid' }
-            //                                 );
-            //                                 linkCustomdata.push(linkPopup);
-            //                             } else {
-            //                                 // Fallback al formato anterior
-            //                                 linkCustomdata.push(`Producción de ${genNode.name}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //                             }
-            //                         }
-            //                     }
-            //                 });
-            //             }
-            //         });
-            //     }
-            // } else {
-            //     console.warn('LinkManager no está disponible para enlaces generation-to-centrales, usando método manual');
+                                        // Usar PopupManager para generar popup de enlace mejorado
+                                        if (popupManager) {
+                                            const linkPopup = popupManager.generateLinkPopup(
+                                                'Energía eléctrica',
+                                                flowValue,
+                                                genNode.name,
+                                                'Centrales Eléctricas',
+                                                validatedColor,
+                                                year,
+                                                { flowType: 'generation_to_grid' }
+                                            );
+                                            linkCustomdata.push(linkPopup);
+                                        } else {
+                                            // Fallback al formato anterior
+                                            linkCustomdata.push(`Producción de ${genNode.name}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            } else {
+                console.warn('LinkManager no está disponible para enlaces generation-to-centrales, usando método manual');
 
-            //     // Método manual como fallback completo
-            //     const generationNodes = [
-            //         { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-            //         { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-            //         { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-            //         { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-            //         { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-            //         { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-            //         { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-            //         { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-            //         { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-            //         { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
-            //     ];
+                // Método manual como fallback completo
+                const generationNodes = [
+                    { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
+                    { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
+                    { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
+                    { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
+                    { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
+                    { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
+                    { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
+                    { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
+                    { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
+                    { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                ];
 
-            //     generationNodes.forEach(genNode => {
-            //         if (genNode.data && genNode.data['Nodos Hijo']) {
-            //             genNode.data['Nodos Hijo'].forEach(child => {
-            //                 if (child['Nodo Hijo'] === 'Energía eléctrica') {
-            //                     const flowValue = child[year];
-            //                     if (flowValue !== undefined && flowValue !== 0) {
-            //                         source.push(genNode.index);
-            //                         target.push(centralesElectricasIndex);
-            //                         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //                         const validatedColor = typeof child.color === 'string' ? child.color : '#888';
-            //                         linkColors.push(validatedColor);
+                generationNodes.forEach(genNode => {
+                    if (genNode.data && genNode.data['Nodos Hijo']) {
+                        genNode.data['Nodos Hijo'].forEach(child => {
+                            if (child['Nodo Hijo'] === 'Energía eléctrica') {
+                                const flowValue = child[year];
+                                if (flowValue !== undefined && flowValue !== 0) {
+                                    source.push(genNode.index);
+                                    target.push(centralesElectricasIndex);
+                                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                                    const validatedColor = typeof child.color === 'string' ? child.color : '#888';
+                                    linkColors.push(validatedColor);
 
-            //                         // Usar PopupManager para generar popup de enlace mejorado
-            //                         if (popupManager) {
-            //                             const linkPopup = popupManager.generateLinkPopup(
-            //                                 'Energía eléctrica',
-            //                                 flowValue,
-            //                                 genNode.name,
-            //                                 'Centrales Eléctricas',
-            //                                 validatedColor,
-            //                                 year,
-            //                                 { flowType: 'generation_to_grid' }
-            //                             );
-            //                             linkCustomdata.push(linkPopup);
-            //                         } else {
-            //                             // Fallback al formato anterior
-            //                             linkCustomdata.push(`Producción de ${genNode.name}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //                         }
-            //                     }
-            //                 }
-            //             });
-            //         }
-            //     });
-            // }
+                                    // Usar PopupManager para generar popup de enlace mejorado
+                                    if (popupManager) {
+                                        const linkPopup = popupManager.generateLinkPopup(
+                                            'Energía eléctrica',
+                                            flowValue,
+                                            genNode.name,
+                                            'Centrales Eléctricas',
+                                            validatedColor,
+                                            year,
+                                            { flowType: 'generation_to_grid' }
+                                        );
+                                        linkCustomdata.push(linkPopup);
+                                    } else {
+                                        // Fallback al formato anterior
+                                        linkCustomdata.push(`Producción de ${genNode.name}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                });
+            }
 
             // --- 13. Procesar Flujos de Salida (Oferta Total -> Consumo Propio del Sector) ---
             // nodeData.consumoPropio['Nodos Hijo'].forEach(child => {
