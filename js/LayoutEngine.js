@@ -112,12 +112,12 @@ class LayoutEngine {
 
         // Dividir la columna de transformación para control individual
         this.defineColumn('transformacion-refinerias', {
-            x: 0.78, // Corregido y ajustado para mejor espaciado
+            x: 0.4, // Corregido y ajustado para mejor espaciado
             title: 'Transformación',
             width: 0.15,
             nodes: ['Refinerías y Despuntadoras'],
             verticalDistribution: 'center',
-            minY: 0.3, // Posiciona este grupo en la parte superior-media
+            minY: 0.25, // Posiciona este grupo en la parte superior-media
             maxY: 0.4
         });
 
