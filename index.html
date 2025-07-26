@@ -1316,7 +1316,7 @@
             // const consumoPropioIndex = addNode(String('Consumo Propio del Sector'), nodeData.consumoPropio.color);
              const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
              const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
-            // const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
+            const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
             // const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
             // const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
             // const termicaConvencionalIndex = addNode(String('Térmica Convencional'), nodeData.termicaConvencional.color);
@@ -1617,35 +1617,43 @@
             secondaryNodeBreakdowns.set('Refinerías y Despuntadoras', { breakdown: refineriasBreakdown, total: refineriasTotal });
 
             // --- 8. Procesar Flujos (Oferta Interna Bruta -> Plantas de Gas y Fraccionadoras) ---
-            // nodeData.plantasGasFraccionadoras['Nodos Hijo'].forEach(child => {
-            //     const flowValue = child[year];
-            //     // Asumimos que Gas natural y Condensados son los inputs principales de OIB a Plantas de Gas y Fraccionadoras
-            //     if ((child['Nodo Hijo'] === 'Gas natural' || child['Nodo Hijo'] === 'Condensados') && flowValue !== undefined && flowValue !== 0) {
-            //         const childColor = child.color;
-            //         source.push(ofertaInternaBrutaIndex);
-            //         target.push(plantasGasFraccionadorasIndex);
-            //         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //         const validatedColor = typeof childColor === 'string' ? childColor : '#888';
-            //         linkColors.push(validatedColor);
+            const plantasGasBreakdown = {};
+            let plantasGasTotal = 0;
+            nodeData.plantasGasFraccionadoras['Nodos Hijo'].forEach(child => {
+                const flowValue = child[year];
+                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
+                    const childName = child['Nodo Hijo'];
+                    const energyNodeIndex = nodeMap.get(childName);
+                    if (energyNodeIndex === undefined) return;
 
-            //         // Usar PopupManager para generar popup de enlace mejorado
-            //         if (popupManager) {
-            //             const linkPopup = popupManager.generateLinkPopup(
-            //                 child['Nodo Hijo'],
-            //                 flowValue,
-            //                 'Oferta Interna Bruta',
-            //                 'Plantas de Gas y Fraccionadoras',
-            //                 validatedColor,
-            //                 year,
-            //                 { flowType: 'transformation_input' }
-            //             );
-            //             linkCustomdata.push(linkPopup);
-            //         } else {
-            //             // Fallback al formato anterior
-            //             linkCustomdata.push(`${child['Nodo Hijo']}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //         }
-            //     }
-            // });
+                    const link_color = nodeColors[energyNodeIndex];
+
+                    source.push(ofertaInternaBrutaIndex);
+                    target.push(plantasGasFraccionadorasIndex);
+                    value.push(Math.log10(Math.abs(flowValue) + 1));
+                    linkColors.push(link_color);
+
+                    // Usar PopupManager para generar popup de enlace mejorado
+                    if (popupManager) {
+                        const linkPopup = popupManager.generateLinkPopup(
+                            childName,
+                            flowValue,
+                            'Oferta Interna Bruta',
+                            'Plantas de Gas y Fraccionadoras',
+                            link_color,
+                            year,
+                            { flowType: 'transformation_input' }
+                        );
+                        linkCustomdata.push(linkPopup);
+                    } else {
+                        // Fallback al formato anterior
+                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                    }
+                    plantasGasBreakdown[childName] = (plantasGasBreakdown[childName] || 0) + flowValue;
+                    plantasGasTotal += flowValue;
+                }
+            });
+            secondaryNodeBreakdowns.set('Plantas de Gas y Fraccionadoras', { breakdown: plantasGasBreakdown, total: plantasGasTotal });
 
             // --- 9. Procesar Flujos (Fuentes de Energía -> Tecnologías de Generación) ---
             // Usar LinkManager para mapeo automático de conexiones

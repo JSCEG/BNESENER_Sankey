@@ -131,13 +131,13 @@ class LayoutEngine {
             maxY: 0.9
         });
         //Plantas de Gas y Fraccionadoras
-        this.defineColumn('transformacion-Palntas de Gas', {
-            x: 0.78,
+        this.defineColumn('transformacion-Plantas de Gas', {
+            x: 0.4,
             title: 'Transformación',
             width: 0.15,
             nodes: ['Plantas de Gas y Fraccionadoras'],
             verticalDistribution: 'center',
-            minY: 0.6, // Posiciona este grupo en la parte inferior-media
+            minY: 0.15, // Posiciona este grupo en la parte inferior-media
             maxY: 0.7
         });
         this.defineColumn('generacion', {

@@ -179,6 +179,7 @@ class PopupManager {
             'Consumo Propio del Sector',
             'Coquizadoras y Hornos',
             'Refinerías y Despuntadoras',
+            'Plantas de Gas y Fraccionadoras',
             'Energía No Aprovechada',
             'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
             'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
@@ -193,7 +194,6 @@ class PopupManager {
         // Mapeo de nombres de nodos a tipos de template
         const nodeTypeMapping = {
             // Nodos de transformación
-            'Plantas de Gas y Fraccionadoras': 'transformation',
 
             // Nodos de generación eléctrica
             'Centrales Eléctricas': 'generation',
