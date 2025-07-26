@@ -506,7 +506,7 @@ class PopupManager {
             const entrada = this.formatNumber(data.total_input || 0);
             const salida = this.formatNumber(data.total_output || 0);
             const eficiencia = data.efficiency || 0;
-            return `${data.label}\n↓${entrada} ↑${salida} ⚡${eficiencia}%`;
+            return `${data.label}\n↓${entrada}PJ ↑${salida}PJ ⚡${eficiencia}%`;
         }
 
         let text = `${this.interpolateTemplate(template.title, data)}\n`;

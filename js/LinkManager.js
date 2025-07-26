@@ -106,8 +106,23 @@ class LinkManager {
                 'Plantas de Gas y Fraccionadoras',
                 'Coquizadoras y Hornos',
                 'Combustión Interna',
-                'Carboeléctrica'
+                'Carboeléctrica',
+                'Térmica Convencional'
                 // Agregamos otras tecnologías gradualmente
+            ]]
+        ]));
+
+        // === MAPEO CENTROS DE TRANSFORMACIÓN -> TECNOLOGÍAS DE GENERACIÓN ===
+        this.registerConnectionMap('transformation-to-generation', new Map([
+            ['Refinerías y Despuntadoras', [
+                { target: 'Térmica Convencional', energetics: ['Combustóleo', 'Coque de petróleo'] },
+                { target: 'Combustión Interna', energetics: ['Diesel', 'Combustóleo'] },
+                { target: 'Turbogás', energetics: ['Diesel'] }
+            ]],
+            ['Plantas de Gas y Fraccionadoras', [
+                { target: 'Térmica Convencional', energetics: ['Gas natural seco'] },
+                { target: 'Combustión Interna', energetics: ['Gas natural seco'] },
+                { target: 'Turbogás', energetics: ['Gas natural seco'] }
             ]]
         ]));
 
@@ -156,6 +171,8 @@ class LinkManager {
                 this.generateGenerationToCentralesLinks(links, nodeMap, nodeColors, nodeData, year);
             } else if (mapType === 'distribution-to-transformation') {
                 this.generateDistributionToTransformationLinks(links, nodeMap, nodeColors, nodeData, year);
+            } else if (mapType === 'transformation-to-generation') {
+                this.generateTransformationToGenerationLinks(links, nodeMap, nodeColors, nodeData, year);
             }
         }
 
@@ -333,10 +350,14 @@ class LinkManager {
      * @returns {string} Color del energético primario asociado
      */
     getPrimaryEnergyColorForTech(techName) {
-        // Mapeo de tecnologías a sus energéticos primarios (empezando solo con Carboeléctrica)
+        // Mapeo de tecnologías a sus energéticos primarios
         const techToEnergyMap = {
-            'Carboeléctrica': 'Carbón mineral'
-            // Agregamos otras tecnologías gradualmente
+            'Carboeléctrica': 'Carbón mineral',
+            'Térmica Convencional': 'Combustóleo', // Principal combustible en 2024
+            'Nucleoeléctrica': 'Energía Nuclear',
+            'Solar Fotovoltaica': 'Energía solar',
+            'Geotérmica': 'Geoenergía',
+            'Eólica': 'Energía eólica'
         };
 
         const primaryEnergy = techToEnergyMap[techName];
@@ -380,60 +401,146 @@ class LinkManager {
                     let totalInput = 0;
                     let energyType = '';
 
-                    // Solo manejar Carboeléctrica por ahora
-                    if (targetNode === 'Carboeléctrica') {
-                        // Buscar directamente en los datos de Carboeléctrica
+                    // Manejar tecnologías que reciben energéticos desde Oferta Interna Bruta
+                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás') {
                         const techNodeKey = this.getGenerationNodeKey(targetNode);
                         const techNodeData = nodeData[techNodeKey];
                         
                         if (!techNodeData || !techNodeData['Nodos Hijo']) continue;
 
-                        // Calcular el total de energéticos que entran (valores negativos)
+                        // Crear enlaces separados para cada energético que entra
                         techNodeData['Nodos Hijo'].forEach(child => {
                             const flowValue = child[year];
-                            // Solo valores negativos (entradas) y que no sea energía eléctrica
-                            if (flowValue !== undefined && flowValue < 0 && child['Nodo Hijo'] !== 'Energía eléctrica') {
-                                totalInput += Math.abs(flowValue); // Convertir a positivo para el enlace
-                                energyType = child['Nodo Hijo']; // Para el popup
-                                console.log(`Carboeléctrica consume ${child['Nodo Hijo']}: ${flowValue} PJ`);
+                            
+                            // Determinar qué tipos de energéticos procesar según la tecnología
+                            let shouldProcessEnergetic = false;
+                            
+                            if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional') {
+                                // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
+                                shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 && 
+                                    child['Nodo Hijo'] !== 'Energía eléctrica' && 
+                                    child.tipo === 'Energía Primaria');
+                            } else if (targetNode === 'Combustión Interna' || targetNode === 'Turbogás') {
+                                // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
+                                // Los energéticos SECUNDARIOS les llegan desde centros de transformación
+                                shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 && 
+                                    child['Nodo Hijo'] !== 'Energía eléctrica' && 
+                                    child.tipo === 'Energía Primaria');
+                            }
+                            
+                            if (shouldProcessEnergetic) {
+                                const energeticValue = Math.abs(flowValue);
+                                const energeticName = child['Nodo Hijo'];
+                                const energeticType = child.tipo;
+                                
+                                console.log(`${targetNode} consume energético ${energeticType} ${energeticName}: ${flowValue} PJ`);
+                                
+                                // Obtener el color específico del energético
+                                const energeticColor = this.styleManager ? 
+                                    this.styleManager.getEnergyColor(energeticName) : 
+                                    nodeColors[sourceIndex];
+                                
+                                links.source.push(sourceIndex);
+                                links.target.push(targetIndex);
+                                links.value.push(Math.log10(energeticValue + 1));
+                                links.linkColors.push(
+                                    this.styleManager ? 
+                                        this.styleManager.validateColor(energeticColor) : 
+                                        (typeof energeticColor === 'string' ? energeticColor : '#888')
+                                );
+                                
+                                // Usar PopupManager para generar popup de enlace mejorado si está disponible
+                                if (this.popupManager) {
+                                    const linkPopup = this.popupManager.generateLinkPopup(
+                                        energeticName,
+                                        energeticValue,
+                                        sourceNode,
+                                        targetNode,
+                                        energeticColor,
+                                        year,
+                                        { flowType: 'distribution_to_generation' }
+                                    );
+                                    links.linkCustomdata.push(linkPopup);
+                                } else {
+                                    // Fallback al formato anterior
+                                    links.linkCustomdata.push(`${energeticName}: ${energeticValue.toLocaleString()} PJ`);
+                                }
                             }
                         });
+                    }
+                }
+            }
+        }
+    }
 
-                        if (totalInput > 0) {
-                            // Log para debugging del popup
-                            if (targetNode === 'Carboeléctrica') {
-                                console.log(`Generando popup para ${targetNode}: energyType=${energyType}, totalInput=${totalInput}`);
+    /**
+     * Genera enlaces desde centros de transformación hacia tecnologías de generación
+     * @param {Object} links - Objeto de enlaces a llenar
+     * @param {Map} nodeMap - Mapa de nombres de nodos a índices
+     * @param {Array} nodeColors - Array de colores de nodos
+     * @param {Object} nodeData - Datos de nodos
+     * @param {string} year - Año para los datos
+     */
+    generateTransformationToGenerationLinks(links, nodeMap, nodeColors, nodeData, year) {
+        const transToGenMap = this.connectionMaps.get('transformation-to-generation');
+        if (!transToGenMap) return;
+
+        for (const [sourceNode, targetConfigs] of transToGenMap.entries()) {
+            const sourceIndex = nodeMap.get(sourceNode);
+            if (sourceIndex === undefined) continue;
+
+            for (const config of targetConfigs) {
+                const targetIndex = nodeMap.get(config.target);
+                if (targetIndex === undefined) continue;
+
+                // Buscar datos de la tecnología de generación
+                const techNodeKey = this.getGenerationNodeKey(config.target);
+                const techNodeData = nodeData[techNodeKey];
+                if (!techNodeData || !techNodeData['Nodos Hijo']) continue;
+
+                // Para cada energético que debe venir de este centro de transformación
+                for (const energeticName of config.energetics) {
+                    let energeticValue = 0;
+
+                    // Buscar el valor del energético en la tecnología
+                    techNodeData['Nodos Hijo'].forEach(child => {
+                        if (child['Nodo Hijo'] === energeticName) {
+                            const flowValue = child[year];
+                            if (flowValue !== undefined && flowValue < 0) {
+                                energeticValue = Math.abs(flowValue);
                             }
-                            
-                            // Usar el color del energético primario asociado a la tecnología
-                            const primaryEnergyColor = this.getPrimaryEnergyColorForTech(targetNode);
-                            const linkColor = primaryEnergyColor || nodeColors[sourceIndex];
-                            
-                            links.source.push(sourceIndex);
-                            links.target.push(targetIndex);
-                            links.value.push(Math.log10(totalInput + 1));
-                            links.linkColors.push(
-                                this.styleManager ? 
-                                    this.styleManager.validateColor(linkColor) : 
-                                    (typeof linkColor === 'string' ? linkColor : '#888')
+                        }
+                    });
+
+                    if (energeticValue > 0) {
+                        // Obtener el color del energético específico del StyleManager
+                        const energeticColor = this.styleManager ? 
+                            this.styleManager.getEnergyColor(energeticName) : 
+                            '#888';
+
+                        links.source.push(sourceIndex);
+                        links.target.push(targetIndex);
+                        links.value.push(Math.log10(energeticValue + 1));
+                        links.linkColors.push(
+                            this.styleManager ? 
+                                this.styleManager.validateColor(energeticColor) : 
+                                (typeof energeticColor === 'string' ? energeticColor : '#888')
+                        );
+
+                        // Generar popup del enlace
+                        if (this.popupManager) {
+                            const linkPopup = this.popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,
+                                sourceNode,
+                                config.target,
+                                energeticColor,
+                                year,
+                                { flowType: 'transformation_to_generation' }
                             );
-                            
-                            // Usar PopupManager para generar popup de enlace mejorado si está disponible
-                            if (this.popupManager) {
-                                const linkPopup = this.popupManager.generateLinkPopup(
-                                    energyType || 'Energéticos múltiples',
-                                    totalInput,
-                                    sourceNode,
-                                    targetNode,
-                                    linkColor,
-                                    year,
-                                    { flowType: 'distribution_to_generation' }
-                                );
-                                links.linkCustomdata.push(linkPopup);
-                            } else {
-                                // Fallback al formato anterior
-                                links.linkCustomdata.push(`${sourceNode} → ${targetNode}: ${totalInput.toLocaleString()} PJ`);
-                            }
+                            links.linkCustomdata.push(linkPopup);
+                        } else {
+                            links.linkCustomdata.push(`${sourceNode} → ${config.target}: ${energeticValue.toLocaleString()} PJ`);
                         }
                     }
                 }
