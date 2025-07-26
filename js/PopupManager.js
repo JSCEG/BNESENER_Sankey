@@ -180,6 +180,17 @@ class PopupManager {
             'Coquizadoras y Hornos',
             'Refinerías y Despuntadoras',
             'Plantas de Gas y Fraccionadoras',
+            'Centrales Eléctricas',
+            'Carboeléctrica',
+            'Térmica Convencional',
+            'Combustión Interna',
+            'Turbogás',
+            'Ciclo Combinado',
+            'Nucleoeléctrica',
+            'Cogeneración',
+            'Geotérmica',
+            'Eólica',
+            'Solar Fotovoltaica',
             'Energía No Aprovechada',
             'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
             'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
@@ -194,19 +205,6 @@ class PopupManager {
         // Mapeo de nombres de nodos a tipos de template
         const nodeTypeMapping = {
             // Nodos de transformación
-
-            // Nodos de generación eléctrica
-            'Centrales Eléctricas': 'generation',
-            'Carboeléctrica': 'generation',
-            'Térmica Convencional': 'generation',
-            'Combustión Interna': 'generation',
-            'Turbogás': 'generation',
-            'Ciclo Combinado': 'generation',
-            'Nucleoeléctrica': 'generation',
-            'Cogeneración': 'generation',
-            'Geotérmica': 'generation',
-            'Eólica': 'generation',
-            'Solar Fotovoltaica': 'generation',
 
             // Nodos hub
             'Oferta Total': 'hub',

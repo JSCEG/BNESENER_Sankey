@@ -42,6 +42,8 @@ class LinkManager {
         // Inicializar mapeos por defecto
         this.initializeDefaultMappings();
         
+        // Los colores se obtendrán del StyleManager, no hardcodeados
+        
         console.log('LinkManager inicializado');
     }
 
@@ -64,16 +66,16 @@ class LinkManager {
             // Combustibles gaseosos
             ['Gas natural', ['Térmica Convencional', 'Turbogás', 'Ciclo Combinado', 'Cogeneración']],
             ['Gas natural seco', ['Térmica Convencional', 'Turbogás', 'Ciclo Combinado', 'Cogeneración']],
-            ['Gas licuado de petróleo', ['Turbogás', 'Combustión Interna']],
-            ['Biogás', ['Combustión Interna', 'Cogeneración']],
+            ['Gas licuado de petróleo', ['Turbogás']],
+            ['Biogás', ['Cogeneración']],
             
-            // Energías renovables (mapeo directo)
-            ['Energía Nuclear', ['Nucleoeléctrica']],
-            ['Energia Hidraúlica', ['Cogeneración']], // Algunas plantas hidro son cogeneración
-            ['Energía Hidráulica', ['Cogeneración']],
-            ['Geoenergía', ['Geotérmica']],
-            ['Energía solar', ['Solar Fotovoltaica']],
-            ['Energía eólica', ['Eólica']],
+            // Energías renovables - estas van desde Oferta Interna Bruta, no directamente
+            // ['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
+            // ['Energia Hidraúlica', ['Cogeneración']], // Manejado por distribution-to-transformation
+            // ['Energía Hidráulica', ['Cogeneración']], // Manejado por distribution-to-transformation
+            // ['Geoenergía', ['Geotérmica']], // Manejado por distribution-to-transformation
+            // ['Energía solar', ['Solar Fotovoltaica']], // Manejado por distribution-to-transformation
+            // ['Energía eólica', ['Eólica']], // Manejado por distribution-to-transformation
             
             // Biomasa
             ['Bagazo de caña', ['Cogeneración']],
@@ -102,7 +104,12 @@ class LinkManager {
                 'Consumo Propio del Sector',
                 'Refinerías y Despuntadoras',
                 'Plantas de Gas y Fraccionadoras',
-                'Coquizadoras y Hornos'
+                'Coquizadoras y Hornos',
+                'Combustión Interna',
+                'Nucleoeléctrica',
+                'Geotérmica',
+                'Eólica',
+                'Solar Fotovoltaica'
             ]]
         ]));
 
@@ -149,6 +156,8 @@ class LinkManager {
                 this.generateFuelToGenerationLinks(links, nodeMap, nodeColors, nodeData, year, excludeEnergyTypes);
             } else if (mapType === 'generation-to-centrales') {
                 this.generateGenerationToCentralesLinks(links, nodeMap, nodeColors, nodeData, year);
+            } else if (mapType === 'distribution-to-transformation') {
+                this.generateDistributionToTransformationLinks(links, nodeMap, nodeColors, nodeData, year);
             }
         }
 
@@ -244,10 +253,18 @@ class LinkManager {
      */
     generateGenerationToCentralesLinks(links, nodeMap, nodeColors, nodeData, year) {
         const genToCentralesMap = this.connectionMaps.get('generation-to-centrales');
-        if (!genToCentralesMap) return;
+        if (!genToCentralesMap) {
+            console.warn('No se encontró el mapa generation-to-centrales');
+            return;
+        }
 
         const centralesIndex = nodeMap.get('Centrales Eléctricas');
-        if (centralesIndex === undefined) return;
+        if (centralesIndex === undefined) {
+            console.warn('No se encontró el índice de Centrales Eléctricas');
+            return;
+        }
+
+        console.log('Iniciando generación de enlaces generation-to-centrales');
 
         // Procesar cada tecnología de generación
         for (const [genTech, targets] of genToCentralesMap.entries()) {
@@ -259,7 +276,10 @@ class LinkManager {
             // Buscar datos de la tecnología
             const genNodeKey = this.getGenerationNodeKey(genTech);
             const genNodeData = nodeData[genNodeKey];
-            if (!genNodeData) continue;
+            if (!genNodeData) {
+                console.warn(`No se encontraron datos para ${genTech} (clave: ${genNodeKey})`);
+                continue;
+            }
 
             // Calcular total de energía eléctrica generada
             let totalElectricGeneration = 0;
@@ -275,15 +295,19 @@ class LinkManager {
             }
 
             if (totalElectricGeneration > 0) {
-                const genColor = nodeColors[genIndex];
+                // Aquí se transforma el energético primario en energía eléctrica
+                // Por lo tanto, el enlace debe tener el color de "Energía eléctrica"
+                const electricityColor = this.styleManager ? 
+                    this.styleManager.getEnergyColor('Energía eléctrica') : 
+                    '#FFD700'; // Fallback al dorado
                 
                 links.source.push(genIndex);
                 links.target.push(centralesIndex);
                 links.value.push(Math.log10(totalElectricGeneration + 1));
                 links.linkColors.push(
                     this.styleManager ? 
-                        this.styleManager.validateColor(genColor) : 
-                        (typeof genColor === 'string' ? genColor : '#888')
+                        this.styleManager.validateColor(electricityColor) : 
+                        (typeof electricityColor === 'string' ? electricityColor : '#888')
                 );
                 // Usar PopupManager para generar popup de enlace mejorado si está disponible
                 if (this.popupManager) {
@@ -292,7 +316,7 @@ class LinkManager {
                         totalElectricGeneration,
                         genTech,
                         'Centrales Eléctricas',
-                        genColor,
+                        electricityColor,
                         year,
                         { flowType: 'generation_to_grid' }
                     );
@@ -300,6 +324,126 @@ class LinkManager {
                 } else {
                     // Fallback al formato anterior
                     links.linkCustomdata.push(`${genTech}: ${totalElectricGeneration.toLocaleString()} PJ`);
+                }
+            }
+        }
+    }
+
+    /**
+     * Obtiene el color del energético primario asociado a una tecnología de generación
+     * @param {string} techName - Nombre de la tecnología de generación
+     * @returns {string} Color del energético primario asociado
+     */
+    getPrimaryEnergyColorForTech(techName) {
+        // Mapeo de tecnologías a sus energéticos primarios
+        const techToEnergyMap = {
+            'Nucleoeléctrica': 'Energía Nuclear',
+            'Solar Fotovoltaica': 'Energía solar',
+            'Geotérmica': 'Geoenergía',
+            'Eólica': 'Energía eólica'
+        };
+
+        const primaryEnergy = techToEnergyMap[techName];
+        let color = null;
+        
+        if (primaryEnergy && this.styleManager) {
+            // Obtener el color del StyleManager
+            color = this.styleManager.getEnergyColor(primaryEnergy);
+        }
+        
+        // Log para debugging
+        const debugTechs = ['Nucleoeléctrica', 'Solar Fotovoltaica', 'Geotérmica', 'Eólica'];
+        if (debugTechs.includes(techName)) {
+            console.log(`Color para ${techName}: ${color} (energético: ${primaryEnergy})`);
+        }
+        
+        return color;
+    }
+
+    /**
+     * Genera enlaces de distribución a transformación (ej: Oferta Interna Bruta -> Combustión Interna)
+     * @param {Object} links - Objeto de enlaces a llenar
+     * @param {Map} nodeMap - Mapa de nombres de nodos a índices
+     * @param {Array} nodeColors - Array de colores de nodos
+     * @param {Object} nodeData - Datos de nodos
+     * @param {string} year - Año para los datos
+     */
+    generateDistributionToTransformationLinks(links, nodeMap, nodeColors, nodeData, year) {
+        const distToTransMap = this.connectionMaps.get('distribution-to-transformation');
+        if (!distToTransMap) return;
+
+        for (const [sourceNode, targets] of distToTransMap.entries()) {
+            const sourceIndex = nodeMap.get(sourceNode);
+            if (sourceIndex === undefined) continue;
+
+            for (const targetNode of targets) {
+                const targetIndex = nodeMap.get(targetNode);
+                if (targetIndex === undefined) continue;
+
+                // Manejar diferentes tipos de tecnologías de generación
+                if (sourceNode === 'Oferta Interna Bruta') {
+                    let totalInput = 0;
+                    let energyType = '';
+
+                    // Mapear nombres de tecnologías a tipos de energía que consumen
+                    const techMapping = {
+                        'Combustión Interna': ['Biogás', 'Diesel', 'Gas natural seco'], // Energéticos que entran a combustión interna
+                        'Nucleoeléctrica': ['Energía Nuclear'],
+                        'Geotérmica': ['Geoenergía'],
+                        'Eólica': ['Energía eólica'],
+                        'Solar Fotovoltaica': ['Energía solar']
+                    };
+
+                    if (techMapping[targetNode]) {
+                        const energyTypes = techMapping[targetNode];
+                        
+                        // Buscar en los datos de Oferta Interna Bruta
+                        const ofertaInternaData = nodeData.ofertaInternaBruta;
+                        if (!ofertaInternaData || !ofertaInternaData['Nodos Hijo']) continue;
+
+                        // Calcular el total de energía disponible para esta tecnología
+                        ofertaInternaData['Nodos Hijo'].forEach(child => {
+                            if (energyTypes.includes(child['Nodo Hijo'])) {
+                                const flowValue = child[year];
+                                if (flowValue !== undefined && flowValue > 0) {
+                                    totalInput += flowValue;
+                                    energyType = child['Nodo Hijo']; // Para el popup
+                                }
+                            }
+                        });
+
+                        if (totalInput > 0) {
+                            // Usar el color del energético primario asociado a la tecnología
+                            const primaryEnergyColor = this.getPrimaryEnergyColorForTech(targetNode);
+                            const linkColor = primaryEnergyColor || nodeColors[sourceIndex];
+                            
+                            links.source.push(sourceIndex);
+                            links.target.push(targetIndex);
+                            links.value.push(Math.log10(totalInput + 1));
+                            links.linkColors.push(
+                                this.styleManager ? 
+                                    this.styleManager.validateColor(linkColor) : 
+                                    (typeof linkColor === 'string' ? linkColor : '#888')
+                            );
+                            
+                            // Usar PopupManager para generar popup de enlace mejorado si está disponible
+                            if (this.popupManager) {
+                                const linkPopup = this.popupManager.generateLinkPopup(
+                                    energyTypes.length === 1 ? energyTypes[0] : 'Energéticos múltiples',
+                                    totalInput,
+                                    sourceNode,
+                                    targetNode,
+                                    linkColor,
+                                    year,
+                                    { flowType: 'distribution_to_generation' }
+                                );
+                                links.linkCustomdata.push(linkPopup);
+                            } else {
+                                // Fallback al formato anterior
+                                links.linkCustomdata.push(`${sourceNode} → ${targetNode}: ${totalInput.toLocaleString()} PJ`);
+                            }
+                        }
+                    }
                 }
             }
         }

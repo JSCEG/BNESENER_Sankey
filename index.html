@@ -1678,6 +1678,24 @@
                     linkColors.push(...fuelToGenerationLinks.linkColors);
                     linkCustomdata.push(...fuelToGenerationLinks.linkCustomdata);
 
+                    // Generar enlaces de distribución a transformación (ej: Oferta Interna Bruta -> Combustión Interna)
+                    const distributionToTransformationLinks = linkManager.generateDataLinks(
+                        nodeMap,
+                        nodeColors,
+                        nodeData,
+                        year,
+                        {
+                            mapTypes: ['distribution-to-transformation']
+                        }
+                    );
+
+                    // Agregar enlaces de distribución a transformación
+                    source.push(...distributionToTransformationLinks.source);
+                    target.push(...distributionToTransformationLinks.target);
+                    value.push(...distributionToTransformationLinks.value);
+                    linkColors.push(...distributionToTransformationLinks.linkColors);
+                    linkCustomdata.push(...distributionToTransformationLinks.linkCustomdata);
+
                     console.log(`LinkManager generó ${fuelToGenerationLinks.source.length} enlaces fuel-to-generation`);
                 } catch (error) {
                     console.warn('Error usando LinkManager para mapeo automático:', error);
@@ -1689,11 +1707,7 @@
                         { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
                         { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
                         { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                        { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-                        { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-                        { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-                        { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' }
                     ];
 
                     generationNodesForInput.forEach(genNode => {
@@ -1761,11 +1775,7 @@
                     { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
                     { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
                     { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                    { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-                    { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-                    { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-                    { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-                    { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                    { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' }
                 ];
 
                 generationNodesForInput.forEach(genNode => {
@@ -1846,8 +1856,10 @@
                     linkCustomdata.push(...generationToCentralesLinks.linkCustomdata);
 
                     console.log(`LinkManager generó ${generationToCentralesLinks.source.length} enlaces generation-to-centrales`);
+                    console.log('Enlaces generation-to-centrales:', generationToCentralesLinks);
                 } catch (error) {
-                    console.warn('Error usando LinkManager para enlaces generation-to-centrales:', error);
+                    console.error('Error usando LinkManager para enlaces generation-to-centrales:', error);
+                    console.error('Stack trace:', error.stack);
 
                     // Fallback al método manual
                     const generationNodes = [
@@ -1856,11 +1868,7 @@
                         { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
                         { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
                         { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                        { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-                        { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-                        { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-                        { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
+                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' }
                     ];
 
                     generationNodes.forEach(genNode => {
@@ -1898,55 +1906,7 @@
                     });
                 }
             } else {
-                console.warn('LinkManager no está disponible para enlaces generation-to-centrales, usando método manual');
-
-                // Método manual como fallback completo
-                const generationNodes = [
-                    { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-                    { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-                    { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-                    { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-                    { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                    { data: nodeData.nucleoelectrica, index: nucleoelectricaIndex, name: 'Nucleoeléctrica' },
-                    { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' },
-                    { data: nodeData.geotermica, index: geotermicaIndex, name: 'Geotérmica' },
-                    { data: nodeData.eolica, index: eolicaIndex, name: 'Eólica' },
-                    { data: nodeData.solarFotovoltaica, index: solarFotovoltaicaIndex, name: 'Solar Fotovoltaica' }
-                ];
-
-                generationNodes.forEach(genNode => {
-                    if (genNode.data && genNode.data['Nodos Hijo']) {
-                        genNode.data['Nodos Hijo'].forEach(child => {
-                            if (child['Nodo Hijo'] === 'Energía eléctrica') {
-                                const flowValue = child[year];
-                                if (flowValue !== undefined && flowValue !== 0) {
-                                    source.push(genNode.index);
-                                    target.push(centralesElectricasIndex);
-                                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                                    const validatedColor = typeof child.color === 'string' ? child.color : '#888';
-                                    linkColors.push(validatedColor);
-
-                                    // Usar PopupManager para generar popup de enlace mejorado
-                                    if (popupManager) {
-                                        const linkPopup = popupManager.generateLinkPopup(
-                                            'Energía eléctrica',
-                                            flowValue,
-                                            genNode.name,
-                                            'Centrales Eléctricas',
-                                            validatedColor,
-                                            year,
-                                            { flowType: 'generation_to_grid' }
-                                        );
-                                        linkCustomdata.push(linkPopup);
-                                    } else {
-                                        // Fallback al formato anterior
-                                        linkCustomdata.push(`Producción de ${genNode.name}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                                    }
-                                }
-                            }
-                        });
-                    }
-                });
+                console.warn('LinkManager no está disponible para enlaces generation-to-centrales');
             }
 
             // --- 13. Procesar Flujos de Salida (Oferta Total -> Consumo Propio del Sector) ---
