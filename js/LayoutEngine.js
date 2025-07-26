@@ -76,16 +76,42 @@ class LayoutEngine {
             verticalDistribution: 'center'
         });
 
-        this.defineColumn('distribucion', {
-            x: 0.62, // Ajustado para mejor espaciado
-            title: 'Distribución',
+        // Dividir la columna de distribución para control individual de posición
+        this.defineColumn('distribucion-consumo-oferta', {
+            x: 0.3, // Ajustado para mejor espaciado
+            title: 'Consumo y Oferta',
             width: 0.15,
-            nodes: ['Oferta Interna Bruta', 'Exportación', 'Energía No Aprovechada', 'Consumo Propio del Sector'],
-            verticalDistribution: 'spread'
+            nodes: [
+                'Consumo Propio del Sector',
+                'Oferta Interna Bruta'
+            ],
+            verticalDistribution: 'spread',
+            minY: 0.47, // Posiciona este grupo en la parte superior-media
+            maxY: 0.45
+        });
+
+        this.defineColumn('distribucion-exportacion', {
+            x: 0.3,
+            title: 'Exportación',
+            width: 0.15,
+            nodes: ['Exportación'],
+            verticalDistribution: 'center',
+            minY: 0.8, // Posiciona este nodo más abajo
+            maxY: 0.9
+        });
+
+        this.defineColumn('distribucion-no-aprovechada', {
+            x: 0.3,
+            title: 'No Aprovechada',
+            width: 0.15,
+            nodes: ['Energía No Aprovechada'],
+            verticalDistribution: 'center',
+            minY: 0.9, // Posiciona este nodo en la parte inferior
+            maxY: 0.95
         });
 
         this.defineColumn('transformacion', {
-            x: 0.78, // Ajustado para mejor espaciado
+            x: 0.3, // Ajustado para mejor espaciado
             title: 'Transformación',
             width: 0.15,
             nodes: ['Refinerías y Despuntadoras', 'Plantas de Gas y Fraccionadoras', 'Coquizadoras y Hornos'],
