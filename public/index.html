@@ -754,14 +754,14 @@
     </div>
 
     <!-- Incluir los módulos -->
-    <script src="../js/DataManager.js"></script>
-    <script src="../js/StyleManager.js"></script>
-    <script src="../js/LayoutEngine.js"></script>
-    <script src="../js/NodeFactory.js"></script>
-    <script src="../js/LinkManager.js"></script>
-    <script src="../js/PopupManager.js"></script>
-    <script src="../js/ExportManager.js"></script>
-    <script src="../js/ColumnLabelsManager.js"></script>
+    <script src="js/DataManager.js"></script>
+    <script src="js/StyleManager.js"></script>
+    <script src="js/LayoutEngine.js"></script>
+    <script src="js/NodeFactory.js"></script>
+    <script src="js/LinkManager.js"></script>
+    <script src="js/PopupManager.js"></script>
+    <script src="js/ExportManager.js"></script>
+    <script src="js/ColumnLabelsManager.js"></script>
 
     <script>
         const yearSelector = document.getElementById('year-selector');
@@ -776,7 +776,7 @@
         let columnLabelsManager = null;
 
         // Cargar los datos desde el archivo JSON y inicializar DataManager
-        fetch('../datos_energia_completo.json')
+        fetch('datos_energia_completo.json')
             .then(response => response.json())
             .then(data => {
                 try {
