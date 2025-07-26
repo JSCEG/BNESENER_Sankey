@@ -1741,7 +1741,15 @@
 
                                     let sourceIndex;
                                     if (fuel.tipo === 'Energía Primaria') {
-                                        sourceIndex = ofertaInternaBrutaIndex;
+                                        // Para Térmica Convencional y Turbogás, conectar Bagazo de caña desde Oferta Interna Bruta
+                                        if (
+                                            (genNode.name === 'Turbogás' || genNode.name === 'Térmica Convencional') &&
+                                            fuelName === 'Bagazo de caña'
+                                        ) {
+                                            sourceIndex = ofertaInternaBrutaIndex;
+                                        } else {
+                                            sourceIndex = ofertaInternaBrutaIndex;
+                                        }
                                     } else { // Energía Secundaria
                                         if (fuelName === 'Coque de carbón') {
                                             sourceIndex = coquizadorasHornosIndex;
@@ -1753,6 +1761,9 @@
                                     }
 
                                     if (sourceIndex !== undefined) {
+                                        if (genNode.name === 'Turbogás' && fuelName === 'Bagazo de caña') {
+                                            console.log('DEBUG: Link Bagazo de caña → Turbogás', { sourceIndex, targetIndex, flowValue });
+                                        }
                                         source.push(sourceIndex);
                                         target.push(targetIndex);
                                         value.push(Math.log10(Math.abs(flowValue) + 1));
@@ -1809,7 +1820,15 @@
 
                                 let sourceIndex;
                                 if (fuel.tipo === 'Energía Primaria') {
-                                    sourceIndex = ofertaInternaBrutaIndex;
+                                    // Para Térmica Convencional y Turbogás, conectar Bagazo de caña desde Oferta Interna Bruta
+                                    if (
+                                        (genNode.name === 'Turbogás' || genNode.name === 'Térmica Convencional') &&
+                                        fuelName === 'Bagazo de caña'
+                                    ) {
+                                        sourceIndex = ofertaInternaBrutaIndex;
+                                    } else {
+                                        sourceIndex = ofertaInternaBrutaIndex;
+                                    }
                                 } else { // Energía Secundaria
                                     if (fuelName === 'Coque de carbón') {
                                         sourceIndex = coquizadorasHornosIndex;
@@ -1821,6 +1840,9 @@
                                 }
 
                                 if (sourceIndex !== undefined) {
+                                    if (genNode.name === 'Turbogás' && fuelName === 'Bagazo de caña') {
+                                        console.log('DEBUG: Link Bagazo de caña → Turbogás', { sourceIndex, targetIndex, flowValue });
+                                    }
                                     source.push(sourceIndex);
                                     target.push(targetIndex);
                                     value.push(Math.log10(Math.abs(flowValue) + 1));

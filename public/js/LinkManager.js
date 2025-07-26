@@ -25,12 +25,12 @@ class LinkManager {
         this.styleManager = options.styleManager || null;
         this.nodeFactory = options.nodeFactory || null;
         this.popupManager = options.popupManager || null;
-        
+
         // Mapas de conexiones por tipo
         this.connectionMaps = new Map();
         this.connectionRules = new Map();
         this.connectionHistory = new Map();
-        
+
         // Configuración de conexiones
         this.connectionConfig = {
             allowMultipleTargets: true,
@@ -38,12 +38,12 @@ class LinkManager {
             validateEnergyTypes: true,
             autoSuggestConnections: true
         };
-        
+
         // Inicializar mapeos por defecto
         this.initializeDefaultMappings();
-        
+
         // Los colores se obtendrán del StyleManager, no hardcodeados
-        
+
         console.log('LinkManager inicializado');
     }
 
@@ -56,19 +56,19 @@ class LinkManager {
             // Combustibles sólidos - Carbón mineral va desde Oferta Interna Bruta
             // ['Carbón mineral', ['Carboeléctrica']], // Manejado por distribution-to-transformation
             ['Coque de carbón', ['Carboeléctrica']],
-            
+
             // Combustibles líquidos
             ['Petróleo crudo', ['Térmica Convencional']],
             ['Diesel', ['Térmica Convencional', 'Combustión Interna']],
             ['Combustóleo', ['Térmica Convencional']],
             ['Gasolinas y naftas', ['Combustión Interna']],
-            
+
             // Combustibles gaseosos
-            ['Gas natural', ['Térmica Convencional', 'Turbogás', 'Ciclo Combinado', 'Cogeneración']],
+            ['Gas natural', ['Térmica Convencional', 'Turbogás', 'Cogeneración']],
             ['Gas natural seco', ['Térmica Convencional', 'Turbogás', 'Ciclo Combinado', 'Cogeneración']],
             ['Gas licuado de petróleo', ['Turbogás']],
             ['Biogás', ['Cogeneración']],
-            
+
             // Energías renovables - estas van desde Oferta Interna Bruta, no directamente
             // ['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
             // ['Energia Hidraúlica', ['Cogeneración']], // Manejado por distribution-to-transformation
@@ -76,7 +76,7 @@ class LinkManager {
             // ['Geoenergía', ['Geotérmica']], // Manejado por distribution-to-transformation
             // ['Energía solar', ['Solar Fotovoltaica']], // Manejado por distribution-to-transformation
             // ['Energía eólica', ['Eólica']], // Manejado por distribution-to-transformation
-            
+
             // Biomasa
             ['Bagazo de caña', ['Cogeneración']],
             ['Leña', ['Cogeneración']]
@@ -107,7 +107,10 @@ class LinkManager {
                 'Coquizadoras y Hornos',
                 'Combustión Interna',
                 'Carboeléctrica',
-                'Térmica Convencional'
+                'Térmica Convencional',
+                'Turbogás',
+                'Ciclo Combinado',
+                'Nucleoeléctrica',
                 // Agregamos otras tecnologías gradualmente
             ]]
         ]));
@@ -122,7 +125,8 @@ class LinkManager {
             ['Plantas de Gas y Fraccionadoras', [
                 { target: 'Térmica Convencional', energetics: ['Gas natural seco'] },
                 { target: 'Combustión Interna', energetics: ['Gas natural seco'] },
-                { target: 'Turbogás', energetics: ['Gas natural seco'] }
+                { target: 'Turbogás', energetics: ['Gas natural seco'] },
+                { target: 'Ciclo Combinado', energetics: ['Gas natural seco'] }
             ]]
         ]));
 
@@ -194,7 +198,7 @@ class LinkManager {
 
         // Procesar cada nodo de tecnología de generación
         const generationNodes = [
-            'carboelectrica', 'termicaConvencional', 'combustionInterna', 
+            'carboelectrica', 'termicaConvencional', 'combustionInterna',
             'turbogas', 'cicloCombinado', 'nucleoelectrica', 'cogeneracion',
             'geotermica', 'eolica', 'solarFotovoltaica'
         ];
@@ -213,26 +217,26 @@ class LinkManager {
                 if (flowValue === undefined || flowValue === 0) return;
 
                 const energyName = child['Nodo Hijo'];
-                
+
                 // Excluir tipos de energía especificados
                 if (excludeEnergyTypes.includes(energyName)) return;
 
                 // Verificar si existe mapeo para este energético
                 if (fuelToGenMap.has(energyName)) {
                     const possibleTargets = fuelToGenMap.get(energyName);
-                    
+
                     // Verificar si la tecnología actual está en los destinos posibles
                     if (possibleTargets.includes(genNodeName)) {
                         const energyIndex = nodeMap.get(energyName);
                         if (energyIndex !== undefined) {
                             const energyColor = nodeColors[energyIndex];
-                            
+
                             links.source.push(energyIndex);
                             links.target.push(genNodeIndex);
                             links.value.push(Math.log10(Math.abs(flowValue) + 1));
                             links.linkColors.push(
-                                this.styleManager ? 
-                                    this.styleManager.validateColor(energyColor) : 
+                                this.styleManager ?
+                                    this.styleManager.validateColor(energyColor) :
                                     (typeof energyColor === 'string' ? energyColor : '#888')
                             );
                             // Usar PopupManager para generar popup de enlace mejorado si está disponible
@@ -312,16 +316,16 @@ class LinkManager {
             if (totalElectricGeneration > 0) {
                 // Aquí se transforma el energético primario en energía eléctrica
                 // Por lo tanto, el enlace debe tener el color de "Energía eléctrica"
-                const electricityColor = this.styleManager ? 
-                    this.styleManager.getEnergyColor('Energía eléctrica') : 
+                const electricityColor = this.styleManager ?
+                    this.styleManager.getEnergyColor('Energía eléctrica') :
                     '#FFD700'; // Fallback al dorado
-                
+
                 links.source.push(genIndex);
                 links.target.push(centralesIndex);
                 links.value.push(Math.log10(totalElectricGeneration + 1));
                 links.linkColors.push(
-                    this.styleManager ? 
-                        this.styleManager.validateColor(electricityColor) : 
+                    this.styleManager ?
+                        this.styleManager.validateColor(electricityColor) :
                         (typeof electricityColor === 'string' ? electricityColor : '#888')
                 );
                 // Usar PopupManager para generar popup de enlace mejorado si está disponible
@@ -362,17 +366,17 @@ class LinkManager {
 
         const primaryEnergy = techToEnergyMap[techName];
         let color = null;
-        
+
         if (primaryEnergy && this.styleManager) {
             // Obtener el color del StyleManager
             color = this.styleManager.getEnergyColor(primaryEnergy);
         }
-        
+
         // Log para debugging (solo Carboeléctrica por ahora)
         if (techName === 'Carboeléctrica') {
             console.log(`Color para ${techName}: ${color} (energético: ${primaryEnergy})`);
         }
-        
+
         return color;
     }
 
@@ -402,53 +406,53 @@ class LinkManager {
                     let energyType = '';
 
                     // Manejar tecnologías que reciben energéticos desde Oferta Interna Bruta
-                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás') {
+                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás' || targetNode === 'Ciclo Combinado') {
                         const techNodeKey = this.getGenerationNodeKey(targetNode);
                         const techNodeData = nodeData[techNodeKey];
-                        
+
                         if (!techNodeData || !techNodeData['Nodos Hijo']) continue;
 
                         // Crear enlaces separados para cada energético que entra
                         techNodeData['Nodos Hijo'].forEach(child => {
                             const flowValue = child[year];
-                            
+
                             // Determinar qué tipos de energéticos procesar según la tecnología
                             let shouldProcessEnergetic = false;
-                            
+
                             if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional') {
                                 // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
-                                shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 && 
-                                    child['Nodo Hijo'] !== 'Energía eléctrica' && 
+                                shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 &&
+                                    child['Nodo Hijo'] !== 'Energía eléctrica' &&
                                     child.tipo === 'Energía Primaria');
                             } else if (targetNode === 'Combustión Interna' || targetNode === 'Turbogás') {
                                 // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
                                 // Los energéticos SECUNDARIOS les llegan desde centros de transformación
-                                shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 && 
-                                    child['Nodo Hijo'] !== 'Energía eléctrica' && 
+                                shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 &&
+                                    child['Nodo Hijo'] !== 'Energía eléctrica' &&
                                     child.tipo === 'Energía Primaria');
                             }
-                            
+
                             if (shouldProcessEnergetic) {
                                 const energeticValue = Math.abs(flowValue);
                                 const energeticName = child['Nodo Hijo'];
                                 const energeticType = child.tipo;
-                                
+
                                 console.log(`${targetNode} consume energético ${energeticType} ${energeticName}: ${flowValue} PJ`);
-                                
+
                                 // Obtener el color específico del energético
-                                const energeticColor = this.styleManager ? 
-                                    this.styleManager.getEnergyColor(energeticName) : 
+                                const energeticColor = this.styleManager ?
+                                    this.styleManager.getEnergyColor(energeticName) :
                                     nodeColors[sourceIndex];
-                                
+
                                 links.source.push(sourceIndex);
                                 links.target.push(targetIndex);
                                 links.value.push(Math.log10(energeticValue + 1));
                                 links.linkColors.push(
-                                    this.styleManager ? 
-                                        this.styleManager.validateColor(energeticColor) : 
+                                    this.styleManager ?
+                                        this.styleManager.validateColor(energeticColor) :
                                         (typeof energeticColor === 'string' ? energeticColor : '#888')
                                 );
-                                
+
                                 // Usar PopupManager para generar popup de enlace mejorado si está disponible
                                 if (this.popupManager) {
                                     const linkPopup = this.popupManager.generateLinkPopup(
@@ -514,16 +518,16 @@ class LinkManager {
 
                     if (energeticValue > 0) {
                         // Obtener el color del energético específico del StyleManager
-                        const energeticColor = this.styleManager ? 
-                            this.styleManager.getEnergyColor(energeticName) : 
+                        const energeticColor = this.styleManager ?
+                            this.styleManager.getEnergyColor(energeticName) :
                             '#888';
 
                         links.source.push(sourceIndex);
                         links.target.push(targetIndex);
                         links.value.push(Math.log10(energeticValue + 1));
                         links.linkColors.push(
-                            this.styleManager ? 
-                                this.styleManager.validateColor(energeticColor) : 
+                            this.styleManager ?
+                                this.styleManager.validateColor(energeticColor) :
                                 (typeof energeticColor === 'string' ? energeticColor : '#888')
                         );
 
@@ -602,24 +606,24 @@ class LinkManager {
         }
 
         const newConnectionMap = new Map();
-        
+
         // Manejar tanto objetos como Maps
-        const entries = legacyFuelToTechMap instanceof Map ? 
-            legacyFuelToTechMap.entries() : 
+        const entries = legacyFuelToTechMap instanceof Map ?
+            legacyFuelToTechMap.entries() :
             Object.entries(legacyFuelToTechMap);
 
         for (const [fuel, targets] of entries) {
             // Convertir índices a nombres si es necesario
-            const targetNames = Array.isArray(targets) ? 
+            const targetNames = Array.isArray(targets) ?
                 targets.map(target => typeof target === 'string' ? target : this.indexToNodeName(target)) :
                 [typeof targets === 'string' ? targets : this.indexToNodeName(targets)];
-            
+
             newConnectionMap.set(fuel, targetNames.filter(name => name !== null));
         }
 
         // Registrar el nuevo mapa
         this.registerConnectionMap(mapName, newConnectionMap);
-        
+
         console.log(`Migrado mapeo legacy "${mapName}" con ${newConnectionMap.size} entradas`);
     }
 
@@ -648,7 +652,7 @@ class LinkManager {
         if (!fuelToGenMap) return {};
 
         const legacyMap = {};
-        
+
         for (const [fuel, targets] of fuelToGenMap.entries()) {
             const targetIndices = [];
             for (const target of targets) {
@@ -859,7 +863,7 @@ class LinkManager {
 
         // Ordenar por similitud y eliminar duplicados
         const uniqueSuggestions = suggestions
-            .filter((suggestion, index, self) => 
+            .filter((suggestion, index, self) =>
                 index === self.findIndex(s => s.target === suggestion.target))
             .sort((a, b) => b.similarity - a.similarity)
             .slice(0, 5);
@@ -876,21 +880,21 @@ class LinkManager {
     calculateNameSimilarity(name1, name2) {
         const words1 = name1.toLowerCase().split(/\s+/);
         const words2 = name2.toLowerCase().split(/\s+/);
-        
+
         let commonWords = 0;
         const totalWords = Math.max(words1.length, words2.length);
-        
+
         for (const word1 of words1) {
             for (const word2 of words2) {
-                if (word1 === word2 || 
-                    word1.includes(word2) || 
+                if (word1 === word2 ||
+                    word1.includes(word2) ||
                     word2.includes(word1)) {
                     commonWords++;
                     break;
                 }
             }
         }
-        
+
         return commonWords / totalWords;
     }
 
@@ -914,7 +918,7 @@ class LinkManager {
         };
 
         const lowerName = nodeName.toLowerCase();
-        
+
         for (const [type, patterns] of Object.entries(energyTypePatterns)) {
             for (const pattern of patterns) {
                 if (lowerName.includes(pattern)) {
@@ -922,7 +926,7 @@ class LinkManager {
                 }
             }
         }
-        
+
         return 'unknown';
     }
 
@@ -1029,7 +1033,7 @@ class LinkManager {
 
         const connectionMap = this.connectionMaps.get(mapName);
         connectionMap.set(sourceNode, [...targetNodes]);
-        
+
         console.log(`Actualizado mapeo "${mapName}" para "${sourceNode}" con ${targetNodes.length} destinos`);
     }
 
@@ -1046,7 +1050,7 @@ class LinkManager {
         }
 
         const connectionMap = this.connectionMaps.get(mapName);
-        
+
         if (targetNode === null) {
             // Eliminar todas las conexiones del nodo fuente
             connectionMap.delete(sourceNode);
@@ -1056,13 +1060,13 @@ class LinkManager {
             if (connectionMap.has(sourceNode)) {
                 const targets = connectionMap.get(sourceNode);
                 const updatedTargets = targets.filter(target => target !== targetNode);
-                
+
                 if (updatedTargets.length > 0) {
                     connectionMap.set(sourceNode, updatedTargets);
                 } else {
                     connectionMap.delete(sourceNode);
                 }
-                
+
                 console.log(`Eliminada conexión "${sourceNode}" -> "${targetNode}" en mapa "${mapName}"`);
             }
         }
@@ -1096,7 +1100,7 @@ class LinkManager {
             for (const [source, targets] of connectionMap.entries()) {
                 mapStats.connections += targets.length;
                 stats.totalConnections += targets.length;
-                
+
                 // Registrar roles de nodos
                 stats.nodesByRole.sources.add(source);
                 for (const target of targets) {
