@@ -27,7 +27,7 @@ class PopupManager {
 
         // Configuración de formato
         this.formatConfig = {
-            locale: 'es-ES',
+            locale: 'en-US', // Cambio temporal para debugging
             currency: 'MXN',
             numberFormat: {
                 minimumFractionDigits: 0,
@@ -56,6 +56,11 @@ class PopupManager {
      * Inicializa los templates por defecto para diferentes tipos de nodos
      */
     initializeDefaultTemplates() {
+        // === TEMPLATE PARA NODOS DE GENERACIÓN ELÉCTRICA ===
+        const generationTemplate = {
+            type: 'generation'
+        };
+
         // === TEMPLATE DINÁMICO UNIVERSAL ===
         // Template que se adapta automáticamente según el tipo de energía del nodo
         const dynamicTemplate = {
@@ -115,7 +120,7 @@ class PopupManager {
         // Usar el mismo template dinámico para todos los tipos
         this.nodeTemplates.set('primary_energy', dynamicTemplate);
         this.nodeTemplates.set('transformation', dynamicTemplate);
-        this.nodeTemplates.set('generation', dynamicTemplate);
+        this.nodeTemplates.set('generation', generationTemplate);
         this.nodeTemplates.set('hub', hubTemplate); // Usar el nuevo template para hubs
         this.nodeTemplates.set('inventory_variation', inventoryVariationTemplate);
         this.nodeTemplates.set('consumption', dynamicTemplate);
@@ -170,6 +175,24 @@ class PopupManager {
      * @returns {string} Tipo de template
      */
     determineNodeTemplateType(nodeName, nodeData) {
+        // Lista de nodos de generación eléctrica
+        const generationNodes = [
+            'Carboeléctrica',
+            'Térmica Convencional',
+            'Combustión Interna',
+            'Turbogás',
+            'Ciclo Combinado',
+            'Nucleoeléctrica',
+            'Cogeneración',
+            'Geotérmica',
+            'Eólica',
+            'Solar Fotovoltaica'
+        ];
+
+        if (generationNodes.includes(nodeName)) {
+            return 'generation';
+        }
+
         // Lista de nodos que usarán el popup simplificado
         const simpleSourceNodes = [
             'Producción',
@@ -181,16 +204,6 @@ class PopupManager {
             'Refinerías y Despuntadoras',
             'Plantas de Gas y Fraccionadoras',
             'Centrales Eléctricas',
-            'Carboeléctrica',
-            'Térmica Convencional',
-            'Combustión Interna',
-            'Turbogás',
-            'Ciclo Combinado',
-            'Nucleoeléctrica',
-            'Cogeneración',
-            'Geotérmica',
-            'Eólica',
-            'Solar Fotovoltaica',
             'Energía No Aprovechada',
             'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
             'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
@@ -488,6 +501,14 @@ class PopupManager {
             return `${data.label}: ${this.formatNumber(totalValue)} ${data.unit || 'PJ'}`;
         }
 
+        // Lógica especial para nodos de generación eléctrica
+        if (template.type === 'generation') {
+            const entrada = this.formatNumber(data.total_input || 0);
+            const salida = this.formatNumber(data.total_output || 0);
+            const eficiencia = data.efficiency || 0;
+            return `${data.label}\n↓${entrada} ↑${salida} ⚡${eficiencia}%`;
+        }
+
         let text = `${this.interpolateTemplate(template.title, data)}\n`;
 
         // Renderizar secciones
@@ -776,6 +797,11 @@ class PopupManager {
      * @returns {Object} Datos preparados para el template
      */
     prepareLinkTemplateData(energyType, value, sourceNode, targetNode, color, year, additionalData) {
+        // Log para debugging
+        if (energyType === 'Carbón mineral') {
+            console.log('PopupManager prepareLinkTemplateData recibió:', { energyType, value, sourceNode, targetNode });
+        }
+        
         const absValue = Math.abs(value);
         const isNegative = value < 0;
         
@@ -940,9 +966,15 @@ class PopupManager {
      * @returns {string} Texto plano renderizado
      */
     renderLinkTemplateAsText(data) {
+        // Log para debugging
+        if (data.energyType === 'Carbón mineral') {
+            console.log('PopupManager renderLinkTemplateAsText:', data);
+            console.log('Valor final del popup:', `${data.energyType}: ${this.formatNumber(data.value)} ${data.unit}`);
+        }
+        
         // Formato simplificado: Nombre del flujo y su valor.
-        // Se usa data.value para preservar el signo (ej. en Variación de Inventarios).
-        return `${data.energyType}: ${this.formatNumber(data.value)} ${data.unit}`;
+        // Usar formattedValue para asegurar consistencia
+        return `${data.energyType}: ${data.formattedValue} ${data.unit}`;
     }
 
     /**

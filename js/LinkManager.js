@@ -53,8 +53,8 @@ class LinkManager {
     initializeDefaultMappings() {
         // === MAPEO COMBUSTIBLES -> TECNOLOGÍAS DE GENERACIÓN ===
         this.registerConnectionMap('fuel-to-generation', new Map([
-            // Combustibles sólidos
-            ['Carbón mineral', ['Carboeléctrica']],
+            // Combustibles sólidos - Carbón mineral va desde Oferta Interna Bruta
+            // ['Carbón mineral', ['Carboeléctrica']], // Manejado por distribution-to-transformation
             ['Coque de carbón', ['Carboeléctrica']],
             
             // Combustibles líquidos
@@ -106,10 +106,8 @@ class LinkManager {
                 'Plantas de Gas y Fraccionadoras',
                 'Coquizadoras y Hornos',
                 'Combustión Interna',
-                'Nucleoeléctrica',
-                'Geotérmica',
-                'Eólica',
-                'Solar Fotovoltaica'
+                'Carboeléctrica'
+                // Agregamos otras tecnologías gradualmente
             ]]
         ]));
 
@@ -335,12 +333,10 @@ class LinkManager {
      * @returns {string} Color del energético primario asociado
      */
     getPrimaryEnergyColorForTech(techName) {
-        // Mapeo de tecnologías a sus energéticos primarios
+        // Mapeo de tecnologías a sus energéticos primarios (empezando solo con Carboeléctrica)
         const techToEnergyMap = {
-            'Nucleoeléctrica': 'Energía Nuclear',
-            'Solar Fotovoltaica': 'Energía solar',
-            'Geotérmica': 'Geoenergía',
-            'Eólica': 'Energía eólica'
+            'Carboeléctrica': 'Carbón mineral'
+            // Agregamos otras tecnologías gradualmente
         };
 
         const primaryEnergy = techToEnergyMap[techName];
@@ -351,9 +347,8 @@ class LinkManager {
             color = this.styleManager.getEnergyColor(primaryEnergy);
         }
         
-        // Log para debugging
-        const debugTechs = ['Nucleoeléctrica', 'Solar Fotovoltaica', 'Geotérmica', 'Eólica'];
-        if (debugTechs.includes(techName)) {
+        // Log para debugging (solo Carboeléctrica por ahora)
+        if (techName === 'Carboeléctrica') {
             console.log(`Color para ${techName}: ${color} (energético: ${primaryEnergy})`);
         }
         
@@ -385,34 +380,31 @@ class LinkManager {
                     let totalInput = 0;
                     let energyType = '';
 
-                    // Mapear nombres de tecnologías a tipos de energía que consumen
-                    const techMapping = {
-                        'Combustión Interna': ['Biogás', 'Diesel', 'Gas natural seco'], // Energéticos que entran a combustión interna
-                        'Nucleoeléctrica': ['Energía Nuclear'],
-                        'Geotérmica': ['Geoenergía'],
-                        'Eólica': ['Energía eólica'],
-                        'Solar Fotovoltaica': ['Energía solar']
-                    };
-
-                    if (techMapping[targetNode]) {
-                        const energyTypes = techMapping[targetNode];
+                    // Solo manejar Carboeléctrica por ahora
+                    if (targetNode === 'Carboeléctrica') {
+                        // Buscar directamente en los datos de Carboeléctrica
+                        const techNodeKey = this.getGenerationNodeKey(targetNode);
+                        const techNodeData = nodeData[techNodeKey];
                         
-                        // Buscar en los datos de Oferta Interna Bruta
-                        const ofertaInternaData = nodeData.ofertaInternaBruta;
-                        if (!ofertaInternaData || !ofertaInternaData['Nodos Hijo']) continue;
+                        if (!techNodeData || !techNodeData['Nodos Hijo']) continue;
 
-                        // Calcular el total de energía disponible para esta tecnología
-                        ofertaInternaData['Nodos Hijo'].forEach(child => {
-                            if (energyTypes.includes(child['Nodo Hijo'])) {
-                                const flowValue = child[year];
-                                if (flowValue !== undefined && flowValue > 0) {
-                                    totalInput += flowValue;
-                                    energyType = child['Nodo Hijo']; // Para el popup
-                                }
+                        // Calcular el total de energéticos que entran (valores negativos)
+                        techNodeData['Nodos Hijo'].forEach(child => {
+                            const flowValue = child[year];
+                            // Solo valores negativos (entradas) y que no sea energía eléctrica
+                            if (flowValue !== undefined && flowValue < 0 && child['Nodo Hijo'] !== 'Energía eléctrica') {
+                                totalInput += Math.abs(flowValue); // Convertir a positivo para el enlace
+                                energyType = child['Nodo Hijo']; // Para el popup
+                                console.log(`Carboeléctrica consume ${child['Nodo Hijo']}: ${flowValue} PJ`);
                             }
                         });
 
                         if (totalInput > 0) {
+                            // Log para debugging del popup
+                            if (targetNode === 'Carboeléctrica') {
+                                console.log(`Generando popup para ${targetNode}: energyType=${energyType}, totalInput=${totalInput}`);
+                            }
+                            
                             // Usar el color del energético primario asociado a la tecnología
                             const primaryEnergyColor = this.getPrimaryEnergyColorForTech(targetNode);
                             const linkColor = primaryEnergyColor || nodeColors[sourceIndex];
@@ -429,7 +421,7 @@ class LinkManager {
                             // Usar PopupManager para generar popup de enlace mejorado si está disponible
                             if (this.popupManager) {
                                 const linkPopup = this.popupManager.generateLinkPopup(
-                                    energyTypes.length === 1 ? energyTypes[0] : 'Energéticos múltiples',
+                                    energyType || 'Energéticos múltiples',
                                     totalInput,
                                     sourceNode,
                                     targetNode,

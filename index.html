@@ -2085,20 +2085,64 @@
                         };
                         nodeDataForPopup = nodeData.consumoPropio;
                     } else {
-                        // Para otros nodos, buscar en nodeData
-                        const nodeKeys = Object.keys(nodeData);
-                        for (const key of nodeKeys) {
-                            if (nodeData[key] && nodeData[key].nombre === label) {
-                                nodeDataForPopup = nodeData[key];
-                                break;
-                            }
-                        }
-
-                        // Datos por defecto si no se encuentra información específica
-                        additionalData = {
-                            description: `Nodo del sistema energético`,
-                            unit: 'PJ'
+                        // Verificar si es un nodo de generación
+                        const generationNodeMap = {
+                            'Carboeléctrica': 'carboelectrica',
+                            'Térmica Convencional': 'termicaConvencional',
+                            'Combustión Interna': 'combustionInterna',
+                            'Turbogás': 'turbogas',
+                            'Ciclo Combinado': 'cicloCombinado',
+                            'Nucleoeléctrica': 'nucleoelectrica',
+                            'Cogeneración': 'cogeneracion',
+                            'Geotérmica': 'geotermica',
+                            'Eólica': 'eolica',
+                            'Solar Fotovoltaica': 'solarFotovoltaica'
                         };
+
+                        if (generationNodeMap[label]) {
+                            const nodeKey = generationNodeMap[label];
+                            nodeDataForPopup = nodeData[nodeKey];
+                            
+                            if (nodeDataForPopup && nodeDataForPopup['Nodos Hijo']) {
+                                // Calcular entradas (valores negativos) y salidas (valores positivos)
+                                let totalInput = 0;
+                                let totalOutput = 0;
+                                
+                                nodeDataForPopup['Nodos Hijo'].forEach(child => {
+                                    const flowValue = child[year];
+                                    if (flowValue !== undefined && flowValue !== 0) {
+                                        if (flowValue < 0) {
+                                            totalInput += Math.abs(flowValue);
+                                        } else {
+                                            totalOutput += flowValue;
+                                        }
+                                    }
+                                });
+                                
+                                additionalData = {
+                                    total_input: totalInput,
+                                    total_output: totalOutput,
+                                    efficiency: totalInput > 0 ? (totalOutput / totalInput * 100).toFixed(1) : 0,
+                                    description: `Central de generación eléctrica`,
+                                    unit: 'PJ'
+                                };
+                            }
+                        } else {
+                            // Para otros nodos, buscar en nodeData
+                            const nodeKeys = Object.keys(nodeData);
+                            for (const key of nodeKeys) {
+                                if (nodeData[key] && nodeData[key].nombre === label) {
+                                    nodeDataForPopup = nodeData[key];
+                                    break;
+                                }
+                            }
+
+                            // Datos por defecto si no se encuentra información específica
+                            additionalData = {
+                                description: `Nodo del sistema energético`,
+                                unit: 'PJ'
+                            };
+                        }
                     }
 
                     // Usar PopupManager para generar el popup si está disponible
