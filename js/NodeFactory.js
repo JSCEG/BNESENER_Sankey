@@ -466,6 +466,10 @@ class NodeFactory {
         const name = nodeName.toLowerCase();
         
         // Reglas específicas por nombre para desambiguar
+        if (name.includes('refinerías')) return 'refinerias';
+        if (name.includes('coquizadoras')) return 'coquizadoras';
+        if (name.includes('plantas de gas')) return 'plantasGas';
+
         if (name.includes('producción')) return 'produccion';
         if (name.includes('importación')) return 'importacion';
         if (name.includes('exportación')) return 'exportacion';

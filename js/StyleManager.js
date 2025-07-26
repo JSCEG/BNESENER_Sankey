@@ -96,6 +96,9 @@ class StyleManager {
             produccion:     ['#065084', '#FFE082'], // Dorado → Dorado claro
             oferta:         ['#2E8B57', '#3CB371'], // Verde mar → Verde medio
             transformacion: ['#CD5C5C', '#E57373'], // Rojo indio → Rosa suave
+            refinerias:     ['#D9534F', '#F3A6A3'], // Rojo suave para refinerías
+            coquizadoras:   ['#A52A2A', '#D2B48C'], // Marrón para coquizadoras
+            plantasGas:     ['#F0AD4E', '#FADCB3'], // Naranja para plantas de gas
             consumo:        ['#4169E1', '#5F9EA0'], // Azul royal → Azul cadete
             hub:            ['#483D8B', '#6A5ACD'], // Azul pizarra → Lavanda
             generacion:     ['#FFD700', '#FFF59D'], // Amarillo → Amarillo pálido
