@@ -2014,6 +2014,54 @@
                 console.log('DEBUG: No se crearon enlaces de variación - nodo no existe o sin datos');
             }
 
+            // 11.0.2: Crear nodo de Exportación de energéticos secundarios
+            let totalExportacionSecundarios = 0;
+            
+            // Calcular total de exportación para energéticos secundarios
+            console.log('DEBUG: Verificando datos de exportación...');
+            if (nodeData.exportacion && nodeData.exportacion['Nodos Hijo']) {
+                nodeData.exportacion['Nodos Hijo'].forEach(child => {
+                    if (child.tipo === 'Energía Secundaria') {
+                        const flowValue = child[year] || 0;
+                        totalExportacionSecundarios += flowValue;
+                        console.log(`DEBUG: Agregando exportación ${child['Nodo Hijo']}: ${flowValue} PJ`);
+                    }
+                });
+            }
+            console.log(`DEBUG: Total exportación secundarios: ${totalExportacionSecundarios} PJ`);
+
+            // Crear nodo de exportación si hay datos
+            let exportacionSecundariosIndex = null;
+            if (totalExportacionSecundarios !== 0) {
+                exportacionSecundariosIndex = addNode('Exportación de energéticos secundarios', '#f39c12');
+                console.log(`DEBUG: Creado nodo Exportación de energéticos secundarios: ${totalExportacionSecundarios} PJ`);
+            }
+
+            // Crear enlaces individuales desde Oferta Total ES hacia Exportación ES (uno por energético)
+            if (exportacionSecundariosIndex !== null && nodeData.exportacion && nodeData.exportacion['Nodos Hijo']) {
+                nodeData.exportacion['Nodos Hijo'].forEach(child => {
+                    if (child.tipo === 'Energía Secundaria') {
+                        const flowValue = child[year] || 0;
+                        if (flowValue !== 0) {
+                            const energeticName = child['Nodo Hijo'];
+                            const energeticColor = styleManager ? 
+                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') : 
+                                '#f39c12';
+                            
+                            console.log(`DEBUG: Procesando ${energeticName} - Color del StyleManager: ${energeticColor}`);
+                            
+                            source.push(ofertaTotalSecundariosIndex);
+                            target.push(exportacionSecundariosIndex);
+                            value.push(Math.log10(Math.abs(flowValue) + 1));
+                            linkColors.push(energeticColor);
+                            linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                            
+                            console.log(`DEBUG: Enlace Oferta Total ES → Exportación ES (${energeticName}): ${Math.abs(flowValue)} PJ - Color: ${energeticColor}`);
+                        }
+                    }
+                });
+            }
+
             // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
             // Usar los datos de ofertaInternaBruta pero filtrar solo energéticos secundarios
             if (nodeData.ofertaInternaBruta && nodeData.ofertaInternaBruta['Nodos Hijo']) {

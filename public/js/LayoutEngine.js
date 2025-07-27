@@ -150,6 +150,16 @@ class LayoutEngine {
             maxY: 0.9
         });
 
+        this.defineColumn('distribucion-exportacion-secundarios', {
+            x: 0.75,
+            title: 'Exportación Secundarios',
+            width: 0.15,
+            nodes: ['Exportación de energéticos secundarios'],
+            verticalDistribution: 'center',
+            minY: 0.8, // Posiciona este nodo más abajo
+            maxY: 0.9
+        });
+
         this.defineColumn('distribucion-no-aprovechada', {
             x: 0.28,
             title: 'No Aprovechada',
