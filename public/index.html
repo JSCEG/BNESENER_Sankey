@@ -1226,7 +1226,7 @@
                 geotermica: getNodeData('Geotérmica'),
                 eolica: getNodeData('Eólica'),
                 solarFotovoltaica: getNodeData('Solar Fotovoltaica'),
-                ofertaTotalEnergiaSecundaria: getNodeData('Oferta Total'),
+                // ofertaTotalEnergiaSecundaria: eliminado - ahora se usa directamente ofertaTotal
                 ofertaTotal: getNodeData('Oferta Total')
             };
 
@@ -1329,7 +1329,7 @@
             const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
             const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
             const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
-            const produccionBrutaEnergiaSecundariaIndex = addNode(String('Producción bruta energía secundaria'), nodeData.ofertaTotalEnergiaSecundaria.color);
+            // Nodo eliminado: Producción bruta de energía secundaria - ahora se usa Oferta Total (Energéticos Secundarios)
             // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
             const linkSigns = [];
             const processParentNode = (nodeData, parentIndex, parentName, allowNegatives = false) => {
@@ -2029,14 +2029,14 @@
                 }
             }
 
-            // 11.2: Flujos de Nodos de Energéticos Secundarios -> Hub Secundario
+            // 11.2: Flujos de Nodos de Energéticos Secundarios -> Oferta Total (Energéticos Secundarios)
             for (const [energyName, totalValue] of secondaryEnergyTotals.entries()) {
                 if (energyName === 'Energía eléctrica') continue; // Excluir energía eléctrica
                 const energyIndex = nodeMap.get(energyName);
                 const energyColor = nodeColors[energyIndex];
 
                 source.push(energyIndex);
-                target.push(produccionBrutaEnergiaSecundariaIndex);
+                target.push(ofertaTotalSecundariosIndex);
                 value.push(Math.log10(totalValue + 1));
                 linkColors.push(energyColor);
                 linkCustomdata.push(`Total ${energyName}: ${totalValue.toLocaleString()} PJ`);
