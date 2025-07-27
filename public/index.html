@@ -1211,22 +1211,10 @@
                 exportacion: getNodeData('Exportación'),
                 ofertaInternaBruta: getNodeData('Oferta Interna Bruta'),
                 energiaNoAprovechada: getNodeData('Energía No Aprovechada'),
-                consumoPropio: getNodeData('Consumo Propio del Sector'),
                 coquizadorasHornos: getNodeData('Coquizadoras y Hornos'),
                 refineriasDespuntadoras: getNodeData('Refinerías y Despuntadoras'),
                 plantasGasFraccionadoras: getNodeData('Plantas de Gas y Fraccionadoras'),
                 centralesElectricas: getNodeData('Centrales Eléctricas'),
-                carboelectrica: getNodeData('Carboeléctrica'),
-                termicaConvencional: getNodeData('Térmica Convencional'),
-                combustionInterna: getNodeData('Combustión Interna'),
-                turbogas: getNodeData('Turbogás'),
-                cicloCombinado: getNodeData('Ciclo Combinado'),
-                nucleoelectrica: getNodeData('Nucleoeléctrica'),
-                cogeneracion: getNodeData('Cogeneración'),
-                geotermica: getNodeData('Geotérmica'),
-                eolica: getNodeData('Eólica'),
-                solarFotovoltaica: getNodeData('Solar Fotovoltaica'),
-                // ofertaTotalEnergiaSecundaria: eliminado - ahora se usa directamente ofertaTotal
                 ofertaTotal: getNodeData('Oferta Total')
             };
 
@@ -1312,22 +1300,11 @@
             const produccionIndex = addNode(String('Producción'), nodeData.produccion.color);
             const exportacionIndex = addNode(String('Exportación'), nodeData.exportacion.color);
             const energiaNoAprovechadaIndex = addNode(String('Energía No Aprovechada'), nodeData.energiaNoAprovechada.color);
-            // const consumoPropioIndex = addNode(String('Consumo Propio del Sector'), nodeData.consumoPropio.color);
             const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
             const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
             const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
             const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
-            // const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
-            // const termicaConvencionalIndex = addNode(String('Térmica Convencional'), nodeData.termicaConvencional.color);
-            // const combustionInternaIndex = addNode(String('Combustión Interna'), nodeData.combustionInterna.color);
-            // const turbogasIndex = addNode(String('Turbogás'), nodeData.turbogas.color);
-            // const cicloCombinadoIndex = addNode(String('Ciclo Combinado'), nodeData.cicloCombinado.color);
-            // const nucleoelectricaIndex = addNode(String('Nucleoeléctrica'), nodeData.nucleoelectrica.color);
-            // const cogeneracionIndex = addNode(String('Cogeneración'), nodeData.cogeneracion.color);
-            // const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
-            // const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
-            // const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
-            // Nodo eliminado: Producción bruta de energía secundaria - ahora se usa Oferta Total (Energéticos Secundarios)
+
             // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
             const linkSigns = [];
             const processParentNode = (nodeData, parentIndex, parentName, allowNegatives = false) => {
@@ -1634,25 +1611,6 @@
                     linkColors.push(...distributionToTransformationLinks.linkColors);
                     linkCustomdata.push(...distributionToTransformationLinks.linkCustomdata);
 
-                    // Generar enlaces de centros de transformación a tecnologías de generación
-                    // Esta lógica ahora se maneja manualmente a través del hub secundario.
-                    // const transformationToGenerationLinks = linkManager.generateDataLinks(
-                    //     nodeMap,
-                    //     nodeColors,
-                    //     nodeData,
-                    //     year,
-                    //     {
-                    //         mapTypes: ['transformation-to-generation']
-                    //     }
-                    // );
-
-                    // // Agregar enlaces de transformación a generación
-                    // source.push(...transformationToGenerationLinks.source);
-                    // target.push(...transformationToGenerationLinks.target);
-                    // value.push(...transformationToGenerationLinks.value);
-                    // linkColors.push(...transformationToGenerationLinks.linkColors);
-                    // linkCustomdata.push(...transformationToGenerationLinks.linkCustomdata);
-
                     console.log(`LinkManager generó ${fuelToGenerationLinks.source.length} enlaces fuel-to-generation`);
                     console.log(`LinkManager generó ${distributionToTransformationLinks.source.length} enlaces distribution-to-transformation`);
                 } catch (error) {
@@ -1660,12 +1618,6 @@
 
                     // Fallback al método manual
                     const generationNodesForInput = [
-                        { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-                        { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-                        { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-                        { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-                        { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' }
                     ];
 
                     generationNodesForInput.forEach(genNode => {
@@ -1689,8 +1641,8 @@
                                             sourceIndex = ofertaInternaBrutaIndex;
                                         }
                                     } else { // Energía Secundaria
-                                        // Ahora la fuente de energía secundaria es el hub secundario
-                                        sourceIndex = produccionBrutaEnergiaSecundariaIndex;
+                                        // Lógica para energéticos secundarios (comentada para eliminar enlaces directos a centrales eléctricas)
+                                        // sourceIndex = produccionBrutaEnergiaSecundariaIndex; // Esto se manejará en una etapa posterior
                                     }
 
                                     if (sourceIndex !== undefined) {
@@ -1734,12 +1686,6 @@
 
                 // Método manual como fallback completo
                 const generationNodesForInput = [
-                    { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-                    { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-                    { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-                    { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-                    { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                    { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' }
                 ];
 
                 generationNodesForInput.forEach(genNode => {
@@ -2055,25 +2001,6 @@
 
             // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
             // Usar los datos de ofertaInternaBruta pero filtrar solo energéticos secundarios
-            // if (nodeData.ofertaInternaBruta && nodeData.ofertaInternaBruta['Nodos Hijo']) {
-            //     nodeData.ofertaInternaBruta['Nodos Hijo'].forEach(child => {
-            //         if (child.tipo === 'Energía Secundaria') {
-            //             const flowValue = child[year] || 0;
-            //             if (flowValue !== 0) {
-            //                 const energeticName = child['Nodo Hijo'];
-            //                 const energeticColor = child.color || '#27ae60';
-
-            //                 source.push(ofertaTotalSecundariosIndex);
-            //                 target.push(ofertaInternaBrutaSecundariosIndex);
-            //                 value.push(Math.log10(Math.abs(flowValue) + 1));
-            //                 linkColors.push(energeticColor);
-            //                 linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-
-            //                 console.log(`DEBUG: Enlace OT→OIB ${energeticName}: ${flowValue} PJ`);
-            //             }
-            //         }
-            //     });
-            // }
             const transformationCenters = [
                 { name: 'Refinerías y Despuntadoras', index: refineriasDespuntadorasIndex, data: nodeData.refineriasDespuntadoras },
                 { name: 'Plantas de Gas y Fraccionadoras', index: plantasGasFraccionadorasIndex, data: nodeData.plantasGasFraccionadoras },
@@ -2197,12 +2124,6 @@
 
                     // Fallback al método manual
                     const generationNodes = [
-                        { data: nodeData.carboelectrica, index: carboelectricaIndex, name: 'Carboeléctrica' },
-                        { data: nodeData.termicaConvencional, index: termicaConvencionalIndex, name: 'Térmica Convencional' },
-                        { data: nodeData.combustionInterna, index: combustionInternaIndex, name: 'Combustión Interna' },
-                        { data: nodeData.turbogas, index: turbogasIndex, name: 'Turbogás' },
-                        { data: nodeData.cicloCombinado, index: cicloCombinadoIndex, name: 'Ciclo Combinado' },
-                        { data: nodeData.cogeneracion, index: cogeneracionIndex, name: 'Cogeneración' }
                     ];
 
                     generationNodes.forEach(genNode => {
@@ -2244,38 +2165,6 @@
             }
 
             // --- 13. Procesar Flujos de Salida (Oferta Total -> Consumo Propio del Sector) ---
-            // nodeData.consumoPropio['Nodos Hijo'].forEach(child => {
-            //     const flowValue = child[year];
-            //     if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-            //         const childName = child['Nodo Hijo'];
-            //         const childColor = child.color;
-            //         // const energyIndex = nodeMap.get(childName); // Obtener el índice del nodo de energético primario
-
-            //         source.push(primariosHubIndex);
-            //         target.push(consumoPropioIndex);
-            //         value.push(Math.log10(Math.abs(flowValue) + 1));
-            //         const validatedColor = typeof childColor === 'string' ? childColor : '#888';
-            //         linkColors.push(validatedColor);
-
-            //         // Usar PopupManager para generar popup de enlace mejorado
-            //         if (popupManager) {
-            //             const linkPopup = popupManager.generateLinkPopup(
-            //                 childName,
-            //                 flowValue,
-            //                 'Oferta Total (Hub)',
-            //                 'Consumo Propio del Sector',
-            //                 validatedColor,
-            //                 year,
-            //                 { flowType: 'hub_distribution' }
-            //             );
-            //             linkCustomdata.push(linkPopup);
-            //         } else {
-            //             // Fallback al formato anterior
-            //             linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-            //         }
-            //     }
-            // });
-
             // --- 6. Calcular Posiciones Inteligentes con LayoutEngine ---
             const nodeX = new Array(labels.length);
             const nodeY = new Array(labels.length);
@@ -2417,98 +2306,37 @@
                             unit: 'PJ'
                         };
                         nodeDataForPopup = nodeData.variacion;
-                    } else if (label === 'Consumo Propio del Sector') {
-                        let totalConsumoPropio = 0;
-                        if (nodeData.consumoPropio && nodeData.consumoPropio['Nodos Hijo']) {
-                            nodeData.consumoPropio['Nodos Hijo'].forEach(child => {
-                                const flowValue = child[year];
-                                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                                    totalConsumoPropio += flowValue;
-                                }
-                            });
-                        }
+                    } else if (secondaryEnergyData.has(label)) {
+                        // Nodo de energético secundario
+                        const energyData = secondaryEnergyData.get(label);
+                        nodeDataForPopup = {
+                            nombre: energyData.name,
+                            descripcion: energyData.descripcion,
+                            tipo: energyData.tipo,
+                            color: energyData.color
+                        };
+
                         additionalData = {
-                            consumption: totalConsumoPropio,
-                            sector: 'Sector Energético',
-                            description: `Consumo interno del sector energético para sus propias operaciones`,
+                            total_production: energyData.totalProduction,
+                            total_consumption: energyData.totalConsumption,
+                            efficiency: energyData.efficiency,
                             unit: 'PJ'
                         };
-                        nodeDataForPopup = nodeData.consumoPropio;
                     } else {
-                        // Verificar si es un nodo de generación
-                        const generationNodeMap = {
-                            'Carboeléctrica': 'carboelectrica',
-                            'Térmica Convencional': 'termicaConvencional',
-                            'Combustión Interna': 'combustionInterna',
-                            'Turbogás': 'turbogas',
-                            'Ciclo Combinado': 'cicloCombinado',
-                            'Nucleoeléctrica': 'nucleoelectrica',
-                            'Cogeneración': 'cogeneracion',
-                            'Geotérmica': 'geotermica',
-                            'Eólica': 'eolica',
-                            'Solar Fotovoltaica': 'solarFotovoltaica'
-                        };
-
-                        if (generationNodeMap[label]) {
-                            const nodeKey = generationNodeMap[label];
-                            nodeDataForPopup = nodeData[nodeKey];
-
-                            if (nodeDataForPopup && nodeDataForPopup['Nodos Hijo']) {
-                                // Calcular entradas (valores negativos) y salidas (valores positivos)
-                                let totalInput = 0;
-                                let totalOutput = 0;
-
-                                nodeDataForPopup['Nodos Hijo'].forEach(child => {
-                                    const flowValue = child[year];
-                                    if (flowValue !== undefined && flowValue !== 0) {
-                                        if (flowValue < 0) {
-                                            totalInput += Math.abs(flowValue);
-                                        } else {
-                                            totalOutput += flowValue;
-                                        }
-                                    }
-                                });
-
-                                additionalData = {
-                                    total_input: totalInput,
-                                    total_output: totalOutput,
-                                    efficiency: totalInput > 0 ? (totalOutput / totalInput * 100).toFixed(1) : 0,
-                                    description: `Central de generación eléctrica`,
-                                    unit: 'PJ'
-                                };
+                        // Para otros nodos, buscar en nodeData
+                        const nodeKeys = Object.keys(nodeData);
+                        for (const key of nodeKeys) {
+                            if (nodeData[key] && nodeData[key].nombre === label) {
+                                nodeDataForPopup = nodeData[key];
+                                break;
                             }
-                        } else if (secondaryEnergyData.has(label)) {
-                            // Nodo de energético secundario
-                            const energyData = secondaryEnergyData.get(label);
-                            nodeDataForPopup = {
-                                nombre: energyData.name,
-                                descripcion: energyData.descripcion,
-                                tipo: energyData.tipo,
-                                color: energyData.color
-                            };
-
-                            additionalData = {
-                                total_production: energyData.totalProduction,
-                                total_consumption: energyData.totalConsumption,
-                                efficiency: energyData.efficiency,
-                                unit: 'PJ'
-                            };
-                        } else {
-                            // Para otros nodos, buscar en nodeData
-                            const nodeKeys = Object.keys(nodeData);
-                            for (const key of nodeKeys) {
-                                if (nodeData[key] && nodeData[key].nombre === label) {
-                                    nodeDataForPopup = nodeData[key];
-                                    break;
-                                }
-                            }
-
-                            // Datos por defecto si no se encuentra información específica
-                            additionalData = {
-                                description: `Nodo del sistema energético`,
-                                unit: 'PJ'
-                            };
                         }
+
+                        // Datos por defecto si no se encuentra información específica
+                        additionalData = {
+                            description: `Nodo del sistema energético`,
+                            unit: 'PJ'
+                        };
                     }
 
                     // Usar PopupManager para generar el popup si está disponible

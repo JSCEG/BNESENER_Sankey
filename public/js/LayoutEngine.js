@@ -105,7 +105,7 @@ class LayoutEngine {
             maxY: 0.65
         });
 
-        
+
 
         this.defineColumn('distribucion-exportacion', {
             x: 0.28,
@@ -194,8 +194,8 @@ class LayoutEngine {
                 'Energía eléctrica'
             ],
             verticalDistribution: 'spread',
-            minY: 0.3,
-            maxY: 0.9
+            minY: 0.1,
+            maxY: 0.6
         });
 
         // Hub secundario movido a columna anterior (hub-secundario-oferta)
@@ -214,7 +214,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('centrales', {
-            x: 0.85, // Mantenido en el borde derecho
+            x: 0.65, // Mantenido en el borde derecho
             title: 'Centrales',
             width: 0.05,
             nodes: ['Centrales Eléctricas'],

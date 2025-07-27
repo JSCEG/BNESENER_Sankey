@@ -385,19 +385,24 @@ class LinkManager {
             const sourceIndex = nodeMap.get(sourceName);
             if (sourceIndex === undefined) continue;
 
-            // Busca el valor del flujo en los datos del nodo primario
             let flowValue = 0;
+            let found = false;
             for (const key in nodeData) {
+                if (found) break;
                 const node = nodeData[key];
                 if (node['Nodos Hijo']) {
-                    const child = node['Nodos Hijo'].find(ch => ch['Nodo Hijo'] === sourceName);
-                    if (child && child[year] !== undefined) {
-                        flowValue = child[year];
-                        break;
+                    for (const child of node['Nodos Hijo']) {
+                        if (child['Nodo Hijo'] === sourceName && child[year] !== undefined) {
+                            flowValue = child[year];
+                            found = true;
+                            break;
+                        }
                     }
                 }
             }
             if (!flowValue || flowValue === 0) continue;
+
+            console.log(`[DEBUG] Link primario directo: ${sourceName} -> ${targets.join(', ')} valor: ${flowValue}`);
 
             for (const targetName of targets) {
                 const targetIndex = nodeMap.get(targetName);
