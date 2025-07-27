@@ -44,16 +44,24 @@ class LayoutEngine {
         // Definir columnas lógicas del flujo energético con mejor distribución horizontal
         // para aprovechar el canvas expandido al 95% del ancho
         // Dividir la columna fuentes para mejor control de posición
-        this.defineColumn('fuentes-secundarios', {
-            x: 0.38,
-            title: 'Fuentes Secundarios',
+        // Dividir fuentes secundarios en columnas separadas para mejor control
+        this.defineColumn('fuentes-importacion-secundarios', {
+            x: 0.4,
+            title: 'Importación Secundarios',
             width: 0.15,
-            nodes: [
-                'Importación de energéticos secundarios',
-                'Variación de inventarios de energéticos secundarios'
-            ],
-            verticalDistribution: 'spread',
-            minY: -0.05, // Expandido para dos nodos
+            nodes: ['Importación de energéticos secundarios'],
+            verticalDistribution: 'center',
+            minY: 0.05, // Arriba
+            maxY: 0.15
+        });
+
+        this.defineColumn('fuentes-variacion-secundarios', {
+            x: 0.4,
+            title: 'Variación Secundarios',
+            width: 0.15,
+            nodes: ['Variación de inventarios de energéticos secundarios'],
+            verticalDistribution: 'center',
+            minY: 0.2, // Abajo
             maxY: 0.3
         });
 
@@ -88,12 +96,12 @@ class LayoutEngine {
 
         // Dividir hubs por tipo de energía
         this.defineColumn('hub-secundario-oferta', {
-            x: 0.53,
+            x: 0.6,
             title: 'Hub Secundarios',
             width: 0.1,
             nodes: ['Oferta Total (Energéticos Secundarios)'],
             verticalDistribution: 'center',
-            minY: 0.2, // Arriba-medio
+            minY: 0.35, // Arriba-medio
             maxY: 0.65
         });
 
@@ -110,7 +118,7 @@ class LayoutEngine {
         // Dividir la columna de distribución para control individual de posición
         // Dividir distribución por tipo de energía
         this.defineColumn('distribucion-secundarios', {
-            x: 0.58,
+            x: 0.68,
             title: 'Distribución Secundarios',
             width: 0.15,
             nodes: ['Oferta Interna Bruta de energéticos secundarios'],
@@ -183,7 +191,7 @@ class LayoutEngine {
             maxY: 0.7
         });
         this.defineColumn('energia-secundaria', {
-            x: 0.4,
+            x: 0.5,
             title: 'Energéticos Secundarios',
             width: 0.15,
             nodes: [
@@ -199,7 +207,7 @@ class LayoutEngine {
                 'Energía eléctrica'
             ],
             verticalDistribution: 'compact',
-            minY: 0.35,
+            minY: 0.3,
             maxY: 0.55
         });
 
