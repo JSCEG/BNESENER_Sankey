@@ -169,7 +169,7 @@ class LayoutEngine {
             x: 0.5,
             title: 'Hub Secundario',
             width: 0.1,
-            nodes: ['Producción bruta energía secundaria'],
+            nodes: ['Oferta Total (Energéticos Secundarios)'],
             verticalDistribution: 'center'
         });
         this.defineColumn('generacion', {

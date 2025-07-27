@@ -1226,7 +1226,7 @@
                 geotermica: getNodeData('Geotérmica'),
                 eolica: getNodeData('Eólica'),
                 solarFotovoltaica: getNodeData('Solar Fotovoltaica'),
-                produccionBrutaEnergiaSecundaria: getNodeData('Producción bruta energía secundaria'),
+                ofertaTotalEnergiaSecundaria: getNodeData('Oferta Total'),
                 ofertaTotal: getNodeData('Oferta Total')
             };
 
@@ -1329,7 +1329,7 @@
             const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
             const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
             const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
-            const produccionBrutaEnergiaSecundariaIndex = addNode(String('Producción bruta energía secundaria'), nodeData.produccionBrutaEnergiaSecundaria.color);
+            const produccionBrutaEnergiaSecundariaIndex = addNode(String('Producción bruta energía secundaria'), nodeData.ofertaTotalEnergiaSecundaria.color);
             // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
             const linkSigns = [];
             const processParentNode = (nodeData, parentIndex, parentName, allowNegatives = false) => {
@@ -1894,12 +1894,15 @@
 
             console.log(`DEBUG: Total importación secundarios: ${totalImportacionSecundarios} PJ`);
 
+            // Crear el nodo hub de Oferta Total para energéticos secundarios
+            const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
+
             // Crear el nodo siempre para testing (cambiar condición temporalmente)
             let importacionSecundariosIndex = null;
             if (totalImportacionSecundarios !== 0) { // Cambiar > 0 por !== 0 para incluir negativos
                 importacionSecundariosIndex = addNode('Importación de energéticos secundarios', '#3498db');
                 console.log(`DEBUG: Creado nodo Importación de energéticos secundarios: ${totalImportacionSecundarios} PJ`);
-                
+
                 // Crear enlaces separados para cada energético secundario importado
                 if (nodeData.importacion && nodeData.importacion['Nodos Hijo']) {
                     nodeData.importacion['Nodos Hijo'].forEach(child => {
@@ -1908,13 +1911,13 @@
                             if (flowValue > 0) {
                                 const energeticName = child['Nodo Hijo'];
                                 const energeticColor = child.color || '#3498db';
-                                
+
                                 source.push(importacionSecundariosIndex);
-                                target.push(produccionBrutaEnergiaSecundariaIndex);
+                                target.push(ofertaTotalSecundariosIndex);
                                 value.push(Math.log10(flowValue + 1));
                                 linkColors.push(energeticColor);
                                 linkCustomdata.push(`${energeticName} importado: ${flowValue.toLocaleString()} PJ`);
-                                
+
                                 console.log(`DEBUG: Enlace ${energeticName}: ${flowValue} PJ (color: ${energeticColor})`);
                             }
                         }
