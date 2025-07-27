@@ -105,40 +105,7 @@ class LayoutEngine {
             maxY: 0.65
         });
 
-        this.defineColumn('hub-primario', {
-            x: 0.20,
-            title: 'Hub Primarios',
-            width: 0.1,
-            nodes: ['Oferta Total'],
-            verticalDistribution: 'center',
-            minY: 0.5, // Medio-abajo
-            maxY: 0.65
-        });
-
-        // Dividir la columna de distribución para control individual de posición
-        // Dividir distribución por tipo de energía
-        this.defineColumn('distribucion-secundarios', {
-            x: 0.68,
-            title: 'Distribución Secundarios',
-            width: 0.15,
-            nodes: ['Oferta Interna Bruta de energéticos secundarios'],
-            verticalDistribution: 'center',
-            minY: 0.2, // Medio
-            maxY: 0.5
-        });
-
-        this.defineColumn('distribucion-primarios', {
-            x: 0.28,
-            title: 'Distribución Primarios',
-            width: 0.15,
-            nodes: [
-                'Consumo Propio del Sector',
-                'Oferta Interna Bruta'
-            ],
-            verticalDistribution: 'spread',
-            minY: 0.58, // Abajo
-            maxY: 0.5
-        });
+        
 
         this.defineColumn('distribucion-exportacion', {
             x: 0.28,

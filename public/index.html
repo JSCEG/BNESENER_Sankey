@@ -1310,8 +1310,6 @@
             const importacionIndex = addNode(String('Importación de energéticos primarios'), nodeData.importacion.color);
             const variacionIndex = addNode(String('Variación de inventarios de Energéticos primarios'), nodeData.variacion.color);
             const produccionIndex = addNode(String('Producción'), nodeData.produccion.color);
-            const primariosHubIndex = addNode(String('Oferta Total'), nodeData.ofertaTotal.color);
-            const ofertaInternaBrutaIndex = addNode(String('Oferta Interna Bruta'), nodeData.ofertaInternaBruta.color);
             const exportacionIndex = addNode(String('Exportación'), nodeData.exportacion.color);
             const energiaNoAprovechadaIndex = addNode(String('Energía No Aprovechada'), nodeData.energiaNoAprovechada.color);
             // const consumoPropioIndex = addNode(String('Consumo Propio del Sector'), nodeData.consumoPropio.color);
@@ -1396,73 +1394,11 @@
             processParentNode(nodeData.variacion, variacionIndex, 'Variación de inventarios de Energéticos primarios', true);
             processParentNode(nodeData.produccion, produccionIndex, 'Producción');
 
-            // --- 3. Procesar Flujos (Tipos de Energía -> Hub "Energéticos Primarios") ---
-            for (const [energyName, totalValue] of primaryEnergyTotals.entries()) {
-                const energyIndex = nodeMap.get(energyName);
-                const energyColor = nodeColors[energyIndex];
-                source.push(energyIndex);
-                target.push(primariosHubIndex);
-                value.push(Math.log10(totalValue + 1));
-                linkColors.push(energyColor);
+            
 
-                // Usar PopupManager para generar popup de enlace mejorado
-                if (popupManager) {
-                    const linkPopup = popupManager.generateLinkPopup(
-                        energyName,
-                        totalValue,
-                        energyName,
-                        'Oferta Total',
-                        energyColor,
-                        year,
-                        { flowType: 'hub_distribution' }
-                    );
-                    linkCustomdata.push(linkPopup);
-                } else {
-                    // Fallback al formato anterior
-                    linkCustomdata.push(`Total: ${Math.abs(totalValue).toLocaleString()} PJ`);
-                }
-            }
+            
 
-            // --- 4. Procesar Flujos (Oferta Total -> Oferta Interna Bruta) ---
-            const oibBreakdown = {};
-            let oibTotal = 0;
-            nodeData.ofertaInternaBruta['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    const childName = child['Nodo Hijo'];
-                    const energyNodeIndex = nodeMap.get(childName);
-                    if (energyNodeIndex === undefined) return;
-
-                    const link_color = nodeColors[energyNodeIndex];
-
-                    source.push(primariosHubIndex);
-                    target.push(ofertaInternaBrutaIndex);
-                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                    linkColors.push(link_color);
-
-                    // Usar PopupManager para generar popup de enlace mejorado
-                    if (popupManager) {
-                        const linkPopup = popupManager.generateLinkPopup(
-                            childName,
-                            flowValue,
-                            'Oferta Total',
-                            'Oferta Interna Bruta',
-                            link_color,
-                            year,
-                            { flowType: 'hub_distribution' }
-                        );
-                        linkCustomdata.push(linkPopup);
-                    } else {
-                        // Fallback al formato anterior
-                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                    }
-                    oibBreakdown[childName] = (oibBreakdown[childName] || 0) + flowValue;
-                    oibTotal += flowValue;
-                }
-            });
-            secondaryNodeBreakdowns.set('Oferta Interna Bruta', { breakdown: oibBreakdown, total: oibTotal });
-
-            // --- 5. Procesar Flujos de Salida (Oferta Total -> Exportación) ---
+            // --- 5. Procesar Flujos de Salida (EP -> Exportación) ---
             const exportacionBreakdown = {};
             let exportacionTotal = 0;
             nodeData.exportacion['Nodos Hijo'].forEach(child => {
@@ -1474,7 +1410,7 @@
 
                     const link_color = nodeColors[energyNodeIndex];
 
-                    source.push(primariosHubIndex);
+                    source.push(energyNodeIndex);
                     target.push(exportacionIndex);
                     value.push(Math.log10(Math.abs(flowValue) + 1));
                     linkColors.push(link_color);
@@ -1484,7 +1420,7 @@
                         const linkPopup = popupManager.generateLinkPopup(
                             childName,
                             flowValue,
-                            'Oferta Total',
+                            childName,
                             'Exportación',
                             link_color,
                             year,
@@ -1501,7 +1437,7 @@
             });
             secondaryNodeBreakdowns.set('Exportación', { breakdown: exportacionBreakdown, total: exportacionTotal });
 
-            // --- 6. Procesar Flujos de Salida (Oferta Total -> Energía No Aprovechada) ---
+            // --- 6. Procesar Flujos de Salida (EP -> Energía No Aprovechada) ---
             const enaBreakdown = {};
             let enaTotal = 0;
             nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
@@ -1513,7 +1449,7 @@
 
                     const link_color = nodeColors[energyNodeIndex];
 
-                    source.push(primariosHubIndex);
+                    source.push(energyNodeIndex);
                     target.push(energiaNoAprovechadaIndex);
                     value.push(Math.log10(Math.abs(flowValue) + 1));
                     linkColors.push(link_color);
@@ -1523,7 +1459,7 @@
                         const linkPopup = popupManager.generateLinkPopup(
                             childName,
                             flowValue,
-                            'Oferta Total',
+                            childName,
                             'Energía No Aprovechada',
                             link_color,
                             year,
@@ -1540,7 +1476,7 @@
             });
             secondaryNodeBreakdowns.set('Energía No Aprovechada', { breakdown: enaBreakdown, total: enaTotal });
 
-            // --- 7. Procesar Flujos (Oferta Interna Bruta -> Coquizadoras y Hornos) ---
+            // --- 7. Procesar Flujos (EP -> Coquizadoras y Hornos) ---
             const coquizadorasBreakdown = {};
             let coquizadorasTotal = 0;
             nodeData.coquizadorasHornos['Nodos Hijo'].forEach(child => {
@@ -1552,7 +1488,7 @@
 
                     const link_color = nodeColors[energyNodeIndex];
 
-                    source.push(ofertaInternaBrutaIndex);
+                    source.push(energyNodeIndex);
                     target.push(coquizadorasHornosIndex);
                     value.push(Math.log10(Math.abs(flowValue) + 1));
                     linkColors.push(link_color);
@@ -1562,7 +1498,7 @@
                         const linkPopup = popupManager.generateLinkPopup(
                             childName,
                             flowValue,
-                            'Oferta Interna Bruta',
+                            childName,
                             'Coquizadoras y Hornos',
                             link_color,
                             year,
@@ -1579,7 +1515,7 @@
             });
             secondaryNodeBreakdowns.set('Coquizadoras y Hornos', { breakdown: coquizadorasBreakdown, total: coquizadorasTotal });
 
-            // --- 7. Procesar Flujos (Oferta Interna Bruta -> Refinerías y Despuntadoras) ---
+            // --- 7. Procesar Flujos (EP -> Refinerías y Despuntadoras) ---
             const refineriasBreakdown = {};
             let refineriasTotal = 0;
             nodeData.refineriasDespuntadoras['Nodos Hijo'].forEach(child => {
@@ -1591,7 +1527,7 @@
 
                     const link_color = nodeColors[energyNodeIndex];
 
-                    source.push(ofertaInternaBrutaIndex);
+                    source.push(energyNodeIndex);
                     target.push(refineriasDespuntadorasIndex);
                     value.push(Math.log10(Math.abs(flowValue) + 1));
                     linkColors.push(link_color);
@@ -1601,7 +1537,7 @@
                         const linkPopup = popupManager.generateLinkPopup(
                             childName,
                             flowValue,
-                            'Oferta Interna Bruta',
+                            childName,
                             'Refinerías y Despuntadoras',
                             link_color,
                             year,
@@ -1618,7 +1554,7 @@
             });
             secondaryNodeBreakdowns.set('Refinerías y Despuntadoras', { breakdown: refineriasBreakdown, total: refineriasTotal });
 
-            // --- 8. Procesar Flujos (Oferta Interna Bruta -> Plantas de Gas y Fraccionadoras) ---
+            // --- 8. Procesar Flujos (EP -> Plantas de Gas y Fraccionadoras) ---
             const plantasGasBreakdown = {};
             let plantasGasTotal = 0;
             nodeData.plantasGasFraccionadoras['Nodos Hijo'].forEach(child => {
@@ -1630,7 +1566,7 @@
 
                     const link_color = nodeColors[energyNodeIndex];
 
-                    source.push(ofertaInternaBrutaIndex);
+                    source.push(energyNodeIndex);
                     target.push(plantasGasFraccionadorasIndex);
                     value.push(Math.log10(Math.abs(flowValue) + 1));
                     linkColors.push(link_color);
@@ -1640,7 +1576,7 @@
                         const linkPopup = popupManager.generateLinkPopup(
                             childName,
                             flowValue,
-                            'Oferta Interna Bruta',
+                            childName,
                             'Plantas de Gas y Fraccionadoras',
                             link_color,
                             year,
