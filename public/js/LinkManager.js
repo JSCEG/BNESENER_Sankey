@@ -70,7 +70,7 @@ class LinkManager {
             ['Biogás', ['Cogeneración']],
 
             // Energías renovables - estas van desde Oferta Interna Bruta, no directamente
-            ['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
+            //['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
             //['Energia Hidraúlica', ['Cogeneración']], // Manejado por distribution-to-transformation
             // ['Energía Hidráulica', ['Cogeneración']], // Manejado por distribution-to-transformation
             // ['Geoenergía', ['Geotérmica']], // Manejado por distribution-to-transformation
@@ -80,6 +80,15 @@ class LinkManager {
             // Biomasa
             ['Bagazo de caña', ['Cogeneración']],
             ['Leña', ['Cogeneración']]
+        ]));
+
+        // === MAPEO ENERGÉTICOS PRIMARIOS DIRECTOS -> CENTRALES ELÉCTRICAS ===
+        this.registerConnectionMap('primary-to-centrales', new Map([
+            ['Energía Nuclear', ['Centrales Eléctricas']],
+            ['Energía Hidráulica', ['Centrales Eléctricas']],
+            ['Geoenergía', ['Centrales Eléctricas']],
+            ['Energía solar', ['Centrales Eléctricas']],
+            ['Energía eólica', ['Centrales Eléctricas']]
         ]));
 
         // === MAPEO FUENTES -> HUB PRIMARIO ===
@@ -168,7 +177,14 @@ class LinkManager {
             linkCustomdata: []
         };
 
-        const mapTypes = options.mapTypes || ['fuel-to-generation'];
+        const mapTypes = [
+            'fuel-to-generation',
+            'generation-to-centrales',
+            'distribution-to-transformation',
+            'transformation-to-generation',
+            'primary-to-centrales', // <-- agrega este
+            // ...otros si los tienes
+        ];
         const excludeEnergyTypes = options.excludeEnergyTypes || ['Energía eléctrica'];
 
         for (const mapType of mapTypes) {
@@ -180,6 +196,8 @@ class LinkManager {
                 this.generateDistributionToTransformationLinks(links, nodeMap, nodeColors, nodeData, year);
             } else if (mapType === 'transformation-to-generation') {
                 this.generateTransformationToGenerationLinks(links, nodeMap, nodeColors, nodeData, year);
+            } else if (mapType === 'primary-to-centrales') {
+                this.generatePrimaryToCentralesLinks(links, nodeMap, nodeColors, nodeData, year);
             }
         }
 
@@ -347,6 +365,54 @@ class LinkManager {
                     // Fallback al formato anterior
                     links.linkCustomdata.push(`${genTech}: ${totalElectricGeneration.toLocaleString()} PJ`);
                 }
+            }
+        }
+    }
+
+    /**
+     * Genera enlaces de energéticos primarios directos a centrales eléctricas
+     * @param {Object} links - Objeto de enlaces a llenar
+     * @param {Map} nodeMap - Mapa de nombres de nodos a índices
+     * @param {Array} nodeColors - Array de colores de nodos
+     * @param {Object} nodeData - Datos de nodos
+     * @param {string} year - Año para los datos
+     */
+    generatePrimaryToCentralesLinks(links, nodeMap, nodeColors, nodeData, year) {
+        const map = this.connectionMaps.get('primary-to-centrales');
+        if (!map) return;
+
+        for (const [sourceName, targets] of map.entries()) {
+            const sourceIndex = nodeMap.get(sourceName);
+            if (sourceIndex === undefined) continue;
+
+            // Busca el valor del flujo en los datos del nodo primario
+            let flowValue = 0;
+            for (const key in nodeData) {
+                const node = nodeData[key];
+                if (node['Nodos Hijo']) {
+                    const child = node['Nodos Hijo'].find(ch => ch['Nodo Hijo'] === sourceName);
+                    if (child && child[year] !== undefined) {
+                        flowValue = child[year];
+                        break;
+                    }
+                }
+            }
+            if (!flowValue || flowValue === 0) continue;
+
+            for (const targetName of targets) {
+                const targetIndex = nodeMap.get(targetName);
+                if (targetIndex === undefined) continue;
+
+                const color = nodeColors[sourceIndex];
+                links.source.push(sourceIndex);
+                links.target.push(targetIndex);
+                links.value.push(Math.log10(Math.abs(flowValue) + 1));
+                links.linkColors.push(
+                    this.styleManager ?
+                        this.styleManager.validateColor(color) :
+                        (typeof color === 'string' ? color : '#888')
+                );
+                links.linkCustomdata.push(`${sourceName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
             }
         }
     }
