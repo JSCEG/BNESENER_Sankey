@@ -406,7 +406,7 @@ class LinkManager {
                     let energyType = '';
 
                     // Manejar tecnologías que reciben energéticos desde Oferta Interna Bruta
-                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás' || targetNode === 'Ciclo Combinado') {
+                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás' || targetNode === 'Ciclo Combinado' || targetNode === 'Nucleoeléctrica') {
                         const techNodeKey = this.getGenerationNodeKey(targetNode);
                         const techNodeData = nodeData[techNodeKey];
 
@@ -419,7 +419,7 @@ class LinkManager {
                             // Determinar qué tipos de energéticos procesar según la tecnología
                             let shouldProcessEnergetic = false;
 
-                            if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional') {
+                            if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Nucleoeléctrica') {
                                 // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
                                 shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 &&
                                     child['Nodo Hijo'] !== 'Energía eléctrica' &&
