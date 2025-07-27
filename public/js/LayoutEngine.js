@@ -151,13 +151,13 @@ class LayoutEngine {
         });
 
         this.defineColumn('distribucion-exportacion-secundarios', {
-            x: 0.75,
+            x: 0.65,
             title: 'Exportación Secundarios',
             width: 0.15,
             nodes: ['Exportación de energéticos secundarios'],
             verticalDistribution: 'center',
             minY: 0.8, // Posiciona este nodo más abajo
-            maxY: 0.9
+            maxY: 0.99
         });
 
         this.defineColumn('distribucion-energia-na-secundarios', {
@@ -233,7 +233,7 @@ class LayoutEngine {
 
         // Hub secundario movido a columna anterior (hub-secundario-oferta)
         this.defineColumn('generacion', {
-            x: 0.55, // Ajustado para mejor espaciado
+            x: 0.65, // Ajustado para mejor espaciado
             title: 'Generación',
             width: 0.15,
             nodes: [
@@ -242,12 +242,12 @@ class LayoutEngine {
                 'Geotérmica', 'Eólica', 'Solar Fotovoltaica'
             ],
             verticalDistribution: 'compact',
-            minY: 0.75,
+            minY: 0.55,
             maxY: 0.9
         });
 
         this.defineColumn('centrales', {
-            x: 0.65, // Mantenido en el borde derecho
+            x: 0.85, // Mantenido en el borde derecho
             title: 'Centrales',
             width: 0.05,
             nodes: ['Centrales Eléctricas'],
