@@ -156,6 +156,85 @@ if (template.type === 'mi_tipo') {
 
 ## 🔧 Patrones de Código Importantes
 
+### AGREGAR NUEVO NODO FILTRADO (Ejemplo: Importación de energéticos secundarios)
+
+**Paso 1: Crear el nodo y calcular su valor**
+```javascript
+// En public/index.html, sección ~1870 (antes de transformationCenters)
+// 1. Calcular el valor filtrado desde los datos originales
+let totalImportacionSecundarios = 0;
+if (nodeData.importacion && nodeData.importacion['Nodos Hijo']) {
+    nodeData.importacion['Nodos Hijo'].forEach(child => {
+        if (child.tipo === 'Energía Secundaria') { // Filtro
+            const flowValue = child[year] || 0;
+            totalImportacionSecundarios += flowValue;
+        }
+    });
+}
+
+// 2. Crear el nodo con addNode()
+let importacionSecundariosIndex = null;
+if (totalImportacionSecundarios !== 0) {
+    importacionSecundariosIndex = addNode('Importación de energéticos secundarios', '#3498db');
+}
+```
+
+**Paso 2: Crear enlaces para que el nodo sea visible**
+```javascript
+// 3. Crear enlaces separados por energético (con colores específicos)
+if (nodeData.importacion && nodeData.importacion['Nodos Hijo']) {
+    nodeData.importacion['Nodos Hijo'].forEach(child => {
+        if (child.tipo === 'Energía Secundaria') {
+            const flowValue = child[year] || 0;
+            if (flowValue > 0) {
+                const energeticName = child['Nodo Hijo'];
+                const energeticColor = child.color || '#3498db';
+                
+                source.push(importacionSecundariosIndex);
+                target.push(nodoDestinoIndex); // Hacia donde va el enlace
+                value.push(Math.log10(flowValue + 1));
+                linkColors.push(energeticColor);
+                linkCustomdata.push(`${energeticName} importado: ${flowValue.toLocaleString()} PJ`);
+            }
+        }
+    });
+}
+```
+
+**Paso 3: Configurar popup del nodo**
+```javascript
+// En public/index.html, sección ~2180 (dentro de customNodeHover)
+} else if (label === 'Importación de energéticos secundarios') {
+    additionalData = {
+        total_input: totalImportacionSecundarios,
+        description: `Importaciones totales de energéticos secundarios`,
+        unit: 'PJ'
+    };
+    nodeDataForPopup = nodeData.importacion; // Usar datos originales
+```
+
+**Paso 4: Agregar al LayoutEngine**
+```javascript
+// En public/js/LayoutEngine.js, agregar a una columna existente o crear nueva
+this.defineColumn('fuentes-secundarios', {
+    x: 0.05,
+    title: 'Fuentes Secundarios',
+    width: 0.15,
+    nodes: ['Importación de energéticos secundarios'],
+    verticalDistribution: 'center',
+    minY: 0.1, // Posición vertical
+    maxY: 0.25
+});
+```
+
+**Paso 5: Variables importantes a definir**
+```javascript
+// Asegurarse de que estas variables estén disponibles en el scope:
+// - totalImportacionSecundarios (calculado en paso 1)
+// - importacionSecundariosIndex (creado en paso 1)
+// - nodoDestinoIndex (hacia donde van los enlaces)
+```
+
 ### Agregar Nodo con Datos para Popup
 ```javascript
 // 1. Crear el nodo
@@ -212,14 +291,34 @@ const efficiency = totalInput > 0 ? (totalOutput / totalInput * 100).toFixed(1) 
 5. **Los energéticos secundarios van desde centros de transformación**
 6. **Usar `addNode()` para crear nodos y obtener su índice**
 7. **Siempre validar que los datos existan** antes de procesarlos
+8. **Los nodos SIN ENLACES no se muestran** - siempre crear al menos un enlace
+9. **Usar colores específicos** de cada energético (child.color) para enlaces multicolores
+10. **Definir variables en el scope correcto** para que estén disponibles en toda la función
 
 ## 📊 Flujo de Datos Típico
 
+### Energéticos Primarios:
 ```
 Fuentes → Oferta Total → Oferta Interna Bruta → Tecnologías → Centrales Eléctricas
    ↓           ↓              ↓                    ↓              ↓
 Producción   Hub         Distribución      Transformación    Consolidación
 ```
+
+### Energéticos Secundarios:
+```
+Importación ES → Oferta Total ES → Oferta Interna Bruta ES → Tecnologías
+     ↓                ↓                    ↓                     ↓
+  Fuentes         Hub Secundario      Distribución         Transformación
+```
+
+### Ubicaciones por Columna (x):
+- **0.05:** Fuentes (Producción, Importaciones, Variaciones)
+- **0.20:** Hubs (Oferta Total, Oferta Total ES)
+- **0.28:** Distribución (Oferta Interna Bruta, OIB ES)
+- **0.35:** Transformación (Refinerías, Plantas, Coquizadoras)
+- **0.40:** Energéticos Secundarios individuales
+- **0.55:** Generación (Tecnologías eléctricas)
+- **0.95:** Centrales Eléctricas
 
 ## 🎨 Convenciones de Nombres
 

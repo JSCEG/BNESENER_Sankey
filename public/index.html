@@ -1894,6 +1894,34 @@
 
             console.log(`DEBUG: Total importación secundarios: ${totalImportacionSecundarios} PJ`);
 
+            // 11.0.1: Crear nodo de Variación de inventarios de energéticos secundarios
+            let totalVariacionSecundarios = 0;
+            let variacionPositivaSecundarios = 0;
+            let variacionNegativaSecundarios = 0;
+            
+            // Calcular total de variación para energéticos secundarios
+            if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
+                nodeData.variacion['Nodos Hijo'].forEach(child => {
+                    if (child.tipo === 'Energía Secundaria') {
+                        const flowValue = child[year] || 0;
+                        totalVariacionSecundarios += flowValue;
+                        
+                        if (flowValue > 0) {
+                            variacionPositivaSecundarios += flowValue;
+                        } else {
+                            variacionNegativaSecundarios += flowValue;
+                        }
+                    }
+                });
+            }
+
+            // Crear el nodo solo si hay variaciones de energéticos secundarios
+            let variacionSecundariosIndex = null;
+            if (totalVariacionSecundarios !== 0) {
+                variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
+                console.log(`DEBUG: Creado nodo Variación de energéticos secundarios: ${totalVariacionSecundarios} PJ`);
+            }
+
             // Crear los nodos hub para energéticos secundarios
             const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
             const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
@@ -1904,7 +1932,7 @@
                 importacionSecundariosIndex = addNode('Importación de energéticos secundarios', '#3498db');
                 console.log(`DEBUG: Creado nodo Importación de energéticos secundarios: ${totalImportacionSecundarios} PJ`);
 
-                // Crear enlaces separados para cada energético secundario importado
+                // Crear enlaces hacia cada energético secundario individual
                 if (nodeData.importacion && nodeData.importacion['Nodos Hijo']) {
                     nodeData.importacion['Nodos Hijo'].forEach(child => {
                         if (child.tipo === 'Energía Secundaria') {
@@ -1913,19 +1941,46 @@
                                 const energeticName = child['Nodo Hijo'];
                                 const energeticColor = child.color || '#3498db';
 
+                                // Crear el nodo del energético si no existe
+                                const energeticIndex = addNode(energeticName, energeticColor);
+
                                 source.push(importacionSecundariosIndex);
-                                target.push(ofertaTotalSecundariosIndex);
+                                target.push(energeticIndex);
                                 value.push(Math.log10(flowValue + 1));
                                 linkColors.push(energeticColor);
                                 linkCustomdata.push(`${energeticName} importado: ${flowValue.toLocaleString()} PJ`);
 
-                                console.log(`DEBUG: Enlace ${energeticName}: ${flowValue} PJ (color: ${energeticColor})`);
+                                console.log(`DEBUG: Enlace importación → ${energeticName}: ${flowValue} PJ`);
                             }
                         }
                     });
                 }
             } else {
                 console.log('DEBUG: No se creó el nodo porque totalImportacionSecundarios es 0');
+            }
+
+            // Crear enlaces desde Variación hacia cada energético secundario individual
+            if (variacionSecundariosIndex !== null && nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
+                nodeData.variacion['Nodos Hijo'].forEach(child => {
+                    if (child.tipo === 'Energía Secundaria') {
+                        const flowValue = child[year] || 0;
+                        if (flowValue !== 0) {
+                            const energeticName = child['Nodo Hijo'];
+                            const energeticColor = child.color || '#e74c3c';
+                            
+                            // Crear el nodo del energético si no existe
+                            const energeticIndex = addNode(energeticName, energeticColor);
+                            
+                            source.push(variacionSecundariosIndex);
+                            target.push(energeticIndex);
+                            value.push(Math.log10(Math.abs(flowValue) + 1));
+                            linkColors.push(energeticColor);
+                            linkCustomdata.push(`${energeticName} variación: ${flowValue.toLocaleString()} PJ`);
+                            
+                            console.log(`DEBUG: Enlace variación → ${energeticName}: ${flowValue} PJ`);
+                        }
+                    }
+                });
             }
 
             // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
@@ -2254,6 +2309,15 @@
                             unit: 'PJ'
                         };
                         nodeDataForPopup = nodeData.importacion;
+                    } else if (label === 'Variación de inventarios de energéticos secundarios') {
+                        additionalData = {
+                            variacion_positiva: variacionPositivaSecundarios,
+                            variacion_negativa: variacionNegativaSecundarios,
+                            total: Math.abs(totalVariacionSecundarios),
+                            description: `Cambios en los inventarios de energéticos secundarios (+ aumento, - disminución)`,
+                            unit: 'PJ'
+                        };
+                        nodeDataForPopup = nodeData.variacion;
                     } else if (label === 'Producción') {
                         let totalProduccion = 0;
                         for (const breakdown of primaryEnergyBreakdown.values()) {

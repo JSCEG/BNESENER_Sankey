@@ -45,13 +45,16 @@ class LayoutEngine {
         // para aprovechar el canvas expandido al 95% del ancho
         // Dividir la columna fuentes para mejor control de posición
         this.defineColumn('fuentes-secundarios', {
-            x: 0.45,
+            x: 0.38,
             title: 'Fuentes Secundarios',
             width: 0.15,
-            nodes: ['Importación de energéticos secundarios'],
-            verticalDistribution: 'center',
-            minY: -0.1, // Arriba
-            maxY: 0.25
+            nodes: [
+                'Importación de energéticos secundarios',
+                'Variación de inventarios de energéticos secundarios'
+            ],
+            verticalDistribution: 'spread',
+            minY: -0.05, // Expandido para dos nodos
+            maxY: 0.3
         });
 
         this.defineColumn('fuentes-primarios', {
@@ -59,8 +62,8 @@ class LayoutEngine {
             title: 'Fuentes Primarios',
             width: 0.15,
             nodes: [
-                'Producción', 
-                'Importación de energéticos primarios', 
+                'Producción',
+                'Importación de energéticos primarios',
                 'Variación de inventarios de Energéticos primarios'
             ],
             verticalDistribution: 'spread',
@@ -180,7 +183,7 @@ class LayoutEngine {
             maxY: 0.7
         });
         this.defineColumn('energia-secundaria', {
-            x: 0.4,
+            x: 0.45,
             title: 'Energéticos Secundarios',
             width: 0.15,
             nodes: [
@@ -195,8 +198,8 @@ class LayoutEngine {
                 'Otros energéticos'
             ],
             verticalDistribution: 'compact',
-            minY: 0.3,
-            maxY: 0.45
+            minY: 0.35,
+            maxY: 0.55
         });
 
         // Hub secundario movido a columna anterior (hub-secundario-oferta)
