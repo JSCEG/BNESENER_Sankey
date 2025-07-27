@@ -88,11 +88,12 @@ class LayoutEngine {
             width: 0.15,
             nodes: [
                 'Consumo Propio del Sector',
-                'Oferta Interna Bruta'
+                'Oferta Interna Bruta',
+                'Oferta Interna Bruta de energéticos secundarios'
             ],
             verticalDistribution: 'spread',
-            minY: 0.47, // Posiciona este grupo en la parte superior-media
-            maxY: 0.45
+            minY: 0.3, // Expandido para acomodar el nuevo nodo
+            maxY: 0.6  // Expandido para acomodar el nuevo nodo
         });
 
         this.defineColumn('distribucion-exportacion', {
