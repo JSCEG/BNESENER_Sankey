@@ -1394,9 +1394,9 @@
             processParentNode(nodeData.variacion, variacionIndex, 'Variación de inventarios de Energéticos primarios', true);
             processParentNode(nodeData.produccion, produccionIndex, 'Producción');
 
-            
 
-            
+
+
 
             // --- 5. Procesar Flujos de Salida (EP -> Exportación) ---
             const exportacionBreakdown = {};
@@ -1839,7 +1839,7 @@
             let totalVariacionSecundarios = 0;
             let variacionPositivaSecundarios = 0;
             let variacionNegativaSecundarios = 0;
-            
+
             // Calcular total de variación para energéticos secundarios
             console.log('DEBUG: Verificando datos de variación...');
             if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
@@ -1849,7 +1849,7 @@
                     if (child.tipo === 'Energía Secundaria') {
                         const flowValue = child[year] || 0;
                         totalVariacionSecundarios += flowValue;
-                        
+
                         if (flowValue > 0) {
                             variacionPositivaSecundarios += flowValue;
                         } else {
@@ -1859,17 +1859,17 @@
                     }
                 });
             }
-            
+
             console.log(`DEBUG: Total variación secundarios: ${totalVariacionSecundarios} PJ`);
 
             // Crear el nodo siempre para testing (cambiar condición temporalmente)
             let variacionSecundariosIndex = null;
             // TEMPORAL: Crear el nodo aunque no haya datos para ver la estructura
             if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
-                const hasSecondaryVariation = nodeData.variacion['Nodos Hijo'].some(child => 
+                const hasSecondaryVariation = nodeData.variacion['Nodos Hijo'].some(child =>
                     child.tipo === 'Energía Secundaria' && child[year] !== undefined
                 );
-                
+
                 if (hasSecondaryVariation) {
                     variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
                     console.log(`DEBUG: Creado nodo Variación de energéticos secundarios: ${totalVariacionSecundarios} PJ`);
@@ -1877,7 +1877,7 @@
                     console.log('DEBUG: No hay datos de variación para energéticos secundarios - CREANDO NODO TEMPORAL');
                     // Crear el nodo temporal para mostrar la estructura
                     variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
-                    
+
                     // Crear un enlace temporal hacia "Oferta Total" para que sea visible
                     source.push(variacionSecundariosIndex);
                     target.push(ofertaTotalSecundariosIndex);
@@ -1930,16 +1930,16 @@
                         if (flowValue !== undefined && flowValue !== 0) {
                             const energeticName = child['Nodo Hijo'];
                             const energeticColor = child.color || '#e74c3c';
-                            
+
                             // Crear el nodo del energético si no existe
                             const energeticIndex = addNode(energeticName, energeticColor);
-                            
+
                             source.push(variacionSecundariosIndex);
                             target.push(energeticIndex);
                             value.push(Math.log10(Math.abs(flowValue) + 1));
                             linkColors.push(energeticColor);
                             linkCustomdata.push(`${energeticName} variación: ${flowValue.toLocaleString()} PJ`);
-                            
+
                             console.log(`DEBUG: Creado enlace variación → ${energeticName}: ${flowValue} PJ`);
                         } else {
                             console.log(`DEBUG: Saltando ${child['Nodo Hijo']} - valor: ${flowValue}`);
@@ -1952,7 +1952,7 @@
 
             // 11.0.2: Crear nodo de Exportación de energéticos secundarios
             let totalExportacionSecundarios = 0;
-            
+
             // Calcular total de exportación para energéticos secundarios
             console.log('DEBUG: Verificando datos de exportación...');
             if (nodeData.exportacion && nodeData.exportacion['Nodos Hijo']) {
@@ -1980,19 +1980,19 @@
                         const flowValue = child[year] || 0;
                         if (flowValue !== 0) {
                             const energeticName = child['Nodo Hijo'];
-                            const energeticColor = styleManager ? 
-                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') : 
+                            const energeticColor = styleManager ?
+                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') :
                                 '#f39c12';
-                            
-                            console.log(`DEBUG: Procesando ${energeticName} - Color del StyleManager: ${energeticColor}`);
-                            
-                            source.push(ofertaTotalSecundariosIndex);
-                            target.push(exportacionSecundariosIndex);
-                            value.push(Math.log10(Math.abs(flowValue) + 1));
-                            linkColors.push(energeticColor);
-                            linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                            
-                            console.log(`DEBUG: Enlace Oferta Total ES → Exportación ES (${energeticName}): ${Math.abs(flowValue)} PJ - Color: ${energeticColor}`);
+
+                            // Busca el índice del nodo energético secundario
+                            const energeticIndex = nodeMap.get(energeticName);
+                            if (energeticIndex !== undefined) {
+                                source.push(energeticIndex);
+                                target.push(exportacionSecundariosIndex);
+                                value.push(Math.log10(Math.abs(flowValue) + 1));
+                                linkColors.push(energeticColor);
+                                linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                            }
                         }
                     }
                 });
@@ -2000,7 +2000,7 @@
 
             // 11.0.3: Crear nodo de Energía No Aprovechada de energéticos secundarios
             let totalEnergiaNASecundarios = 0;
-            
+
             // Calcular total de energía no aprovechada para energéticos secundarios
             console.log('DEBUG: Verificando datos de energía no aprovechada...');
             if (nodeData.energiaNoAprovechada && nodeData.energiaNoAprovechada['Nodos Hijo']) {
@@ -2028,18 +2028,25 @@
                         const flowValue = child[year] || 0;
                         if (flowValue !== 0) {
                             const energeticName = child['Nodo Hijo'];
-                            const energeticColor = styleManager ? 
-                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') : 
+                            const energeticColor = styleManager ?
+                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') :
                                 '#A9A9A9';
-                            
+
                             console.log(`DEBUG: Procesando energía no aprovechada ${energeticName} - Color del StyleManager: ${energeticColor}`);
-                            
-                            source.push(ofertaTotalSecundariosIndex);
+
+                            const energeticIndex = nodeMap.get(energeticName);
+                            if (energeticIndex !== undefined) {
+                                source.push(energeticIndex);
+                                target.push(energiaNASecundariosIndex);
+                                value.push(Math.log10(Math.abs(flowValue) + 1));
+                                linkColors.push(energeticColor);
+                                linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                            }
                             target.push(energiaNASecundariosIndex);
                             value.push(Math.log10(Math.abs(flowValue) + 1));
                             linkColors.push(energeticColor);
                             linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                            
+
                             console.log(`DEBUG: Enlace Oferta Total ES → Energía No Aprovechada ES (${energeticName}): ${Math.abs(flowValue)} PJ - Color: ${energeticColor}`);
                         }
                     }

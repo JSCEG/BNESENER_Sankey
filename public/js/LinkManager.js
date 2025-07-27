@@ -70,8 +70,8 @@ class LinkManager {
             ['Biogás', ['Cogeneración']],
 
             // Energías renovables - estas van desde Oferta Interna Bruta, no directamente
-            // ['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
-            // ['Energia Hidraúlica', ['Cogeneración']], // Manejado por distribution-to-transformation
+            ['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
+            //['Energia Hidraúlica', ['Cogeneración']], // Manejado por distribution-to-transformation
             // ['Energía Hidráulica', ['Cogeneración']], // Manejado por distribution-to-transformation
             // ['Geoenergía', ['Geotérmica']], // Manejado por distribution-to-transformation
             // ['Energía solar', ['Solar Fotovoltaica']], // Manejado por distribution-to-transformation
