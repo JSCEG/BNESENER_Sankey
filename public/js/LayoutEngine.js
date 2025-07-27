@@ -23,7 +23,7 @@ class LayoutEngine {
     constructor(options = {}) {
         this.canvasWidth = options.canvasWidth || 1.0;
         this.canvasHeight = options.canvasHeight || 1.0;
-        this.minNodeSpacing = options.minNodeSpacing || 0.04; // Reduced spacing for better distribution
+        this.minNodeSpacing = options.minNodeSpacing || 0.02; // Reduced spacing for better distribution
         this.columnSpacing = options.columnSpacing || 0.2;
         this.marginTop = options.marginTop || 0.03; // Reduced top margin
         this.marginBottom = options.marginBottom || 0.03; // Reduced bottom margin
@@ -54,13 +54,13 @@ class LayoutEngine {
         });
 
         this.defineColumn('energia-primaria', {
-            x: 0.15, // Movido a la derecha para mejor espaciado
+            x: 0.12, // Movido a la derecha para mejor espaciado
             title: 'Energéticos Primarios',
             width: 0.15,
             nodes: [
                 'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
-                'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica', 
-                'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña', 
+                'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
+                'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña',
                 'Leña', 'Biogás'
             ],
             verticalDistribution: 'compact', // Agrupa los nodos verticalmente
@@ -69,7 +69,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('hub-primario', {
-            x: 0.25, // Movido a la derecha para mejor espaciado
+            x: 0.20, // Movido a la derecha para mejor espaciado
             title: 'Hub Primario',
             width: 0.1,
             nodes: ['Oferta Total'],
@@ -78,7 +78,7 @@ class LayoutEngine {
 
         // Dividir la columna de distribución para control individual de posición
         this.defineColumn('distribucion-consumo-oferta', {
-            x: 0.3, // Ajustado para mejor espaciado
+            x: 0.28, // Ajustado para mejor espaciado
             title: 'Consumo y Oferta',
             width: 0.15,
             nodes: [
@@ -91,7 +91,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('distribucion-exportacion', {
-            x: 0.3,
+            x: 0.28,
             title: 'Exportación',
             width: 0.15,
             nodes: ['Exportación'],
@@ -101,7 +101,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('distribucion-no-aprovechada', {
-            x: 0.3,
+            x: 0.28,
             title: 'No Aprovechada',
             width: 0.15,
             nodes: ['Energía No Aprovechada'],
@@ -112,7 +112,7 @@ class LayoutEngine {
 
         // Dividir la columna de transformación para control individual
         this.defineColumn('transformacion-refinerias', {
-            x: 0.4, // Corregido y ajustado para mejor espaciado
+            x: 0.35, // Corregido y ajustado para mejor espaciado
             title: 'Transformación',
             width: 0.15,
             nodes: ['Refinerías y Despuntadoras'],
@@ -122,7 +122,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('transformacion-coquizadoras', {
-            x: 0.4,
+            x: 0.35,
             title: 'Transformación',
             width: 0.15,
             nodes: ['Coquizadoras y Hornos'],
@@ -132,7 +132,7 @@ class LayoutEngine {
         });
         //Plantas de Gas y Fraccionadoras
         this.defineColumn('transformacion-Plantas de Gas', {
-            x: 0.4,
+            x: 0.35,
             title: 'Transformación',
             width: 0.15,
             nodes: ['Plantas de Gas y Fraccionadoras'],
@@ -140,8 +140,35 @@ class LayoutEngine {
             minY: 0.15, // Posiciona este grupo en la parte inferior-media
             maxY: 0.7
         });
+        this.defineColumn('energia-secundaria', {
+            x: 0.5,
+            title: 'Energéticos Secundarios',
+            width: 0.15,
+            nodes: [
+                'Coque de carbón',
+                'Coque de petróleo',
+                'Gas licuado de petróleo',
+                'Gasolinas y naftas',
+                'Querosenos',
+                'Diesel',
+                'Combustóleo',
+                'Gas natural seco',
+                'Otros energéticos'
+            ],
+            verticalDistribution: 'compact',
+            minY: 0.4,
+            maxY: 0.7
+        });
+
+        this.defineColumn('hub-secundario', {
+            x: 0.65,
+            title: 'Hub Secundario',
+            width: 0.1,
+            nodes: ['Producción bruta energía secundaria'],
+            verticalDistribution: 'center'
+        });
         this.defineColumn('generacion', {
-            x: 0.90, // Ajustado para mejor espaciado
+            x: 0.8, // Ajustado para mejor espaciado
             title: 'Generación',
             width: 0.15,
             nodes: [
@@ -153,7 +180,7 @@ class LayoutEngine {
         });
 
         this.defineColumn('centrales', {
-            x: 0.98, // Mantenido en el borde derecho
+            x: 0.95, // Mantenido en el borde derecho
             title: 'Centrales',
             width: 0.05,
             nodes: ['Centrales Eléctricas'],

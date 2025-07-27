@@ -1226,6 +1226,7 @@
                 geotermica: getNodeData('Geotérmica'),
                 eolica: getNodeData('Eólica'),
                 solarFotovoltaica: getNodeData('Solar Fotovoltaica'),
+                produccionBrutaEnergiaSecundaria: getNodeData('Producción bruta energía secundaria'),
                 ofertaTotal: getNodeData('Oferta Total')
             };
 
@@ -1328,6 +1329,7 @@
             const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
             const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
             const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
+            const produccionBrutaEnergiaSecundariaIndex = addNode(String('Producción bruta energía secundaria'), nodeData.produccionBrutaEnergiaSecundaria.color);
             // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
             const linkSigns = [];
             const processParentNode = (nodeData, parentIndex, parentName, allowNegatives = false) => {
@@ -1751,13 +1753,8 @@
                                             sourceIndex = ofertaInternaBrutaIndex;
                                         }
                                     } else { // Energía Secundaria
-                                        if (fuelName === 'Coque de carbón') {
-                                            sourceIndex = coquizadorasHornosIndex;
-                                        } else if (fuelName === 'Gas natural seco') {
-                                            sourceIndex = nodeData.plantasGasFraccionadoras ? plantasGasFraccionadorasIndex : refineriasDespuntadorasIndex;
-                                        } else {
-                                            sourceIndex = refineriasDespuntadorasIndex;
-                                        }
+                                        // Ahora la fuente de energía secundaria es el hub secundario
+                                        sourceIndex = produccionBrutaEnergiaSecundariaIndex;
                                     }
 
                                     if (sourceIndex !== undefined) {
@@ -1877,6 +1874,52 @@
             }
 
             // --- 10. Procesar Flujos (Tecnologías de Generación -> Centrales Eléctricas) ---
+            // (Esta sección se mantiene igual)
+
+            // --- 11. Lógica para Energéticos Secundarios ---
+            const secondaryEnergyTotals = new Map();
+            const transformationCenters = [
+                { name: 'Refinerías y Despuntadoras', index: refineriasDespuntadorasIndex, data: nodeData.refineriasDespuntadoras },
+                { name: 'Plantas de Gas y Fraccionadoras', index: plantasGasFraccionadorasIndex, data: nodeData.plantasGasFraccionadoras },
+                { name: 'Coquizadoras y Hornos', index: coquizadorasHornosIndex, data: nodeData.coquizadorasHornos }
+            ];
+
+            // 11.1: Flujos de Centros de Transformación -> Nodos de Energéticos Secundarios
+            transformationCenters.forEach(center => {
+                center.data['Nodos Hijo'].forEach(child => {
+                    const flowValue = child[year];
+                    if (child.tipo === 'Energía Secundaria' && child['Nodo Hijo'] !== 'Energía eléctrica' && flowValue !== undefined && flowValue > 0) {
+                        const childName = child['Nodo Hijo'];
+                        const childColor = child.color;
+                        const energyIndex = addNode(childName, childColor);
+
+                        source.push(center.index);
+                        target.push(energyIndex);
+                        value.push(Math.log10(flowValue + 1));
+                        linkColors.push(childColor);
+                        linkCustomdata.push(`${center.name} -> ${childName}: ${flowValue.toLocaleString()} PJ`);
+
+                        // Acumular el total para este energético secundario
+                        secondaryEnergyTotals.set(childName, (secondaryEnergyTotals.get(childName) || 0) + flowValue);
+                    }
+                });
+            });
+
+            // 11.2: Flujos de Nodos de Energéticos Secundarios -> Hub Secundario
+            for (const [energyName, totalValue] of secondaryEnergyTotals.entries()) {
+                if (energyName === 'Energía eléctrica') continue; // Excluir energía eléctrica
+                const energyIndex = nodeMap.get(energyName);
+                const energyColor = nodeColors[energyIndex];
+
+                source.push(energyIndex);
+                target.push(produccionBrutaEnergiaSecundariaIndex);
+                value.push(Math.log10(totalValue + 1));
+                linkColors.push(energyColor);
+                linkCustomdata.push(`Total ${energyName}: ${totalValue.toLocaleString()} PJ`);
+            }
+
+            // 11.3: Flujos de Hub Secundario -> Tecnologías de Generación
+            // (Esta lógica se manejará dentro de la sección 9, la cual debe ser ajustada para tomar del hub secundario)
             // Usar LinkManager para generar enlaces de generación a centrales
             if (linkManager) {
                 try {
