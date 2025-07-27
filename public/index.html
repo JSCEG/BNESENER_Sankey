@@ -2062,6 +2062,54 @@
                 });
             }
 
+            // 11.0.3: Crear nodo de Energía No Aprovechada de energéticos secundarios
+            let totalEnergiaNASecundarios = 0;
+            
+            // Calcular total de energía no aprovechada para energéticos secundarios
+            console.log('DEBUG: Verificando datos de energía no aprovechada...');
+            if (nodeData.energiaNoAprovechada && nodeData.energiaNoAprovechada['Nodos Hijo']) {
+                nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
+                    if (child.tipo === 'Energía Secundaria') {
+                        const flowValue = child[year] || 0;
+                        totalEnergiaNASecundarios += flowValue;
+                        console.log(`DEBUG: Agregando energía no aprovechada ${child['Nodo Hijo']}: ${flowValue} PJ`);
+                    }
+                });
+            }
+            console.log(`DEBUG: Total energía no aprovechada secundarios: ${totalEnergiaNASecundarios} PJ`);
+
+            // Crear nodo de energía no aprovechada si hay datos
+            let energiaNASecundariosIndex = null;
+            if (totalEnergiaNASecundarios !== 0) {
+                energiaNASecundariosIndex = addNode('Energía No Aprovechada de energéticos secundarios', '#A9A9A9');
+                console.log(`DEBUG: Creado nodo Energía No Aprovechada de energéticos secundarios: ${totalEnergiaNASecundarios} PJ`);
+            }
+
+            // Crear enlaces individuales desde Oferta Total ES hacia Energía No Aprovechada ES (uno por energético)
+            if (energiaNASecundariosIndex !== null && nodeData.energiaNoAprovechada && nodeData.energiaNoAprovechada['Nodos Hijo']) {
+                nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
+                    if (child.tipo === 'Energía Secundaria') {
+                        const flowValue = child[year] || 0;
+                        if (flowValue !== 0) {
+                            const energeticName = child['Nodo Hijo'];
+                            const energeticColor = styleManager ? 
+                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') : 
+                                '#A9A9A9';
+                            
+                            console.log(`DEBUG: Procesando energía no aprovechada ${energeticName} - Color del StyleManager: ${energeticColor}`);
+                            
+                            source.push(ofertaTotalSecundariosIndex);
+                            target.push(energiaNASecundariosIndex);
+                            value.push(Math.log10(Math.abs(flowValue) + 1));
+                            linkColors.push(energeticColor);
+                            linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+                            
+                            console.log(`DEBUG: Enlace Oferta Total ES → Energía No Aprovechada ES (${energeticName}): ${Math.abs(flowValue)} PJ - Color: ${energeticColor}`);
+                        }
+                    }
+                });
+            }
+
             // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
             // Usar los datos de ofertaInternaBruta pero filtrar solo energéticos secundarios
             if (nodeData.ofertaInternaBruta && nodeData.ofertaInternaBruta['Nodos Hijo']) {

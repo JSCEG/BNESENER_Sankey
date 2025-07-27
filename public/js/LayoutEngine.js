@@ -160,6 +160,16 @@ class LayoutEngine {
             maxY: 0.9
         });
 
+        this.defineColumn('distribucion-energia-na-secundarios', {
+            x: 0.75,
+            title: 'Energía No Aprovechada Secundarios',
+            width: 0.15,
+            nodes: ['Energía No Aprovechada de energéticos secundarios'],
+            verticalDistribution: 'center',
+            minY: 0.9, // Posiciona este nodo en la parte inferior
+            maxY: 0.95
+        });
+
         this.defineColumn('distribucion-no-aprovechada', {
             x: 0.28,
             title: 'No Aprovechada',
