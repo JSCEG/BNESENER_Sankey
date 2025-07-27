@@ -89,9 +89,9 @@ class LayoutEngine {
                 'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña',
                 'Leña', 'Biogás'
             ],
-            verticalDistribution: 'compact', // Agrupa los nodos verticalmente
-            minY: 0.4, // Aumentado para bajar y compactar más el bloque
-            maxY: 0.7  // Reducido para subir y compactar más el bloque
+            verticalDistribution: 'spread', // Agrupa los nodos verticalmente
+            minY: 0.2, // Aumentado para bajar y compactar más el bloque
+            maxY: 0.9  // Reducido para subir y compactar más el bloque
         });
 
         // Dividir hubs por tipo de energía
@@ -226,9 +226,9 @@ class LayoutEngine {
                 'Otros energéticos',
                 'Energía eléctrica'
             ],
-            verticalDistribution: 'compact',
+            verticalDistribution: 'spread',
             minY: 0.3,
-            maxY: 0.55
+            maxY: 0.9
         });
 
         // Hub secundario movido a columna anterior (hub-secundario-oferta)
