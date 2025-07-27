@@ -111,6 +111,7 @@ class LinkManager {
                 'Turbogás',
                 'Ciclo Combinado',
                 'Nucleoeléctrica',
+                'Geotérmica'
                 // Agregamos otras tecnologías gradualmente
             ]]
         ]));
@@ -120,13 +121,15 @@ class LinkManager {
             ['Refinerías y Despuntadoras', [
                 { target: 'Térmica Convencional', energetics: ['Combustóleo', 'Coque de petróleo'] },
                 { target: 'Combustión Interna', energetics: ['Diesel', 'Combustóleo'] },
-                { target: 'Turbogás', energetics: ['Diesel'] }
+                { target: 'Turbogás', energetics: ['Diesel'] },
+                { target: 'Cogeneración', energetics: ['Diesel', 'Combustóleo'] }
             ]],
             ['Plantas de Gas y Fraccionadoras', [
                 { target: 'Térmica Convencional', energetics: ['Gas natural seco'] },
                 { target: 'Combustión Interna', energetics: ['Gas natural seco'] },
                 { target: 'Turbogás', energetics: ['Gas natural seco'] },
-                { target: 'Ciclo Combinado', energetics: ['Gas natural seco'] }
+                { target: 'Ciclo Combinado', energetics: ['Gas natural seco'] },
+                { target: 'Cogeneración', energetics: ['Gas natural seco'] }
             ]]
         ]));
 
