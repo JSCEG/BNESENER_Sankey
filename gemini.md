@@ -245,12 +245,75 @@ A continuación se presenta la lista de nodos padre utilizada en el archivo dato
 
   * Los colores de los nodos padre y los enlaces se toman directamente de la propiedad `color` definida en cada "Nodo Padre" y "Nodo Hijo" en `datos_energia_completo.json`.
   * Se utiliza `typeof color === 'string' ? color : '#888'` para asegurar que el color sea un string válido, usando un gris por defecto si no lo es.
+  * Se utiliza `typeof color === 'string' ? color : '#888'` para asegurar que el color sea un string válido, usando un gris por defecto si no lo es.
 * **Patrones Detectados:**
 
   * Los "Nodos Hijo" se identifican por `Nodo Hijo` (nombre), `tipo` (Energía Primaria/Secundaria), `id_hijo` y `color`.
   * Los valores de flujo se obtienen por año (ej. `2010`, `2011`).
   * El `id_hijo` se utiliza para ordenar los nodos hijo dentro de cada nodo padre.
   * Los valores negativos en `Variación de Inventarios` se manejan con `Math.abs()` para el valor del enlace, pero se suman/restan al `primaryEnergyTotals` según su signo. En los popups de los enlaces, los valores negativos mantienen su signo para reflejar la disminución de inventario.
+
+### Posicionamiento de Nodos y Comportamiento de `updateSankey`
+
+La función `updateSankey` en `index.html` es central para la visualización del diagrama. Además de procesar los flujos, también gestiona el posicionamiento de los nodos y la actualización general del gráfico.
+
+**Ejemplos de Posicionamiento de Nodos:**
+
+El posicionamiento de los nodos se define en la sección `nodeX` y `nodeY` dentro de `updateSankey`. Para ajustar la posición de un nodo, se modifican sus coordenadas `x` (horizontal) y `y` (vertical) en un rango de 0 a 1.
+
+- **Mover un nodo:**
+  - "Cambia la posición horizontal de 'Oferta Interna Bruta' a 0.3 en `index.html`."
+  - "Mueve 'Centrales Eléctricas' más abajo, ajustando su `nodeY` a 0.5 en `index.html`."
+
+- **Alinear nodos:**
+  - "Alinea verticalmente 'Refinerías y Despuntadoras' y 'Plantas de Gas y Fraccionadoras' en `index.html`." (Esto implicaría darles el mismo `nodeY`).
+
+**Comportamiento de `updateSankey`:**
+
+La función `updateSankey` es responsable de:
+- Limpiar el diagrama existente (`Plotly.purge`).
+- Obtener los datos de los nodos y sus hijos para el año seleccionado.
+- Definir los nodos principales y sus colores.
+- Procesar los flujos de energía (entradas, salidas, transformaciones).
+- Calcular las posiciones de los nodos (`nodeX`, `nodeY`).
+- Configurar el objeto de datos para Plotly (`data`).
+- Renderizar el diagrama de Sankey (`Plotly.react`).
+
+**Ejemplos de Interacción con `updateSankey`:**
+- "Explica cómo `updateSankey` maneja la creación de los enlaces entre los nodos de transformación y el hub de energía secundaria."
+- "Quiero que `updateSankey` recalcule las posiciones de todos los nodos después de un cambio en los datos. ¿Cómo puedo forzar una actualización completa?"
+- "¿Qué secciones de `updateSankey` son responsables de la lógica de los popups de los nodos?"
+
+### Posicionamiento de Nodos y Comportamiento de `updateSankey`
+
+La función `updateSankey` en `index.html` es central para la visualización del diagrama. Además de procesar los flujos, también gestiona el posicionamiento de los nodos y la actualización general del gráfico.
+
+**Ejemplos de Posicionamiento de Nodos:**
+
+El posicionamiento de los nodos se define en la sección `nodeX` y `nodeY` dentro de `updateSankey`. Para ajustar la posición de un nodo, se modifican sus coordenadas `x` (horizontal) y `y` (vertical) en un rango de 0 a 1.
+
+- **Mover un nodo:**
+  - "Cambia la posición horizontal de 'Oferta Interna Bruta' a 0.3 en `index.html`."
+  - "Mueve 'Centrales Eléctricas' más abajo, ajustando su `nodeY` a 0.5 en `index.html`."
+
+- **Alinear nodos:**
+  - "Alinea verticalmente 'Refinerías y Despuntadoras' y 'Plantas de Gas y Fraccionadoras' en `index.html`." (Esto implicaría darles el mismo `nodeY`).
+
+**Comportamiento de `updateSankey`:**
+
+La función `updateSankey` es responsable de:
+- Limpiar el diagrama existente (`Plotly.purge`).
+- Obtener los datos de los nodos y sus hijos para el año seleccionado.
+- Definir los nodos principales y sus colores.
+- Procesar los flujos de energía (entradas, salidas, transformaciones).
+- Calcular las posiciones de los nodos (`nodeX`, `nodeY`).
+- Configurar el objeto de datos para Plotly (`data`).
+- Renderizar el diagrama de Sankey (`Plotly.react`).
+
+**Ejemplos de Interacción con `updateSankey`:**
+- "Explica cómo `updateSankey` maneja la creación de los enlaces entre los nodos de transformación y el hub de energía secundaria."
+- "Quiero que `updateSankey` recalcule las posiciones de todos los nodos después de un cambio en los datos. ¿Cómo puedo forzar una actualización completa?"
+- "¿Qué secciones de `updateSankey` son responsables de la lógica de los popups de los nodos?"
 
 #### Creación de Flujos y Popups en `index.html`
 
@@ -386,3 +449,75 @@ Con el objetivo de mejorar la legibilidad y mantenibilidad del script en `index.
   * **Problema:** La carga inicial de los datos para cada nodo principal era repetitiva, con una variable declarada para cada uno.
   * **Solución:** Se introdujo una función auxiliar `getNodeData(nodeName)` que busca los datos de un nodo por su nombre. Los datos de todos los nodos ahora se almacenan en un único objeto `nodeData`, lo que reduce la duplicación y facilita la gestión del código.
   * **Impacto:** El código es más limpio y fácil de mantener. No hay cambios en la funcionalidad del diagrama.
+
+
+### 4. Implementar los Cambios
+
+Utiliza las herramientas disponibles para aplicar los cambios según el plan:
+
+- **Modificación de Archivos:** Usa `replace` para cambios específicos en el contenido de los archivos o `write_file` para crear nuevos archivos o sobrescribir contenido.
+- **Ejecución de Comandos:** Utiliza `run_shell_command` para tareas como instalar dependencias, ejecutar scripts de construcción o formatear código.
+
+### 5. Verificar y Validar
+
+Después de implementar los cambios, es crucial verificar que todo funcione como se espera y que se adhiera a los estándares del proyecto:
+
+- **Ejecutar Pruebas:** Si existen, ejecuta las pruebas del proyecto para asegurar que los cambios no introdujeron regresiones.
+- **Linting y Formateo:** Ejecuta las herramientas de linting y formateo del proyecto para mantener la calidad del código y la coherencia del estilo.
+- **Construcción del Proyecto:** Si aplica, construye el proyecto para asegurar que no haya errores de compilación.
+- **Revisión Manual:** Realiza una revisión manual de los cambios para detectar cualquier problema que las pruebas automatizadas no puedan capturar.
+
+### 6. Iterar y Refinar
+
+Si la verificación revela problemas o si el usuario solicita ajustes, repite los pasos anteriores, utilizando el feedback para refinar la solución. Mantén un registro de las interacciones y los cambios para mantener el contexto actualizado.
+
+Al seguir estos pasos, se busca maximizar la eficiencia y precisión de la asistencia de Gemini en el desarrollo del proyecto Gemini Sankey.
+
+### Refactorización del Código
+
+Con el objetivo de mejorar la legibilidad y mantenibilidad del script en `index.html`, se han realizado las siguientes refactorizaciones:
+
+* **Carga de Datos de Nodos:**
+  * **Problema:** La carga inicial de los datos para cada nodo principal era repetitiva, con una variable declarada para cada uno.
+  * **Solución:** Se introdujo una función auxiliar `getNodeData(nodeName)` que busca los datos de un nodo por su nombre. Los datos de todos los nodos ahora se almacenan en un único objeto `nodeData`, lo que reduce la duplicación y facilita la gestión del código.
+  * **Impacto:** El código es más limpio y fácil de mantener. No hay cambios en la funcionalidad del diagrama.
+
+## Interacción con Gemini para Tareas Específicas del Diagrama de Sankey
+
+Para interactuar de manera más eficiente con Gemini en tareas relacionadas con el diagrama de Sankey, por favor, utiliza las siguientes pautas y ejemplos:
+
+### 1. Buscar o Inspeccionar Nodos/Enlaces
+
+Cuando necesites información sobre un nodo o enlace específico, o quieras entender cómo se manejan ciertos datos, sé lo más preciso posible. Utiliza el nombre exacto del nodo o el tipo de energético.
+
+**Ejemplos:**
+- "Busca la definición del nodo 'Centrales Eléctricas' en `datos_energia_completo.json`."
+- "Muéstrame la lógica de creación de enlaces para 'Oferta Total (Hub)' en `index.html`."
+- "¿Cómo se calcula el popup para el nodo 'Refinerías y Despuntadoras' en `PopupManager.js`?"
+- "Encuentra todas las ocurrencias de 'Gas natural seco' en `index.html`."
+
+### 2. Modificar o Eliminar Enlaces
+
+Para solicitar la modificación o eliminación de enlaces, especifica claramente el nodo de origen, el nodo de destino y, si es posible, el tipo de energético o cualquier condición relevante. Si es una eliminación, indica si es un enlace directo o si se genera a través de alguna lógica.
+
+**Ejemplos:**
+- "Elimina los enlaces directos desde 'Refinerías y Despuntadoras' a 'Centrales Eléctricas' en `index.html`."
+- "Asegúrate de que 'Coque de carbón' fluya solo al nodo 'Producción bruta energía secundaria' y no directamente a 'Carboeléctrica' en el fallback manual de `index.html`."
+- "Modifica la lógica en `LinkManager.js` para que los enlaces de 'Oferta Interna Bruta' a 'Consumo Propio del Sector' sean de color 'gris'."
+
+### 3. Crear Nodos Filtrados o Agregados
+
+Si necesitas un nuevo nodo que represente un subconjunto o una agregación de energéticos, describe claramente el propósito del nodo y los criterios de filtrado (por tipo de energía, por nombre, etc.).
+
+**Ejemplos:**
+- "Crea un nodo 'Consumo Final de Energéticos Primarios' que agrupe todos los flujos de energía primaria que llegan a 'Consumo Final Total'."
+- "Implementa un nodo 'Total de Energéticos Secundarios Transformados' que sume las salidas de 'Refinerías y Despuntadoras', 'Plantas de Gas y Fraccionadoras' y 'Coquizadoras y Hornos'."
+
+### 4. Revisar y Ajustar Popups de Nodos
+
+Para solicitar cambios en los popups, indica el nodo específico y describe el formato deseado, haciendo referencia a ejemplos existentes si es posible.
+
+**Ejemplos:**
+- "Haz que el popup del nodo 'Producción bruta energía secundaria' muestre 'Entra', 'Sale' y el porcentaje de eficiencia, similar al popup de 'Centrales Eléctricas'."
+- "Añade una sección al popup de 'Oferta Interna Bruta' que desglose los energéticos primarios por su valor."
+- "Simplifica el popup de los nodos de 'Energía Primaria' para que solo muestre el nombre y el valor total."

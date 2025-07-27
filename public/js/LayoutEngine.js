@@ -127,7 +127,7 @@ class LayoutEngine {
             width: 0.15,
             nodes: ['Coquizadoras y Hornos'],
             verticalDistribution: 'spread',
-            minY: -0.45, // Posiciona este grupo en la parte inferior-media
+            minY: -0.65, // Posiciona este grupo en la parte inferior-media
             maxY: 0.9
         });
         //Plantas de Gas y Fraccionadoras
@@ -137,11 +137,11 @@ class LayoutEngine {
             width: 0.15,
             nodes: ['Plantas de Gas y Fraccionadoras'],
             verticalDistribution: 'center',
-            minY: 0.15, // Posiciona este grupo en la parte inferior-media
+            minY: -0.3, // Posiciona este grupo en la parte inferior-media
             maxY: 0.7
         });
         this.defineColumn('energia-secundaria', {
-            x: 0.5,
+            x: 0.4,
             title: 'Energéticos Secundarios',
             width: 0.15,
             nodes: [
@@ -156,19 +156,19 @@ class LayoutEngine {
                 'Otros energéticos'
             ],
             verticalDistribution: 'compact',
-            minY: 0.4,
-            maxY: 0.7
+            minY: 0.3,
+            maxY: 0.45
         });
 
         this.defineColumn('hub-secundario', {
-            x: 0.65,
+            x: 0.5,
             title: 'Hub Secundario',
             width: 0.1,
             nodes: ['Producción bruta energía secundaria'],
             verticalDistribution: 'center'
         });
         this.defineColumn('generacion', {
-            x: 0.8, // Ajustado para mejor espaciado
+            x: 0.55, // Ajustado para mejor espaciado
             title: 'Generación',
             width: 0.15,
             nodes: [
@@ -176,7 +176,9 @@ class LayoutEngine {
                 'Turbogás', 'Ciclo Combinado', 'Nucleoeléctrica', 'Cogeneración',
                 'Geotérmica', 'Eólica', 'Solar Fotovoltaica'
             ],
-            verticalDistribution: 'compact'
+            verticalDistribution: 'compact',
+            minY: 0.75,
+            maxY: 0.9
         });
 
         this.defineColumn('centrales', {
