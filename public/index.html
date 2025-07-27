@@ -1699,26 +1699,26 @@
                     linkCustomdata.push(...distributionToTransformationLinks.linkCustomdata);
 
                     // Generar enlaces de centros de transformación a tecnologías de generación
-                    const transformationToGenerationLinks = linkManager.generateDataLinks(
-                        nodeMap,
-                        nodeColors,
-                        nodeData,
-                        year,
-                        {
-                            mapTypes: ['transformation-to-generation']
-                        }
-                    );
+                    // Esta lógica ahora se maneja manualmente a través del hub secundario.
+                    // const transformationToGenerationLinks = linkManager.generateDataLinks(
+                    //     nodeMap,
+                    //     nodeColors,
+                    //     nodeData,
+                    //     year,
+                    //     {
+                    //         mapTypes: ['transformation-to-generation']
+                    //     }
+                    // );
 
-                    // Agregar enlaces de transformación a generación
-                    source.push(...transformationToGenerationLinks.source);
-                    target.push(...transformationToGenerationLinks.target);
-                    value.push(...transformationToGenerationLinks.value);
-                    linkColors.push(...transformationToGenerationLinks.linkColors);
-                    linkCustomdata.push(...transformationToGenerationLinks.linkCustomdata);
+                    // // Agregar enlaces de transformación a generación
+                    // source.push(...transformationToGenerationLinks.source);
+                    // target.push(...transformationToGenerationLinks.target);
+                    // value.push(...transformationToGenerationLinks.value);
+                    // linkColors.push(...transformationToGenerationLinks.linkColors);
+                    // linkCustomdata.push(...transformationToGenerationLinks.linkCustomdata);
 
                     console.log(`LinkManager generó ${fuelToGenerationLinks.source.length} enlaces fuel-to-generation`);
                     console.log(`LinkManager generó ${distributionToTransformationLinks.source.length} enlaces distribution-to-transformation`);
-                    console.log(`LinkManager generó ${transformationToGenerationLinks.source.length} enlaces transformation-to-generation`);
                 } catch (error) {
                     console.warn('Error usando LinkManager para mapeo automático:', error);
 
@@ -1827,13 +1827,8 @@
                                         sourceIndex = ofertaInternaBrutaIndex;
                                     }
                                 } else { // Energía Secundaria
-                                    if (fuelName === 'Coque de carbón') {
-                                        sourceIndex = coquizadorasHornosIndex;
-                                    } else if (fuelName === 'Gas natural seco') {
-                                        sourceIndex = nodeData.plantasGasFraccionadoras ? plantasGasFraccionadorasIndex : refineriasDespuntadorasIndex;
-                                    } else {
-                                        sourceIndex = refineriasDespuntadorasIndex;
-                                    }
+                                    // Lógica para energéticos secundarios (comentada para eliminar enlaces directos a centrales eléctricas)
+                                    // sourceIndex = produccionBrutaEnergiaSecundariaIndex; // Esto se manejará en una etapa posterior
                                 }
 
                                 if (sourceIndex !== undefined) {
