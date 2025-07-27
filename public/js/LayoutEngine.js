@@ -43,19 +43,29 @@ class LayoutEngine {
     initializeDefaultColumns() {
         // Definir columnas lógicas del flujo energético con mejor distribución horizontal
         // para aprovechar el canvas expandido al 95% del ancho
-        this.defineColumn('fuentes', {
+        // Dividir la columna fuentes para mejor control de posición
+        this.defineColumn('fuentes-secundarios', {
+            x: 0.45,
+            title: 'Fuentes Secundarios',
+            width: 0.15,
+            nodes: ['Importación de energéticos secundarios'],
+            verticalDistribution: 'center',
+            minY: -0.1, // Arriba
+            maxY: 0.25
+        });
+
+        this.defineColumn('fuentes-primarios', {
             x: 0.05,
-            title: 'Fuentes',
+            title: 'Fuentes Primarios',
             width: 0.15,
             nodes: [
                 'Producción', 
                 'Importación de energéticos primarios', 
-                'Variación de inventarios de Energéticos primarios',
-                'Importación de energéticos secundarios'
+                'Variación de inventarios de Energéticos primarios'
             ],
-            verticalDistribution: 'spread', // Agrupa los nodos verticalmente
-            minY: 0.2, // Expandido para acomodar el nuevo nodo
-            maxY: 0.8  // Expandido para acomodar el nuevo nodo
+            verticalDistribution: 'spread',
+            minY: 0.1, // Medio-abajo
+            maxY: 0.8
         });
 
         this.defineColumn('energia-primaria', {
@@ -73,27 +83,50 @@ class LayoutEngine {
             maxY: 0.7  // Reducido para subir y compactar más el bloque
         });
 
+        // Dividir hubs por tipo de energía
+        this.defineColumn('hub-secundario-oferta', {
+            x: 0.53,
+            title: 'Hub Secundarios',
+            width: 0.1,
+            nodes: ['Oferta Total (Energéticos Secundarios)'],
+            verticalDistribution: 'center',
+            minY: 0.2, // Arriba-medio
+            maxY: 0.65
+        });
+
         this.defineColumn('hub-primario', {
-            x: 0.20, // Movido a la derecha para mejor espaciado
-            title: 'Hub Primario',
+            x: 0.20,
+            title: 'Hub Primarios',
             width: 0.1,
             nodes: ['Oferta Total'],
-            verticalDistribution: 'center'
+            verticalDistribution: 'center',
+            minY: 0.5, // Medio-abajo
+            maxY: 0.65
         });
 
         // Dividir la columna de distribución para control individual de posición
-        this.defineColumn('distribucion-consumo-oferta', {
-            x: 0.28, // Ajustado para mejor espaciado
-            title: 'Consumo y Oferta',
+        // Dividir distribución por tipo de energía
+        this.defineColumn('distribucion-secundarios', {
+            x: 0.58,
+            title: 'Distribución Secundarios',
+            width: 0.15,
+            nodes: ['Oferta Interna Bruta de energéticos secundarios'],
+            verticalDistribution: 'center',
+            minY: 0.2, // Medio
+            maxY: 0.5
+        });
+
+        this.defineColumn('distribucion-primarios', {
+            x: 0.28,
+            title: 'Distribución Primarios',
             width: 0.15,
             nodes: [
                 'Consumo Propio del Sector',
-                'Oferta Interna Bruta',
-                'Oferta Interna Bruta de energéticos secundarios'
+                'Oferta Interna Bruta'
             ],
             verticalDistribution: 'spread',
-            minY: 0.3, // Expandido para acomodar el nuevo nodo
-            maxY: 0.6  // Expandido para acomodar el nuevo nodo
+            minY: 0.58, // Abajo
+            maxY: 0.5
         });
 
         this.defineColumn('distribucion-exportacion', {
@@ -123,7 +156,7 @@ class LayoutEngine {
             width: 0.15,
             nodes: ['Refinerías y Despuntadoras'],
             verticalDistribution: 'center',
-            minY: 0.25, // Posiciona este grupo en la parte superior-media
+            minY: 0.45, // Posiciona este grupo en la parte superior-media
             maxY: 0.4
         });
 
@@ -133,7 +166,7 @@ class LayoutEngine {
             width: 0.15,
             nodes: ['Coquizadoras y Hornos'],
             verticalDistribution: 'spread',
-            minY: -0.65, // Posiciona este grupo en la parte inferior-media
+            minY: -0.45, // Posiciona este grupo en la parte inferior-media
             maxY: 0.9
         });
         //Plantas de Gas y Fraccionadoras
@@ -143,7 +176,7 @@ class LayoutEngine {
             width: 0.15,
             nodes: ['Plantas de Gas y Fraccionadoras'],
             verticalDistribution: 'center',
-            minY: -0.3, // Posiciona este grupo en la parte inferior-media
+            minY: -0.1, // Posiciona este grupo en la parte inferior-media
             maxY: 0.7
         });
         this.defineColumn('energia-secundaria', {
@@ -166,13 +199,7 @@ class LayoutEngine {
             maxY: 0.45
         });
 
-        this.defineColumn('hub-secundario', {
-            x: 0.5,
-            title: 'Hub Secundario',
-            width: 0.1,
-            nodes: ['Oferta Total (Energéticos Secundarios)'],
-            verticalDistribution: 'center'
-        });
+        // Hub secundario movido a columna anterior (hub-secundario-oferta)
         this.defineColumn('generacion', {
             x: 0.55, // Ajustado para mejor espaciado
             title: 'Generación',
@@ -188,11 +215,13 @@ class LayoutEngine {
         });
 
         this.defineColumn('centrales', {
-            x: 0.95, // Mantenido en el borde derecho
+            x: 0.65, // Mantenido en el borde derecho
             title: 'Centrales',
             width: 0.05,
             nodes: ['Centrales Eléctricas'],
-            verticalDistribution: 'center'
+            verticalDistribution: 'compact',
+            minY: 0.65,
+            maxY: 0.8
         });
 
         console.log('LayoutEngine inicializado con', this.columnDefinitions.size, 'columnas');
