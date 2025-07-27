@@ -1317,16 +1317,16 @@
             const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
             const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
             const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
-            const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
-            const termicaConvencionalIndex = addNode(String('Térmica Convencional'), nodeData.termicaConvencional.color);
-            const combustionInternaIndex = addNode(String('Combustión Interna'), nodeData.combustionInterna.color);
-            const turbogasIndex = addNode(String('Turbogás'), nodeData.turbogas.color);
-            const cicloCombinadoIndex = addNode(String('Ciclo Combinado'), nodeData.cicloCombinado.color);
-            const nucleoelectricaIndex = addNode(String('Nucleoeléctrica'), nodeData.nucleoelectrica.color);
-            const cogeneracionIndex = addNode(String('Cogeneración'), nodeData.cogeneracion.color);
-            const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
-            const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
-            const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
+            // const carboelectricaIndex = addNode(String('Carboeléctrica'), nodeData.carboelectrica.color);
+            // const termicaConvencionalIndex = addNode(String('Térmica Convencional'), nodeData.termicaConvencional.color);
+            // const combustionInternaIndex = addNode(String('Combustión Interna'), nodeData.combustionInterna.color);
+            // const turbogasIndex = addNode(String('Turbogás'), nodeData.turbogas.color);
+            // const cicloCombinadoIndex = addNode(String('Ciclo Combinado'), nodeData.cicloCombinado.color);
+            // const nucleoelectricaIndex = addNode(String('Nucleoeléctrica'), nodeData.nucleoelectrica.color);
+            // const cogeneracionIndex = addNode(String('Cogeneración'), nodeData.cogeneracion.color);
+            // const geotermicaIndex = addNode(String('Geotérmica'), nodeData.geotermica.color);
+            // const eolicaIndex = addNode(String('Eólica'), nodeData.eolica.color);
+            // const solarFotovoltaicaIndex = addNode(String('Solar Fotovoltaica'), nodeData.solarFotovoltaica.color);
             // Nodo eliminado: Producción bruta de energía secundaria - ahora se usa Oferta Total (Energéticos Secundarios)
             // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
             const linkSigns = [];
@@ -1832,7 +1832,7 @@
             console.log(`DEBUG: Total importación secundarios: ${totalImportacionSecundarios} PJ`);
 
             // Crear los nodos hub para energéticos secundarios PRIMERO
-            const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
+            // const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
             // const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
 
             // 11.0.1: Crear nodo de Variación de inventarios de energéticos secundarios
@@ -2161,7 +2161,7 @@
                 const energyColor = nodeColors[energyIndex];
 
                 source.push(energyIndex);
-                target.push(ofertaTotalSecundariosIndex);
+                target.push(centralesElectricasIndex); // O el hub destino que corresponda
                 value.push(Math.log10(totalValue + 1));
                 linkColors.push(energyColor);
                 linkCustomdata.push(`Total ${energyName}: ${totalValue.toLocaleString()} PJ`);
