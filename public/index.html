@@ -1873,6 +1873,7 @@
 
             // --- 11. Lógica para Energéticos Secundarios ---
             const secondaryEnergyTotals = new Map();
+            const secondaryEnergyData = new Map(); // Para almacenar datos detallados de energéticos secundarios
             const transformationCenters = [
                 { name: 'Refinerías y Despuntadoras', index: refineriasDespuntadorasIndex, data: nodeData.refineriasDespuntadoras },
                 { name: 'Plantas de Gas y Fraccionadoras', index: plantasGasFraccionadorasIndex, data: nodeData.plantasGasFraccionadoras },
@@ -1888,6 +1889,24 @@
                         const childColor = child.color;
                         const energyIndex = addNode(childName, childColor);
 
+                        // Guardar datos del energético secundario para popups
+                        if (!secondaryEnergyData.has(childName)) {
+                            secondaryEnergyData.set(childName, {
+                                name: childName,
+                                tipo: child.tipo,
+                                descripcion: child.descripcion || `Energético secundario del sistema energético`,
+                                color: childColor,
+                                sources: new Map(), // Centros de transformación que lo producen
+                                totalProduction: 0,
+                                totalConsumption: 0
+                            });
+                        }
+
+                        // Actualizar datos de producción
+                        const energyData = secondaryEnergyData.get(childName);
+                        energyData.sources.set(center.name, flowValue);
+                        energyData.totalProduction += flowValue;
+
                         source.push(center.index);
                         target.push(energyIndex);
                         value.push(Math.log10(flowValue + 1));
@@ -1899,6 +1918,41 @@
                     }
                 });
             });
+
+            // Calcular consumo total de energéticos secundarios en tecnologías de generación
+            const generationNodes = [
+                { data: nodeData.carboelectrica, name: 'Carboeléctrica' },
+                { data: nodeData.termicaConvencional, name: 'Térmica Convencional' },
+                { data: nodeData.combustionInterna, name: 'Combustión Interna' },
+                { data: nodeData.turbogas, name: 'Turbogás' },
+                { data: nodeData.cicloCombinado, name: 'Ciclo Combinado' },
+                { data: nodeData.nucleoelectrica, name: 'Nucleoeléctrica' },
+                { data: nodeData.cogeneracion, name: 'Cogeneración' }
+            ];
+
+            generationNodes.forEach(genNode => {
+                if (genNode.data && genNode.data['Nodos Hijo']) {
+                    genNode.data['Nodos Hijo'].forEach(child => {
+                        const flowValue = child[year];
+                        if (child.tipo === 'Energía Secundaria' && flowValue !== undefined && flowValue < 0) {
+                            const energyName = child['Nodo Hijo'];
+                            if (secondaryEnergyData.has(energyName)) {
+                                const energyData = secondaryEnergyData.get(energyName);
+                                energyData.totalConsumption += Math.abs(flowValue);
+                            }
+                        }
+                    });
+                }
+            });
+
+            // Calcular eficiencia para cada energético secundario
+            for (const [energyName, energyData] of secondaryEnergyData.entries()) {
+                if (energyData.totalProduction > 0) {
+                    energyData.efficiency = (energyData.totalConsumption / energyData.totalProduction * 100).toFixed(1);
+                } else {
+                    energyData.efficiency = 0;
+                }
+            }
 
             // 11.2: Flujos de Nodos de Energéticos Secundarios -> Hub Secundario
             for (const [energyName, totalValue] of secondaryEnergyTotals.entries()) {
@@ -2207,6 +2261,22 @@
                                     unit: 'PJ'
                                 };
                             }
+                        } else if (secondaryEnergyData.has(label)) {
+                            // Nodo de energético secundario
+                            const energyData = secondaryEnergyData.get(label);
+                            nodeDataForPopup = {
+                                nombre: energyData.name,
+                                descripcion: energyData.descripcion,
+                                tipo: energyData.tipo,
+                                color: energyData.color
+                            };
+
+                            additionalData = {
+                                total_production: energyData.totalProduction,
+                                total_consumption: energyData.totalConsumption,
+                                efficiency: energyData.efficiency,
+                                unit: 'PJ'
+                            };
                         } else {
                             // Para otros nodos, buscar en nodeData
                             const nodeKeys = Object.keys(nodeData);

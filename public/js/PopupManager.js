@@ -117,6 +117,11 @@ class PopupManager {
             footer: 'Año: %{year}'
         };
 
+        // === TEMPLATE SIMPLIFICADO PARA ENERGÉTICOS SECUNDARIOS ===
+        const secondaryEnergyTemplate = {
+            type: 'secondary_energy'
+        };
+
         // Usar el mismo template dinámico para todos los tipos
         this.nodeTemplates.set('primary_energy', dynamicTemplate);
         this.nodeTemplates.set('transformation', dynamicTemplate);
@@ -124,6 +129,7 @@ class PopupManager {
         this.nodeTemplates.set('hub', hubTemplate); // Usar el nuevo template para hubs
         this.nodeTemplates.set('inventory_variation', inventoryVariationTemplate);
         this.nodeTemplates.set('consumption', dynamicTemplate);
+        this.nodeTemplates.set('secondary_energy', secondaryEnergyTemplate); // Nuevo template para energéticos secundarios
         this.nodeTemplates.set('default', dynamicTemplate);
 
         // Template simple para nodos de fuente (solo es un marcador)
@@ -235,6 +241,11 @@ class PopupManager {
             return nodeTypeMapping[nodeName];
         }
 
+        // Detectar energéticos secundarios por additionalData
+        if (nodeData && nodeData.tipo === 'Energía Secundaria') {
+            return 'secondary_energy';
+        }
+
         // Inferir tipo basado en características del nodo
         if (nodeData && nodeData['Nodos Hijo']) {
             const children = nodeData['Nodos Hijo'];
@@ -290,6 +301,14 @@ class PopupManager {
         }
         if (additionalData.variacion_negativa !== undefined) {
             templateData.hasNegativeVariation = additionalData.variacion_negativa < 0;
+        }
+
+        // Añadir condiciones para energéticos secundarios
+        if (additionalData.total_consumption !== undefined) {
+            templateData.hasConsumption = additionalData.total_consumption > 0;
+        }
+        if (additionalData.efficiency !== undefined) {
+            templateData.hasEfficiency = parseFloat(additionalData.efficiency) > 0;
         }
         // Procesar datos específicos según el tipo de nodo
         if (nodeData && nodeData['Nodos Hijo']) {
@@ -507,6 +526,12 @@ class PopupManager {
             const salida = this.formatNumber(data.total_output || 0);
             const eficiencia = data.efficiency || 0;
             return `${data.label}\n↓${entrada}PJ ↑${salida}PJ ⚡${eficiencia}%`;
+        }
+
+        // Lógica especial para energéticos secundarios
+        if (template.type === 'secondary_energy') {
+            const totalValue = this.formatNumber(data.total_production || 0);
+            return `${data.label}: ${totalValue} PJ`;
         }
 
         let text = `${this.interpolateTemplate(template.title, data)}\n`;
@@ -1215,6 +1240,68 @@ class PopupManager {
         style.id = 'popup-styles';
         style.textContent = css;
         document.head.appendChild(style);
+    }
+
+    /**
+     * Formatea el valor de un campo según su tipo
+     * @param {*} value - Valor a formatear
+     * @param {string} format - Tipo de formato ('number', 'percentage', 'breakdown', etc.)
+     * @param {string} unit - Unidad del valor
+     * @returns {string} Valor formateado
+     */
+    formatFieldValue(value, format = 'text', unit = '') {
+        if (value === undefined || value === null) {
+            return 'N/A';
+        }
+
+        switch (format) {
+            case 'number':
+                return this.formatNumber(value);
+            
+            case 'percentage':
+                return `${this.formatNumber(value)}%`;
+            
+            case 'breakdown':
+                if (Array.isArray(value)) {
+                    return value.map(item => 
+                        `${item.name}: ${this.formatNumber(item.value)} ${unit} (${item.percentage}%)`
+                    ).join('\n  ');
+                }
+                return value.toString();
+            
+            case 'currency':
+                return new Intl.NumberFormat(this.formatConfig.locale, {
+                    style: 'currency',
+                    currency: this.formatConfig.currency
+                }).format(value);
+            
+            default:
+                return value.toString();
+        }
+    }
+
+    /**
+     * Formatea un número con separadores de miles
+     * @param {number} value - Número a formatear
+     * @returns {string} Número formateado
+     */
+    formatNumber(value) {
+        if (typeof value !== 'number' || isNaN(value)) {
+            return '0';
+        }
+
+        return new Intl.NumberFormat(this.formatConfig.locale, this.formatConfig.numberFormat).format(value);
+    }
+
+    /**
+     * Obtiene la lista de templates disponibles
+     * @returns {Object} Templates disponibles
+     */
+    getAvailableTemplates() {
+        return {
+            nodeTemplates: Array.from(this.nodeTemplates.keys()),
+            linkTemplates: Array.from(this.linkTemplates.keys())
+        };
     }
 
     /**
