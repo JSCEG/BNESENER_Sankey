@@ -47,10 +47,15 @@ class LayoutEngine {
             x: 0.05,
             title: 'Fuentes',
             width: 0.15,
-            nodes: ['Producción', 'Importación de energéticos primarios', 'Variación de inventarios de Energéticos primarios'],
+            nodes: [
+                'Producción', 
+                'Importación de energéticos primarios', 
+                'Variación de inventarios de Energéticos primarios',
+                'Importación de energéticos secundarios'
+            ],
             verticalDistribution: 'spread', // Agrupa los nodos verticalmente
-            minY: 0.3, // Aumentado para bajar y compactar más el bloque
-            maxY: 0.7  // Reducido para subir y compactar más el bloque
+            minY: 0.2, // Expandido para acomodar el nuevo nodo
+            maxY: 0.8  // Expandido para acomodar el nuevo nodo
         });
 
         this.defineColumn('energia-primaria', {
