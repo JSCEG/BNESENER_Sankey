@@ -183,7 +183,7 @@ class LayoutEngine {
             maxY: 0.7
         });
         this.defineColumn('energia-secundaria', {
-            x: 0.45,
+            x: 0.4,
             title: 'Energéticos Secundarios',
             width: 0.15,
             nodes: [
@@ -195,7 +195,8 @@ class LayoutEngine {
                 'Diesel',
                 'Combustóleo',
                 'Gas natural seco',
-                'Otros energéticos'
+                'Otros energéticos',
+                'Energía eléctrica'
             ],
             verticalDistribution: 'compact',
             minY: 0.35,

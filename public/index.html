@@ -1872,6 +1872,7 @@
             // (Esta sección se mantiene igual)
 
             // --- 11. Lógica para Energéticos Secundarios ---
+            console.log('DEBUG: ===== INICIANDO SECCIÓN 11 - ENERGÉTICOS SECUNDARIOS =====');
             const secondaryEnergyTotals = new Map();
             const secondaryEnergyData = new Map(); // Para almacenar datos detallados de energéticos secundarios
 
@@ -1894,14 +1895,21 @@
 
             console.log(`DEBUG: Total importación secundarios: ${totalImportacionSecundarios} PJ`);
 
+            // Crear los nodos hub para energéticos secundarios PRIMERO
+            const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
+            const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
+
             // 11.0.1: Crear nodo de Variación de inventarios de energéticos secundarios
             let totalVariacionSecundarios = 0;
             let variacionPositivaSecundarios = 0;
             let variacionNegativaSecundarios = 0;
             
             // Calcular total de variación para energéticos secundarios
+            console.log('DEBUG: Verificando datos de variación...');
             if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
+                console.log('DEBUG: Nodos hijo de variación:', nodeData.variacion['Nodos Hijo'].length);
                 nodeData.variacion['Nodos Hijo'].forEach(child => {
+                    console.log(`DEBUG: ${child['Nodo Hijo']} - Tipo: ${child.tipo} - Valor ${year}: ${child[year]}`);
                     if (child.tipo === 'Energía Secundaria') {
                         const flowValue = child[year] || 0;
                         totalVariacionSecundarios += flowValue;
@@ -1911,20 +1919,38 @@
                         } else {
                             variacionNegativaSecundarios += flowValue;
                         }
+                        console.log(`DEBUG: Agregando variación ${child['Nodo Hijo']}: ${flowValue} PJ`);
                     }
                 });
             }
+            
+            console.log(`DEBUG: Total variación secundarios: ${totalVariacionSecundarios} PJ`);
 
-            // Crear el nodo solo si hay variaciones de energéticos secundarios
+            // Crear el nodo siempre para testing (cambiar condición temporalmente)
             let variacionSecundariosIndex = null;
-            if (totalVariacionSecundarios !== 0) {
-                variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
-                console.log(`DEBUG: Creado nodo Variación de energéticos secundarios: ${totalVariacionSecundarios} PJ`);
+            // TEMPORAL: Crear el nodo aunque no haya datos para ver la estructura
+            if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
+                const hasSecondaryVariation = nodeData.variacion['Nodos Hijo'].some(child => 
+                    child.tipo === 'Energía Secundaria' && child[year] !== undefined
+                );
+                
+                if (hasSecondaryVariation) {
+                    variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
+                    console.log(`DEBUG: Creado nodo Variación de energéticos secundarios: ${totalVariacionSecundarios} PJ`);
+                } else {
+                    console.log('DEBUG: No hay datos de variación para energéticos secundarios - CREANDO NODO TEMPORAL');
+                    // Crear el nodo temporal para mostrar la estructura
+                    variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
+                    
+                    // Crear un enlace temporal hacia "Oferta Total" para que sea visible
+                    source.push(variacionSecundariosIndex);
+                    target.push(ofertaTotalSecundariosIndex);
+                    value.push(Math.log10(1 + 1)); // Valor mínimo
+                    linkColors.push('#e74c3c');
+                    linkCustomdata.push(`Variación energéticos secundarios: 0 PJ (sin datos)`);
+                    console.log('DEBUG: Creado enlace temporal de variación');
+                }
             }
-
-            // Crear los nodos hub para energéticos secundarios
-            const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
-            const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
 
             // Crear el nodo siempre para testing (cambiar condición temporalmente)
             let importacionSecundariosIndex = null;
@@ -1961,10 +1987,11 @@
 
             // Crear enlaces desde Variación hacia cada energético secundario individual
             if (variacionSecundariosIndex !== null && nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
+                console.log('DEBUG: Creando enlaces de variación...');
                 nodeData.variacion['Nodos Hijo'].forEach(child => {
                     if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        if (flowValue !== 0) {
+                        const flowValue = child[year];
+                        if (flowValue !== undefined && flowValue !== 0) {
                             const energeticName = child['Nodo Hijo'];
                             const energeticColor = child.color || '#e74c3c';
                             
@@ -1977,10 +2004,14 @@
                             linkColors.push(energeticColor);
                             linkCustomdata.push(`${energeticName} variación: ${flowValue.toLocaleString()} PJ`);
                             
-                            console.log(`DEBUG: Enlace variación → ${energeticName}: ${flowValue} PJ`);
+                            console.log(`DEBUG: Creado enlace variación → ${energeticName}: ${flowValue} PJ`);
+                        } else {
+                            console.log(`DEBUG: Saltando ${child['Nodo Hijo']} - valor: ${flowValue}`);
                         }
                     }
                 });
+            } else {
+                console.log('DEBUG: No se crearon enlaces de variación - nodo no existe o sin datos');
             }
 
             // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
