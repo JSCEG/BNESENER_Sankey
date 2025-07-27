@@ -1833,7 +1833,7 @@
 
             // Crear los nodos hub para energéticos secundarios PRIMERO
             const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
-            const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
+            // const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
 
             // 11.0.1: Crear nodo de Variación de inventarios de energéticos secundarios
             let totalVariacionSecundarios = 0;
@@ -2055,25 +2055,25 @@
 
             // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
             // Usar los datos de ofertaInternaBruta pero filtrar solo energéticos secundarios
-            if (nodeData.ofertaInternaBruta && nodeData.ofertaInternaBruta['Nodos Hijo']) {
-                nodeData.ofertaInternaBruta['Nodos Hijo'].forEach(child => {
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        if (flowValue !== 0) {
-                            const energeticName = child['Nodo Hijo'];
-                            const energeticColor = child.color || '#27ae60';
+            // if (nodeData.ofertaInternaBruta && nodeData.ofertaInternaBruta['Nodos Hijo']) {
+            //     nodeData.ofertaInternaBruta['Nodos Hijo'].forEach(child => {
+            //         if (child.tipo === 'Energía Secundaria') {
+            //             const flowValue = child[year] || 0;
+            //             if (flowValue !== 0) {
+            //                 const energeticName = child['Nodo Hijo'];
+            //                 const energeticColor = child.color || '#27ae60';
 
-                            source.push(ofertaTotalSecundariosIndex);
-                            target.push(ofertaInternaBrutaSecundariosIndex);
-                            value.push(Math.log10(Math.abs(flowValue) + 1));
-                            linkColors.push(energeticColor);
-                            linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
+            //                 source.push(ofertaTotalSecundariosIndex);
+            //                 target.push(ofertaInternaBrutaSecundariosIndex);
+            //                 value.push(Math.log10(Math.abs(flowValue) + 1));
+            //                 linkColors.push(energeticColor);
+            //                 linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
 
-                            console.log(`DEBUG: Enlace OT→OIB ${energeticName}: ${flowValue} PJ`);
-                        }
-                    }
-                });
-            }
+            //                 console.log(`DEBUG: Enlace OT→OIB ${energeticName}: ${flowValue} PJ`);
+            //             }
+            //         }
+            //     });
+            // }
             const transformationCenters = [
                 { name: 'Refinerías y Despuntadoras', index: refineriasDespuntadorasIndex, data: nodeData.refineriasDespuntadoras },
                 { name: 'Plantas de Gas y Fraccionadoras', index: plantasGasFraccionadorasIndex, data: nodeData.plantasGasFraccionadoras },
