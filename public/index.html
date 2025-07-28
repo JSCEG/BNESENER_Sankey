@@ -1518,6 +1518,7 @@
 
 
             // --- Nodos de Energéticos Secundarios de Oferta Interna Bruta ---
+            const primaryEnergeticNodesMap = new Map();  // Mapa para los nodos de energéticos primarios
             const secondaryEnergeticNodesMap = new Map(); // Mapa para los nodos de energéticos secundarios
             console.log('Datos de Oferta Interna Bruta:', ofertaInternaBrutaFullData);
 
@@ -1878,6 +1879,89 @@
                 }
             }
 
+
+            //CONSUMOS POR SECTORES
+
+            // --- NODO AGROPECUARIO ---
+            const agropecuarioNodeData = dataManager.getNodeData('Agropecuario');
+            if (agropecuarioNodeData && agropecuarioNodeData['Nodos Hijo']) {
+                // Crear nodo Agropecuario
+                const agropecuarioIndex = addNode(agropecuarioNodeData['Nodo Padre'], agropecuarioNodeData.color);
+                nodeX[agropecuarioIndex] = 0.9;
+                nodeY[agropecuarioIndex] = 0.5;
+
+                // Calcular el total sumando los valores de los hijos
+                const totalAgropecuario = agropecuarioNodeData['Nodos Hijo'].reduce((sum, hijo) => {
+                    return sum + (parseFloat(hijo[year]) || 0);
+                }, 0);
+
+                // Crear un objeto con el formato esperado por la plantilla simple_source
+                const popupData = {
+                    label: agropecuarioNodeData['Nodo Padre'],
+                    total: totalAgropecuario,
+                    unit: 'PJ' // Ajusta la unidad según corresponda
+                };
+
+                // Generar el popup
+                nodeCustomdata[agropecuarioIndex] = popupManager.generateNodePopup(
+                    agropecuarioNodeData['Nodo Padre'],
+                    popupData,  // Pasamos los datos formateados
+                    year,
+                    popupData,  // Mismos datos para el desglose
+                    'text',
+                    'Todos',
+                    'simple_source'
+                );
+                // Crear enlaces desde energéticos primarios
+                agropecuarioNodeData['Nodos Hijo'].forEach(hijo => {
+                    if (hijo.tipo === 'Energía Primaria' && hijo[year] > 0) {
+                        const sourceNodeIndex = primaryEnergeticNodesMap.get(hijo['Nodo Hijo']);
+                        if (sourceNodeIndex !== undefined) {
+                            const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || '#999999';
+
+                            source.push(sourceNodeIndex);
+                            target.push(agropecuarioIndex);
+                            value.push(Math.log10(hijo[year] + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                hijo['Nodo Hijo'],
+                                hijo[year],
+                                hijo['Nodo Hijo'],
+                                'Agropecuario',
+                                linkColor,
+                                year,
+                                { flowType: 'to_agropecuario' }
+                            ));
+                        }
+                    }
+                });
+
+                // Crear enlaces desde energéticos secundarios
+                agropecuarioNodeData['Nodos Hijo'].forEach(hijo => {
+                    if (hijo.tipo === 'Energía Secundaria' && hijo[year] > 0) {
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(hijo['Nodo Hijo']);
+                        if (sourceNodeIndex !== undefined) {
+                            const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || '#999999';
+
+                            source.push(sourceNodeIndex);
+                            target.push(agropecuarioIndex);
+                            value.push(Math.log10(hijo[year] + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                hijo['Nodo Hijo'],
+                                hijo[year],
+                                hijo['Nodo Hijo'],
+                                'Agropecuario',
+                                linkColor,
+                                year,
+                                { flowType: 'to_agropecuario_secondary' }
+                            ));
+                        }
+                    }
+                });
+            }
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
