@@ -1607,7 +1607,8 @@
                         year,
                         importacionSecundariaBreakdown,
                         'text',
-                        'Energía Secundaria'
+                        'Energía Secundaria',
+                        'simple_source'  // Usamos la plantilla simple
                     );
 
                     // Crear enlaces a los energéticos secundarios
@@ -1648,17 +1649,18 @@
                     .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
                         hijo[year] !== undefined &&
                         hijo[year] !== null &&
-                        Math.abs(hijo[year]) > 0);  // Usamos Math.abs para incluir tanto positivos como negativos
+                        Math.abs(hijo[year]) > 0);
 
                 if (secundariosVariacion.length > 0) {
                     // Crear nodo de variación de inventarios secundarios
                     const variacionSecundariaIndex = addNode('Variación de Inventarios ES', variacionNodeData.color);
                     nodeX[variacionSecundariaIndex] = 0.45;
-                    nodeY[variacionSecundariaIndex] = 0.15; // Posición vertical ajustada
+                    nodeY[variacionSecundariaIndex] = 0.15;
 
                     // Crear customdata para el nodo
                     const variacionSecundariaData = {
                         ...variacionNodeData,
+                        'Nodo Padre': 'Variación de Inventarios ES', // Asegurar que use el nombre correcto
                         'Nodos Hijo': secundariosVariacion
                     };
 
@@ -1669,7 +1671,7 @@
                         'Energía Secundaria'
                     );
 
-                    // Preparar datos para el popup
+                    // Preparar datos para el popup - igual que en el caso primario
                     let variacionSecundariaPopupData = {};
                     if (variacionSecundariaBreakdown.input_total > 0) {
                         variacionSecundariaPopupData.variacion_positiva = variacionSecundariaBreakdown.input_total;
@@ -1678,17 +1680,19 @@
                         variacionSecundariaPopupData.variacion_negativa = variacionSecundariaBreakdown.output_total;
                     }
 
-                    // Generar el popup
+                    console.log(`[DEBUG - Variación de Inventarios (Secundaria)] Datos para popup:`, variacionSecundariaPopupData);
+
+                    // Generar el popup con los datos específicos
                     nodeCustomdata[variacionSecundariaIndex] = popupManager.generateNodePopup(
-                        'Variación de Inventarios (Secundaria)',
+                        'Variación de Inventarios ES',
                         variacionSecundariaData,
                         year,
-                        variacionSecundariaPopupData,
+                        variacionSecundariaPopupData, // Pasamos los datos específicos de variación
                         'text',
                         'Energía Secundaria'
                     );
 
-                    // Crear enlaces a los energéticos secundarios
+                    // Resto del código de creación de enlaces se mantiene igual...
                     secundariosVariacion.forEach(energetic => {
                         const energeticName = energetic['Nodo Hijo'];
                         const targetNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
@@ -1698,7 +1702,6 @@
                             const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
                             const absValue = Math.abs(energeticValue);
 
-                            // Para valores positivos (incremento de inventario)
                             if (energeticValue > 0) {
                                 source.push(variacionSecundariaIndex);
                                 target.push(targetNodeIndex);
@@ -1708,17 +1711,16 @@
                                 linkCustomdata.push(popupManager.generateLinkPopup(
                                     energeticName,
                                     absValue,
-                                    'Variación de Inventarios (Secundaria)',
+                                    'Variación de Inventarios ES',
                                     energeticName,
                                     linkColor,
                                     year,
                                     { flowType: 'inventory_change_secondary' }
                                 ));
                             }
-                            // Para valores negativos (decremento de inventario)
                             else if (energeticValue < 0) {
-                                source.push(targetNodeIndex);  // Fuente es el energético
-                                target.push(variacionSecundariaIndex);  // Destino es la variación
+                                source.push(targetNodeIndex);
+                                target.push(variacionSecundariaIndex);
                                 value.push(Math.log10(absValue + 1));
                                 linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
@@ -1726,7 +1728,7 @@
                                     energeticName,
                                     absValue,
                                     energeticName,
-                                    'Variación de Inventarios (Secundaria)',
+                                    'Variación de Inventarios ES',
                                     linkColor,
                                     year,
                                     { flowType: 'inventory_change_secondary' }
@@ -1736,8 +1738,145 @@
                     });
                 }
             }
+            // --- NODO DE EXPORTACIÓN DE ENERGÉTICOS SECUNDARIOS ---
+            if (exportacionNodeData && exportacionNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios (valores negativos)
+                const secundariosExportacion = exportacionNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        hijo[year] < 0);  // Cambiado a < 0 para capturar valores negativos
 
+                if (secundariosExportacion.length > 0) {
+                    // Crear nodo de exportación secundaria
+                    const exportacionSecundariaIndex = addNode('Exportación (Secundaria)', exportacionNodeData.color);
+                    nodeX[exportacionSecundariaIndex] = 0.8;
+                    nodeY[exportacionSecundariaIndex] = 0.95;
 
+                    // Crear customdata para el nodo
+                    const exportacionSecundariaData = {
+                        ...exportacionNodeData,
+                        'Nodos Hijo': secundariosExportacion
+                    };
+
+                    // Calcular el desglose para el popup
+                    const exportacionSecundariaBreakdown = popupManager.calculateNodeBreakdown(
+                        exportacionSecundariaData,
+                        year,
+                        'Energía Secundaria'
+                    );
+
+                    // Generar el popup
+                    nodeCustomdata[exportacionSecundariaIndex] = popupManager.generateNodePopup(
+                        'Exportación (Secundaria)',
+                        exportacionSecundariaData,
+                        year,
+                        exportacionSecundariaBreakdown,
+                        'text',
+                        'Energía Secundaria',
+                        'simple_source'  // Usamos la plantilla simple
+                    );
+
+                    // Crear enlaces desde los energéticos secundarios a la exportación
+                    secundariosExportacion.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        const energeticValue = Math.abs(parseFloat(energetic[year]) || 0);  // Tomar valor absoluto
+
+                        if (sourceNodeIndex !== undefined && energeticValue > 0) {
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                            // La dirección es desde el energético hacia la exportación
+                            source.push(sourceNodeIndex);
+                            target.push(exportacionSecundariaIndex);
+                            value.push(Math.log10(energeticValue + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,  // Usamos el valor absoluto
+                                energeticName,
+                                'Exportación (Secundaria)',
+                                linkColor,
+                                year,
+                                { flowType: 'export_secondary' }
+                            ));
+                        }
+                    });
+                }
+            }
+
+            // --- NODO DE ENERGÍA NO APROVECHADA DE ENERGÉTICOS SECUNDARIOS ---
+            if (energiaNoAprovechadaNodeData && energiaNoAprovechadaNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios
+                const secundariosNoAprovechados = energiaNoAprovechadaNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        hijo[year] > 0);
+
+                if (secundariosNoAprovechados.length > 0) {
+                    // Crear nodo de energía no aprovechada secundaria
+                    const noAprovechadaSecundariaIndex = addNode('Energía No Aprovechada (Secundaria)', energiaNoAprovechadaNodeData.color);
+                    nodeX[noAprovechadaSecundariaIndex] = 0.6; // Posición X intermedia
+                    nodeY[noAprovechadaSecundariaIndex] = 0.9; // Misma altura que el nodo primario
+
+                    // Crear customdata para el nodo
+                    const noAprovechadaSecundariaData = {
+                        ...energiaNoAprovechadaNodeData,
+                        'Nodo Padre': 'Energía No Aprovechada (Secundaria)',
+                        'Nodos Hijo': secundariosNoAprovechados
+                    };
+
+                    // Calcular el desglose para el popup
+                    const noAprovechadaSecundariaBreakdown = popupManager.calculateNodeBreakdown(
+                        noAprovechadaSecundariaData,
+                        year,
+                        'Energía Secundaria'
+                    );
+
+                    // Generar el popup
+                    nodeCustomdata[noAprovechadaSecundariaIndex] = popupManager.generateNodePopup(
+                        'Energía No Aprovechada (Secundaria)',
+                        noAprovechadaSecundariaData,
+                        year,
+                        noAprovechadaSecundariaBreakdown,
+                        'text',
+                        'Energía Secundaria',
+                        'simple_source'  // Usamos la plantilla simple
+                    );
+
+                    // Crear enlaces desde los energéticos secundarios a la energía no aprovechada
+                    secundariosNoAprovechados.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        const energeticValue = parseFloat(energetic[year]) || 0;
+
+                        if (sourceNodeIndex !== undefined && energeticValue > 0) {
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                            // La dirección es desde el energético hacia la energía no aprovechada
+                            source.push(sourceNodeIndex);
+                            target.push(noAprovechadaSecundariaIndex);
+                            value.push(Math.log10(energeticValue + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,
+                                energeticName,
+                                'Energía No Aprovechada (Secundaria)',
+                                linkColor,
+                                year,
+                                {
+                                    flowType: 'unused_energy_secondary',
+                                    template: 'simple'  // Usamos la plantilla simple para los enlaces
+                                }
+                            ));
+                        }
+                    });
+                }
+            }
 
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
