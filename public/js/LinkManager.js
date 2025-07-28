@@ -69,14 +69,6 @@ class LinkManager {
             ['Gas licuado de petróleo', ['Turbogás']],
             ['Biogás', ['Cogeneración']],
 
-            // Energías renovables - estas van desde Oferta Interna Bruta, no directamente
-            //['Energía Nuclear', ['Nucleoeléctrica']], // Manejado por distribution-to-transformation
-            //['Energia Hidraúlica', ['Cogeneración']], // Manejado por distribution-to-transformation
-            // ['Energía Hidráulica', ['Cogeneración']], // Manejado por distribution-to-transformation
-            // ['Geoenergía', ['Geotérmica']], // Manejado por distribution-to-transformation
-            // ['Energía solar', ['Solar Fotovoltaica']], // Manejado por distribution-to-transformation
-            // ['Energía eólica', ['Eólica']], // Manejado por distribution-to-transformation
-
             // Biomasa
             ['Bagazo de caña', ['Cogeneración']],
             ['Leña', ['Cogeneración']]
@@ -101,7 +93,7 @@ class LinkManager {
         // === MAPEO HUB -> DISTRIBUCIÓN ===
         this.registerConnectionMap('hub-to-distribution', new Map([
             ['Oferta Total', [
-                'Oferta Interna Bruta',
+                //'Oferta Interna Bruta',
                 'Exportación',
                 'Energía No Aprovechada'
             ]]
@@ -118,10 +110,7 @@ class LinkManager {
                 'Carboeléctrica',
                 'Térmica Convencional',
                 'Turbogás',
-                'Ciclo Combinado',
-                'Nucleoeléctrica',
-                'Geotérmica'
-                // Agregamos otras tecnologías gradualmente
+                'Ciclo Combinado'
             ]]
         ]));
 
@@ -149,11 +138,7 @@ class LinkManager {
             ['Combustión Interna', ['Centrales Eléctricas']],
             ['Turbogás', ['Centrales Eléctricas']],
             ['Ciclo Combinado', ['Centrales Eléctricas']],
-            ['Nucleoeléctrica', ['Centrales Eléctricas']],
-            ['Cogeneración', ['Centrales Eléctricas']],
-            ['Geotérmica', ['Centrales Eléctricas']],
-            ['Eólica', ['Centrales Eléctricas']],
-            ['Solar Fotovoltaica', ['Centrales Eléctricas']]
+            ['Cogeneración', ['Centrales Eléctricas']]
         ]));
 
         console.log(`Inicializados ${this.connectionMaps.size} mapeos de conexiones`);
@@ -182,8 +167,7 @@ class LinkManager {
             'generation-to-centrales',
             'distribution-to-transformation',
             'transformation-to-generation',
-            'primary-to-centrales', // <-- agrega este
-            // ...otros si los tienes
+            'primary-to-centrales',
         ];
         const excludeEnergyTypes = options.excludeEnergyTypes || ['Energía eléctrica'];
 
@@ -220,8 +204,7 @@ class LinkManager {
         // Procesar cada nodo de tecnología de generación
         const generationNodes = [
             'carboelectrica', 'termicaConvencional', 'combustionInterna',
-            'turbogas', 'cicloCombinado', 'nucleoelectrica', 'cogeneracion',
-            'geotermica', 'eolica', 'solarFotovoltaica'
+            'turbogas', 'cicloCombinado', 'cogeneracion'
         ];
 
         for (const genNodeKey of generationNodes) {
@@ -480,7 +463,7 @@ class LinkManager {
                     let energyType = '';
 
                     // Manejar tecnologías que reciben energéticos desde Oferta Interna Bruta
-                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás' || targetNode === 'Ciclo Combinado' || targetNode === 'Nucleoeléctrica') {
+                    if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Combustión Interna' || targetNode === 'Turbogás' || targetNode === 'Ciclo Combinado') {
                         const techNodeKey = this.getGenerationNodeKey(targetNode);
                         const techNodeData = nodeData[techNodeKey];
 
@@ -493,14 +476,16 @@ class LinkManager {
                             // Determinar qué tipos de energéticos procesar según la tecnología
                             let shouldProcessEnergetic = false;
 
-                            if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Nucleoeléctrica') {
-                                // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
+                            // EXCLUIR ENERGÍAS PRIMARIAS DIRECTAS DE ESTE PROCESAMIENTO
+                            const directPrimaryEnergies = ['Energía Nuclear', 'Geoenergía', 'Energía solar', 'Energía eólica', 'Energía Hidráulica'];
+
+                            if (directPrimaryEnergies.includes(child['Nodo Hijo'])) {
+                                shouldProcessEnergetic = false; // Estas energías se manejan con primary-to-centrales
+                            } else if (targetNode === 'Carboeléctrica' || targetNode === 'Térmica Convencional' || targetNode === 'Turbogás' || targetNode === 'Ciclo Combinado') {
                                 shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 &&
                                     child['Nodo Hijo'] !== 'Energía eléctrica' &&
                                     child.tipo === 'Energía Primaria');
-                            } else if (targetNode === 'Combustión Interna' || targetNode === 'Turbogás') {
-                                // Estas tecnologías consumen energéticos PRIMARIOS desde Oferta Interna Bruta
-                                // Los energéticos SECUNDARIOS les llegan desde centros de transformación
+                            } else if (targetNode === 'Combustión Interna') {
                                 shouldProcessEnergetic = (flowValue !== undefined && flowValue < 0 &&
                                     child['Nodo Hijo'] !== 'Energía eléctrica' &&
                                     child.tipo === 'Energía Primaria');
@@ -638,11 +623,7 @@ class LinkManager {
             'combustionInterna': 'Combustión Interna',
             'turbogas': 'Turbogás',
             'cicloCombinado': 'Ciclo Combinado',
-            'nucleoelectrica': 'Nucleoeléctrica',
-            'cogeneracion': 'Cogeneración',
-            'geotermica': 'Geotérmica',
-            'eolica': 'Eólica',
-            'solarFotovoltaica': 'Solar Fotovoltaica'
+            'cogeneracion': 'Cogeneración'
         };
         return nameMap[nodeKey] || nodeKey;
     }
@@ -659,11 +640,7 @@ class LinkManager {
             'Combustión Interna': 'combustionInterna',
             'Turbogás': 'turbogas',
             'Ciclo Combinado': 'cicloCombinado',
-            'Nucleoeléctrica': 'nucleoelectrica',
-            'Cogeneración': 'cogeneracion',
-            'Geotérmica': 'geotermica',
-            'Eólica': 'eolica',
-            'Solar Fotovoltaica': 'solarFotovoltaica'
+            'Cogeneración': 'cogeneracion'
         };
         return keyMap[nodeName] || nodeName;
     }

@@ -1209,13 +1209,13 @@
                 importacion: getNodeData('Importación'),
                 variacion: getNodeData('Variación de Inventarios'),
                 exportacion: getNodeData('Exportación'),
-                ofertaInternaBruta: getNodeData('Oferta Interna Bruta'),
+                //ofertaInternaBruta: getNodeData('Oferta Interna Bruta'),
                 energiaNoAprovechada: getNodeData('Energía No Aprovechada'),
                 coquizadorasHornos: getNodeData('Coquizadoras y Hornos'),
                 refineriasDespuntadoras: getNodeData('Refinerías y Despuntadoras'),
                 plantasGasFraccionadoras: getNodeData('Plantas de Gas y Fraccionadoras'),
-                centralesElectricas: getNodeData('Centrales Eléctricas'),
-                ofertaTotal: getNodeData('Oferta Total')
+                centralesElectricas: getNodeData('Centrales Eléctricas')
+                //ofertaTotal: getNodeData('Oferta Total')
             };
 
             if (Object.values(nodeData).some(d => !d)) {
@@ -1570,188 +1570,6 @@
             });
             secondaryNodeBreakdowns.set('Plantas de Gas y Fraccionadoras', { breakdown: plantasGasBreakdown, total: plantasGasTotal });
 
-            // --- 9. Procesar Flujos (Fuentes de Energía -> Tecnologías de Generación) ---
-            // Usar LinkManager para mapeo automático de conexiones
-            if (linkManager) {
-                try {
-                    // Generar enlaces usando LinkManager
-                    const fuelToGenerationLinks = linkManager.generateDataLinks(
-                        nodeMap,
-                        nodeColors,
-                        nodeData,
-                        year,
-                        {
-                            mapTypes: ['fuel-to-generation'],
-                            excludeEnergyTypes: ['Energía eléctrica']
-                        }
-                    );
-
-                    // Agregar enlaces generados a los arrays principales
-                    source.push(...fuelToGenerationLinks.source);
-                    target.push(...fuelToGenerationLinks.target);
-                    value.push(...fuelToGenerationLinks.value);
-                    linkColors.push(...fuelToGenerationLinks.linkColors);
-                    linkCustomdata.push(...fuelToGenerationLinks.linkCustomdata);
-
-                    // Generar enlaces de distribución a transformación (ej: Oferta Interna Bruta -> Combustión Interna)
-                    const distributionToTransformationLinks = linkManager.generateDataLinks(
-                        nodeMap,
-                        nodeColors,
-                        nodeData,
-                        year,
-                        {
-                            mapTypes: ['distribution-to-transformation']
-                        }
-                    );
-
-                    // Agregar enlaces de distribución a transformación
-                    source.push(...distributionToTransformationLinks.source);
-                    target.push(...distributionToTransformationLinks.target);
-                    value.push(...distributionToTransformationLinks.value);
-                    linkColors.push(...distributionToTransformationLinks.linkColors);
-                    linkCustomdata.push(...distributionToTransformationLinks.linkCustomdata);
-
-                    console.log(`LinkManager generó ${fuelToGenerationLinks.source.length} enlaces fuel-to-generation`);
-                    console.log(`LinkManager generó ${distributionToTransformationLinks.source.length} enlaces distribution-to-transformation`);
-                } catch (error) {
-                    console.warn('Error usando LinkManager para mapeo automático:', error);
-
-                    // Fallback al método manual
-                    const generationNodesForInput = [
-                    ];
-
-                    generationNodesForInput.forEach(genNode => {
-                        if (genNode.data && genNode.data['Nodos Hijo']) {
-                            genNode.data['Nodos Hijo'].forEach(fuel => {
-                                const fuelName = fuel['Nodo Hijo'];
-                                const fuelColor = fuel.color;
-                                const flowValue = fuel[year];
-                                if (flowValue !== undefined && flowValue !== 0 && fuelName !== 'Energía eléctrica') {
-                                    const targetIndex = genNode.index;
-
-                                    let sourceIndex;
-                                    if (fuel.tipo === 'Energía Primaria') {
-                                        // Para Térmica Convencional y Turbogás, conectar Bagazo de caña desde Oferta Interna Bruta
-                                        if (
-                                            (genNode.name === 'Turbogás' || genNode.name === 'Térmica Convencional') &&
-                                            fuelName === 'Bagazo de caña'
-                                        ) {
-                                            sourceIndex = ofertaInternaBrutaIndex;
-                                        } else {
-                                            sourceIndex = ofertaInternaBrutaIndex;
-                                        }
-                                    } else { // Energía Secundaria
-                                        // Lógica para energéticos secundarios (comentada para eliminar enlaces directos a centrales eléctricas)
-                                        // sourceIndex = produccionBrutaEnergiaSecundariaIndex; // Esto se manejará en una etapa posterior
-                                    }
-
-                                    if (sourceIndex !== undefined) {
-                                        if (genNode.name === 'Turbogás' && fuelName === 'Bagazo de caña') {
-                                            console.log('DEBUG: Link Bagazo de caña → Turbogás', { sourceIndex, targetIndex, flowValue });
-                                        }
-                                        source.push(sourceIndex);
-                                        target.push(targetIndex);
-                                        value.push(Math.log10(Math.abs(flowValue) + 1));
-                                        const validatedColor = typeof fuelColor === 'string' ? fuelColor : '#888';
-                                        linkColors.push(validatedColor);
-
-                                        // Usar PopupManager para generar popup de enlace mejorado
-                                        if (popupManager) {
-                                            const sourceNodeName = sourceIndex === ofertaInternaBrutaIndex ? 'Oferta Interna Bruta' :
-                                                sourceIndex === coquizadorasHornosIndex ? 'Coquizadoras y Hornos' :
-                                                    sourceIndex === plantasGasFraccionadorasIndex ? 'Plantas de Gas y Fraccionadoras' :
-                                                        'Refinerías y Despuntadoras';
-                                            const linkPopup = popupManager.generateLinkPopup(
-                                                fuelName,
-                                                flowValue,
-                                                sourceNodeName,
-                                                genNode.name,
-                                                validatedColor,
-                                                year,
-                                                { flowType: 'fuel_to_generation' }
-                                            );
-                                            linkCustomdata.push(linkPopup);
-                                        } else {
-                                            // Fallback al formato anterior
-                                            linkCustomdata.push(`${fuelName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    });
-                }
-            } else {
-                console.warn('LinkManager no está disponible, usando método manual');
-
-                // Método manual como fallback completo
-                const generationNodesForInput = [
-                ];
-
-                generationNodesForInput.forEach(genNode => {
-                    if (genNode.data && genNode.data['Nodos Hijo']) {
-                        genNode.data['Nodos Hijo'].forEach(fuel => {
-                            const fuelName = fuel['Nodo Hijo'];
-                            const fuelColor = fuel.color;
-                            const flowValue = fuel[year];
-                            if (flowValue !== undefined && flowValue !== 0 && fuelName !== 'Energía eléctrica') {
-                                const targetIndex = genNode.index;
-
-                                let sourceIndex;
-                                if (fuel.tipo === 'Energía Primaria') {
-                                    // Para Térmica Convencional y Turbogás, conectar Bagazo de caña desde Oferta Interna Bruta
-                                    if (
-                                        (genNode.name === 'Turbogás' || genNode.name === 'Térmica Convencional') &&
-                                        fuelName === 'Bagazo de caña'
-                                    ) {
-                                        sourceIndex = ofertaInternaBrutaIndex;
-                                    } else {
-                                        sourceIndex = ofertaInternaBrutaIndex;
-                                    }
-                                } else { // Energía Secundaria
-                                    // Lógica para energéticos secundarios (comentada para eliminar enlaces directos a centrales eléctricas)
-                                    // sourceIndex = produccionBrutaEnergiaSecundariaIndex; // Esto se manejará en una etapa posterior
-                                }
-
-                                if (sourceIndex !== undefined) {
-                                    if (genNode.name === 'Turbogás' && fuelName === 'Bagazo de caña') {
-                                        console.log('DEBUG: Link Bagazo de caña → Turbogás', { sourceIndex, targetIndex, flowValue });
-                                    }
-                                    source.push(sourceIndex);
-                                    target.push(targetIndex);
-                                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                                    const validatedColor = typeof fuelColor === 'string' ? fuelColor : '#888';
-                                    linkColors.push(validatedColor);
-
-                                    // Usar PopupManager para generar popup de enlace mejorado
-                                    if (popupManager) {
-                                        const sourceNodeName = sourceIndex === ofertaInternaBrutaIndex ? 'Oferta Interna Bruta' :
-                                            sourceIndex === coquizadorasHornosIndex ? 'Coquizadoras y Hornos' :
-                                                sourceIndex === plantasGasFraccionadorasIndex ? 'Plantas de Gas y Fraccionadoras' :
-                                                    'Refinerías y Despuntadoras';
-                                        const linkPopup = popupManager.generateLinkPopup(
-                                            fuelName,
-                                            flowValue,
-                                            sourceNodeName,
-                                            genNode.name,
-                                            validatedColor,
-                                            year,
-                                            { flowType: 'fuel_to_generation' }
-                                        );
-                                        linkCustomdata.push(linkPopup);
-                                    } else {
-                                        // Fallback al formato anterior
-                                        linkCustomdata.push(`${fuelName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                                    }
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-
-            // --- 10. Procesar Flujos (Tecnologías de Generación -> Centrales Eléctricas) ---
-            // (Esta sección se mantiene igual)
 
             // --- 11. Lógica para Energéticos Secundarios ---
             console.log('DEBUG: ===== INICIANDO SECCIÓN 11 - ENERGÉTICOS SECUNDARIOS =====');
@@ -2082,17 +1900,7 @@
             }
 
             // 11.2: Flujos de Nodos de Energéticos Secundarios -> Oferta Total (Energéticos Secundarios)
-            for (const [energyName, totalValue] of secondaryEnergyTotals.entries()) {
-                if (energyName === 'Energía eléctrica') continue; // Excluir energía eléctrica
-                const energyIndex = nodeMap.get(energyName);
-                const energyColor = nodeColors[energyIndex];
-
-                source.push(energyIndex);
-                target.push(centralesElectricasIndex); // O el hub destino que corresponda
-                value.push(Math.log10(totalValue + 1));
-                linkColors.push(energyColor);
-                linkCustomdata.push(`Total ${energyName}: ${totalValue.toLocaleString()} PJ`);
-            }
+            // Lógica eliminada para evitar triplicación de enlaces de energías primarias
 
             // 11.3: Flujos de Hub Secundario -> Tecnologías de Generación
             // (Esta lógica se manejará dentro de la sección 9, la cual debe ser ajustada para tomar del hub secundario)
