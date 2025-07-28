@@ -2248,7 +2248,200 @@
                 });
             }
 
+            //-----------------------------------------
+            // --- NODO PÚBLICO ---
+            const publicoNodeData = dataManager.getNodeData('Público');
+            if (publicoNodeData && publicoNodeData['Nodos Hijo']) {
+                // Crear nodo Transporte
+                const publicoIndex = addNode(publicoNodeData['Nodo Padre'], publicoNodeData.color);
+                nodeX[publicoIndex] = 0.9;
+                nodeY[publicoIndex] = 0.7;
 
+                // Calcular el total sumando los valores de los hijos
+                const totalPublico = publicoNodeData['Nodos Hijo'].reduce((sum, hijo) => {
+                    return sum + (parseFloat(hijo[year]) || 0);
+                }, 0);
+
+                // Crear un objeto con el formato esperado por la plantilla simple_source
+                const popupData = {
+                    label: 'Sector Público',  // Cambiamos esto
+                    total: totalPublico,
+                    unit: 'PJ' // Ajusta la unidad según corresponda
+                };
+
+                // Generar el popup
+                nodeCustomdata[publicoIndex] = popupManager.generateNodePopup(
+                    'Sector Público',  // Y aquí también
+                    popupData,  // Pasamos los datos formateados
+                    year,
+                    popupData,  // Mismos datos para el desglose
+                    'text',
+                    'Todos',
+                    'simple_source'
+                );
+                // Crear enlaces desde energéticos primarios
+                // Después de crear los nodos de energía primaria y tener el mapa energeticNodesMap
+
+                // --- Crear enlaces desde los nodos de energía primaria al nodo Industrial ---
+                if (publicoNodeData && publicoNodeData['Nodos Hijo']) {
+                    publicoNodeData['Nodos Hijo'].forEach(hijo => {
+                        if (hijo.tipo === 'Energía Primaria' && hijo[year] > 0) {
+                            const sourceNodeIndex = energeticNodesMap.get(hijo['Nodo Hijo']);
+                            const publicoNodeIndex = nodeMap.get(publicoNodeData['Nodo Padre']);
+
+                            if (sourceNodeIndex !== undefined && publicoNodeIndex !== undefined) {
+                                const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || hijo.color || '#999999';
+                                const linkValue = Math.log10(parseFloat(hijo[year]) + 1);
+
+                                source.push(sourceNodeIndex);
+                                target.push(publicoNodeIndex);
+                                value.push(linkValue);
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                                // Crear el popup para el enlace
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    hijo['Nodo Hijo'],
+                                    parseFloat(hijo[year]),
+                                    hijo['Nodo Hijo'],
+                                    publicoNodeData['Nodo Padre'],
+                                    linkColor,
+                                    year,
+                                    {
+                                        flowType: 'sector_industrial',
+                                        template: 'simple'
+                                    }
+                                ));
+                            }
+                        }
+                    });
+                }
+
+
+                // Crear enlaces desde energéticos secundarios
+                publicoNodeData['Nodos Hijo'].forEach(hijo => {
+                    if (hijo.tipo === 'Energía Secundaria' && hijo[year] > 0) {
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(hijo['Nodo Hijo']);
+                        if (sourceNodeIndex !== undefined) {
+                            const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || '#999999';
+
+                            source.push(sourceNodeIndex);
+                            target.push(publicoIndex);
+                            value.push(Math.log10(hijo[year] + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                hijo['Nodo Hijo'],
+                                hijo[year],
+                                hijo['Nodo Hijo'],
+                                'Público',
+                                linkColor,
+                                year,
+                                { flowType: 'to_publico_secondary' }
+                            ));
+                        }
+                    }
+                });
+            }
+
+
+            // --- NODO RESIDENCIAL ---
+            const residencialNodeData = dataManager.getNodeData('Residencial');
+            if (residencialNodeData && residencialNodeData['Nodos Hijo']) {
+                // Crear nodo Transporte
+                const residencialIndex = addNode(residencialNodeData['Nodo Padre'], residencialNodeData.color);
+                nodeX[residencialIndex] = 0.9;
+                nodeY[residencialIndex] = 0.8;
+
+                // Calcular el total sumando los valores de los hijos
+                const totalResidencial = residencialNodeData['Nodos Hijo'].reduce((sum, hijo) => {
+                    return sum + (parseFloat(hijo[year]) || 0);
+                }, 0);
+
+                // Crear un objeto con el formato esperado por la plantilla simple_source
+                const popupData = {
+                    label: 'Sector Residencial',  // Cambiamos esto
+                    total: totalResidencial,
+                    unit: 'PJ' // Ajusta la unidad según corresponda
+                };
+
+                // Generar el popup
+                nodeCustomdata[residencialIndex] = popupManager.generateNodePopup(
+                    'Sector Residencial',  // Y aquí también
+                    popupData,  // Pasamos los datos formateados
+                    year,
+                    popupData,  // Mismos datos para el desglose
+                    'text',
+                    'Todos',
+                    'simple_source'
+                );
+                // Crear enlaces desde energéticos primarios
+                // Después de crear los nodos de energía primaria y tener el mapa energeticNodesMap
+
+                // --- Crear enlaces desde los nodos de energía primaria al nodo Industrial ---
+                if (residencialNodeData && residencialNodeData['Nodos Hijo']) {
+                    residencialNodeData['Nodos Hijo'].forEach(hijo => {
+                        if (hijo.tipo === 'Energía Primaria' && hijo[year] > 0) {
+                            const sourceNodeIndex = energeticNodesMap.get(hijo['Nodo Hijo']);
+                            const publicoNodeIndex = nodeMap.get(residencialNodeData['Nodo Padre']);
+
+                            if (sourceNodeIndex !== undefined && publicoNodeIndex !== undefined) {
+                                const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || hijo.color || '#999999';
+                                const linkValue = Math.log10(parseFloat(hijo[year]) + 1);
+
+                                source.push(sourceNodeIndex);
+                                target.push(publicoNodeIndex);
+                                value.push(linkValue);
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                                // Crear el popup para el enlace
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    hijo['Nodo Hijo'],
+                                    parseFloat(hijo[year]),
+                                    hijo['Nodo Hijo'],
+                                    residencialNodeData['Nodo Padre'],
+                                    linkColor,
+                                    year,
+                                    {
+                                        flowType: 'sector_industrial',
+                                        template: 'simple'
+                                    }
+                                ));
+                            }
+                        }
+                    });
+                }
+
+
+                // Crear enlaces desde energéticos secundarios
+                residencialNodeData['Nodos Hijo'].forEach(hijo => {
+                    if (hijo.tipo === 'Energía Secundaria' && hijo[year] > 0) {
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(hijo['Nodo Hijo']);
+                        if (sourceNodeIndex !== undefined) {
+                            const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || '#999999';
+
+                            source.push(sourceNodeIndex);
+                            target.push(residencialIndex);
+                            value.push(Math.log10(hijo[year] + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                hijo['Nodo Hijo'],
+                                hijo[year],
+                                hijo['Nodo Hijo'],
+                                'Residencial',
+                                linkColor,
+                                year,
+                                { flowType: 'to_residencial_secondary' }
+                            ));
+                        }
+                    }
+                });
+            }
+
+
+
+
+            //---------
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
