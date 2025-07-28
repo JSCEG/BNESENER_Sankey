@@ -1227,7 +1227,7 @@
                 return nodeIndex;
             }
 
-            // --- AQUÍ EMPEZAREMOS A CREAR Y POSICIONAR LOS NODOS ---
+            // --- AQUÍ SE CREAN Y POSICIONAN LOS NODOS ---
             const importacionNodeData = dataManager.getNodeData('Importación');
             if (importacionNodeData) {
                 const importacionIndex = addNode(importacionNodeData['Nodo Padre'], importacionNodeData.color);
@@ -1314,7 +1314,7 @@
                 const primaryEnergetics = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
 
                 // Calcular posiciones Y para distribuir los nodos de energéticos
-                const startY = 0.1; // Posición inicial
+                const startY = 0.15; // Posición inicial
                 const endY = 0.9;   // Posición final
                 const stepY = (endY - startY) / (primaryEnergetics.length - 1 || 1); // Paso entre nodos
 
@@ -1372,6 +1372,72 @@
             } else {
                 console.error("Error: Datos para 'Exportación' no encontrados en DataManager.");
             }
+
+
+            // --- Nodo de Consumo Propio del Sector de Energéticos Primarios ---
+            const consumoPropioNodeData = dataManager.getNodeData('Consumo Propio del Sector');
+            if (consumoPropioNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                // 1. Crear nodo
+                const consumoPropioIndex = addNode(consumoPropioNodeData['Nodo Padre'], consumoPropioNodeData.color);
+                nodeX[consumoPropioIndex] = 0.3;
+                nodeY[consumoPropioIndex] = 0.95;
+
+                // 2. Configurar popup
+                const breakdown = popupManager.calculateNodeBreakdown(consumoPropioNodeData, year, 'Energía Primaria');
+                nodeCustomdata[consumoPropioIndex] = popupManager.generateNodePopup(
+                    consumoPropioNodeData['Nodo Padre'],
+                    consumoPropioNodeData,
+                    year,
+                    breakdown,
+                    'text',
+                    'Energía Primaria',
+                    'simple_source'
+                );
+
+                // 3. Crear enlaces desde energéticos primarios
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const energeticValue = dataManager.getEnergeticValue(
+                            'Consumo Propio del Sector',
+                            energeticName,
+                            year
+                        );
+
+                        if (energeticValue !== null && Math.abs(energeticValue) > 0) {
+                            const sourceNodeIndex = energeticNodesMap.get(energeticName);
+                            if (sourceNodeIndex !== undefined) {
+                                const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                                // Añadir el enlace
+                                source.push(sourceNodeIndex);
+                                target.push(consumoPropioIndex);
+                                value.push(Math.log10(Math.abs(energeticValue) + 1));
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                                // Añadir popup del enlace
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    energeticName,
+                                    energeticValue,
+                                    energeticName,
+                                    'Consumo Propio del Sector',
+                                    linkColor,
+                                    year,
+                                    {
+                                        flowType: 'consumo_propio_primaria',
+                                        template: 'simple'
+                                    }
+                                ));
+                            }
+                        }
+                    });
+            } else {
+                console.error("Error: Datos para 'Consumo Propio del Sector' no encontrados o incompletos");
+            }
+
+
+
 
             // --- Nodo de Energía No Aprovechada ---
             const energiaNoAprovechadaNodeData = dataManager.getNodeData('Energía No Aprovechada');
@@ -1534,7 +1600,7 @@
                     secondaryEnergetics.map(e => e['Nodo Hijo']));
 
                 // Calcular posiciones Y para distribuir los nodos de energéticos
-                const startY = 0.1; // Posición inicial
+                const startY = 0.15; // Posición inicial
                 const endY = 0.9;   // Posición final
                 const stepY = secondaryEnergetics.length > 1 ?
                     (endY - startY) / (secondaryEnergetics.length - 1) : 0.5; // Evitar división por cero
@@ -1804,6 +1870,82 @@
                                 linkColor,
                                 year,
                                 { flowType: 'export_secondary' }
+                            ));
+                        }
+                    });
+                }
+            }
+
+            // --- NODO DE CONSUMO PROPIO DEL SECTOR (ENERGÉTICOS SECUNDARIOS) ---
+            // Usar un nombre de nodo único para evitar colisiones
+            const NOMBRE_NODO_CONSUMO_PROPIO_SEC = 'Consumo Propio del Sector (Sec)';
+            //const consumoPropioNodeData = dataManager.getNodeData('Consumo Propio del Sector');
+
+            if (consumoPropioNodeData && consumoPropioNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios
+                const secundariosConsumoPropio = consumoPropioNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        hijo[year] > 0);
+
+                if (secundariosConsumoPropio.length < 0) {
+                    // Crear nodo de consumo propio secundario con nombre único
+                    const consumoPropioSecundarioIndex = addNode(NOMBRE_NODO_CONSUMO_PROPIO_SEC, consumoPropioNodeData.color);
+                    nodeX[consumoPropioSecundarioIndex] = 0.3; // Misma columna que el primario
+                    nodeY[consumoPropioSecundarioIndex] = 0.8; // Posición vertical ajustada
+
+                    // Crear customdata para el nodo
+                    const consumoPropioSecundarioData = {
+                        ...consumoPropioNodeData,
+                        'Nodo Padre': NOMBRE_NODO_CONSUMO_PROPIO_SEC, // Usar el nombre único
+                        'Nodos Hijo': secundariosConsumoPropio
+                    };
+
+                    // Calcular el desglose para el popup
+                    const consumoPropioSecundarioBreakdown = popupManager.calculateNodeBreakdown(
+                        consumoPropioSecundarioData,
+                        year,
+                        'Energía Secundaria'
+                    );
+
+                    // Generar el popup
+                    nodeCustomdata[consumoPropioSecundarioIndex] = popupManager.generateNodePopup(
+                        NOMBRE_NODO_CONSUMO_PROPIO_SEC,
+                        consumoPropioSecundarioData,
+                        year,
+                        consumoPropioSecundarioBreakdown,
+                        'text',
+                        'Energía Secundaria',
+                        'simple_source'
+                    );
+
+                    // Crear enlaces desde los energéticos secundarios al consumo propio
+                    secundariosConsumoPropio.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        const energeticValue = parseFloat(energetic[year]) || 0;
+
+                        if (sourceNodeIndex !== undefined && energeticValue > 0) {
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                            // La dirección es desde el energético hacia el consumo propio
+                            source.push(sourceNodeIndex);
+                            target.push(consumoPropioSecundarioIndex);
+                            value.push(Math.log10(energeticValue + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,
+                                energeticName,
+                                NOMBRE_NODO_CONSUMO_PROPIO_SEC, // Usar el nombre único
+                                linkColor,
+                                year,
+                                {
+                                    flowType: 'consumo_propio_secundaria',
+                                    template: 'simple'
+                                }
                             ));
                         }
                     });
@@ -2726,6 +2868,7 @@
                     }
                 });
             }
+
 
             // Enlaces de energéticos primarios a Energía No Aprovechada
             if (energiaNoAprovechadaNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
