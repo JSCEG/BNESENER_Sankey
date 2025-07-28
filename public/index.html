@@ -1436,6 +1436,67 @@
                 console.error("Error: Datos para 'Consumo Propio del Sector' no encontrados o incompletos");
             }
 
+            // --- Nodo de Pérdidas técnicas por transporte, transmisión y distribución ---
+            const perdidasTecnicasNodeData = dataManager.getNodeData('Pérdidas técnicas por transporte, transmisión y distribución');
+            if (perdidasTecnicasNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                // 1. Crear nodo
+                const perdidasTecnicasIndex = addNode(perdidasTecnicasNodeData['Nodo Padre'], perdidasTecnicasNodeData.color);
+                nodeX[perdidasTecnicasIndex] = 0.3;
+                nodeY[perdidasTecnicasIndex] = 0.93;
+
+                // 2. Configurar popup
+                const breakdown = popupManager.calculateNodeBreakdown(perdidasTecnicasNodeData, year, 'Energía Primaria');
+                nodeCustomdata[perdidasTecnicasIndex] = popupManager.generateNodePopup(
+                    perdidasTecnicasNodeData['Nodo Padre'],
+                    perdidasTecnicasNodeData,
+                    year,
+                    breakdown,
+                    'text',
+                    'Energía Primaria',
+                    'simple_source'
+                );
+
+                // 3. Crear enlaces desde energéticos primarios
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const energeticValue = dataManager.getEnergeticValue(
+                            'Pérdidas técnicas por transporte, transmisión y distribución',
+                            energeticName,
+                            year
+                        );
+
+                        if (energeticValue !== null && Math.abs(energeticValue) > 0) {
+                            const sourceNodeIndex = energeticNodesMap.get(energeticName);
+                            if (sourceNodeIndex !== undefined) {
+                                const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                                // Añadir el enlace
+                                source.push(sourceNodeIndex);
+                                target.push(perdidasTecnicasIndex);
+                                value.push(Math.log10(Math.abs(energeticValue) + 1));
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                                // Añadir popup del enlace
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    energeticName,
+                                    energeticValue,
+                                    energeticName,
+                                    'Pérdidas técnicas por transporte, transmisión y distribución',
+                                    linkColor,
+                                    year,
+                                    {
+                                        flowType: 'perdidas_tecnicas',
+                                        template: 'simple'
+                                    }
+                                ));
+                            }
+                        }
+                    });
+            } else {
+                console.error("Error: Datos para 'Pérdidas técnicas por transporte, transmisión y distribución' no encontrados o incompletos");
+            }
 
 
 
@@ -1444,7 +1505,7 @@
             console.log(`[DEBUG] Datos de Energía No Aprovechada:`, energiaNoAprovechadaNodeData);
             if (energiaNoAprovechadaNodeData) {
                 const energiaNoAprovechadaIndex = addNode(energiaNoAprovechadaNodeData['Nodo Padre'], energiaNoAprovechadaNodeData.color);
-                nodeX[energiaNoAprovechadaIndex] = 0.35; // Posición horizontal
+                nodeX[energiaNoAprovechadaIndex] = 0.3; // Posición horizontal
                 nodeY[energiaNoAprovechadaIndex] = 0.9; // Posición vertical;
 
                 // Calcular el desglose para el popup de Energía No Aprovechada (solo energéticos primarios)
@@ -1821,7 +1882,7 @@
                     // Crear nodo de exportación secundaria
                     const exportacionSecundariaIndex = addNode('Exportación (Secundaria)', exportacionNodeData.color);
                     nodeX[exportacionSecundariaIndex] = 0.8;
-                    nodeY[exportacionSecundariaIndex] = 0.95;
+                    nodeY[exportacionSecundariaIndex] = 0.92;
 
                     // Crear customdata para el nodo
                     const exportacionSecundariaData = {
@@ -1876,7 +1937,7 @@
                 }
             }
 
-            // --- NODO DE EXPORTACIÓN DE ENERGÉTICOS SECUNDARIOS ---
+            // --- NODO DE CONSUMO PROPIO DE ENERGÉTICOS SECUNDARIOS ---
             if (consumoPropioNodeData && consumoPropioNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios (valores negativos)
                 const secundariosConsumoPropio = consumoPropioNodeData['Nodos Hijo']
@@ -1938,6 +1999,74 @@
                                 linkColor,
                                 year,
                                 { flowType: 'consumo_propio_secondary' }
+                            ));
+                        }
+                    });
+                }
+            }
+
+            // --- NODO DE Pérdidas técnicas por transporte, transmisión y distribución ---
+            if (perdidasTecnicasNodeData && perdidasTecnicasNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios (valores negativos)
+                const secundariosExportacion = perdidasTecnicasNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        hijo[year] < 0);  // Cambiado a < 0 para capturar valores negativos
+
+                if (secundariosExportacion.length > 0) {
+                    // Crear nodo de exportación secundaria
+                    const perdidasTecnicasIndex = addNode('Pérdidas técnicas por transporte, transmisión y distribución', perdidasTecnicasNodeData.color);
+                    nodeX[perdidasTecnicasIndex] = 0.8;
+                    nodeY[perdidasTecnicasIndex] = 0.95;
+
+                    // Crear customdata para el nodo
+                    const perdidasTecnicasData = {
+                        ...perdidasTecnicasNodeData,
+                        'Nodos Hijo': secundariosExportacion
+                    };
+
+                    // Calcular el desglose para el popup
+                    const perdidasTecnicasBreakdown = popupManager.calculateNodeBreakdown(
+                        perdidasTecnicasData,
+                        year,
+                        'Energía Secundaria'
+                    );
+
+                    // Generar el popup
+                    nodeCustomdata[perdidasTecnicasIndex] = popupManager.generateNodePopup(
+                        'Pérdidas técnicas por transporte, transmisión y distribución',
+                        perdidasTecnicasData,
+                        year,
+                        perdidasTecnicasBreakdown,
+                        'text',
+                        'Energía Secundaria',
+                        'simple_source'  // Usamos la plantilla simple
+                    );
+
+                    // Crear enlaces desde los energéticos secundarios a la exportación
+                    secundariosExportacion.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        const energeticValue = Math.abs(parseFloat(energetic[year]) || 0);  // Tomar valor absoluto
+
+                        if (sourceNodeIndex !== undefined && energeticValue > 0) {
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                            // La dirección es desde el energético hacia la exportación
+                            source.push(sourceNodeIndex);
+                            target.push(perdidasTecnicasIndex);
+                            value.push(Math.log10(energeticValue + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,  // Usamos el valor absoluto
+                                energeticName,
+                                'Pérdidas técnicas por transporte, transmisión y distribución',
+                                linkColor,
+                                year,
+                                { flowType: 'perdidas_tecnicas' }
                             ));
                         }
                     });
