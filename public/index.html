@@ -1397,6 +1397,107 @@
                 console.error("Error: Datos para 'Energía No Aprovechada' no encontrados en DataManager.");
             }
 
+            // --- Nodo de Coquizadoras y Hornos ---
+            const coquizadorasyhornosNodeData = dataManager.getNodeData('Coquizadoras y Hornos');
+            console.log(`[DEBUG] Datos de Coquizadoras y Hornos:`, coquizadorasyhornosNodeData);
+            if (coquizadorasyhornosNodeData) {
+                const coquizadorasyhornosIndex = addNode(coquizadorasyhornosNodeData['Nodo Padre'], coquizadorasyhornosNodeData.color);
+                nodeX[coquizadorasyhornosIndex] = 0.5; // Posición horizontal
+                nodeY[coquizadorasyhornosIndex] = 0.1; // Posición vertical;
+
+                // Calcular el desglose para el popup de Coquizadoras y Hornos (solo energéticos primarios)
+                const coquizadorasyhornosBreakdownForPopup = popupManager.calculateNodeBreakdown(coquizadorasyhornosNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Coquizadoras y Hornos] Breakdown (Primaria) para ${year}:`, coquizadorasyhornosBreakdownForPopup);
+
+                nodeCustomdata[coquizadorasyhornosIndex] = popupManager.generateNodePopup(
+                    coquizadorasyhornosNodeData['Nodo Padre'],
+                    coquizadorasyhornosNodeData,
+                    year,
+                    coquizadorasyhornosBreakdownForPopup,
+                    'text',
+                    'Energía Primaria',
+                    'simple_source'
+                );
+            } else {
+                console.error("Error: Datos para 'Coquizadoras y Hornos' no encontrados en DataManager.");
+            }
+
+            // --- Nodo de Plantas de Gas y Fraccionadoras ---
+            const plantasdegasyfraccionadorasNodeData = dataManager.getNodeData('Plantas de Gas y Fraccionadoras');
+            console.log(`[DEBUG] Datos de Plantas de Gas y Fraccionadoras:`, plantasdegasyfraccionadorasNodeData);
+            if (plantasdegasyfraccionadorasNodeData) {
+                const plantasdegasyfraccionadorasIndex = addNode(plantasdegasyfraccionadorasNodeData['Nodo Padre'], plantasdegasyfraccionadorasNodeData.color);
+                nodeX[plantasdegasyfraccionadorasIndex] = 0.5; // Posición horizontal
+                nodeY[plantasdegasyfraccionadorasIndex] = 0.2; // Posición vertical;
+
+                // Calcular el desglose para el popup de Plantas de Gas y Fraccionadoras (solo energéticos primarios)
+                const plantasdegasyfraccionadorasBreakdownForPopup = popupManager.calculateNodeBreakdown(plantasdegasyfraccionadorasNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Plantas de Gas y Fraccionadoras] Breakdown (Primaria) para ${year}:`, plantasdegasyfraccionadorasBreakdownForPopup);
+
+                nodeCustomdata[plantasdegasyfraccionadorasIndex] = popupManager.generateNodePopup(
+                    plantasdegasyfraccionadorasNodeData['Nodo Padre'],
+                    plantasdegasyfraccionadorasNodeData,
+                    year,
+                    plantasdegasyfraccionadorasBreakdownForPopup,
+                    'text',
+                    'Energía Primaria',
+                    'simple_source'
+                );
+            } else {
+                console.error("Error: Datos para 'Plantas de Gas y Fraccionadoras' no encontrados en DataManager.");
+            }
+
+            // --- Nodo de Refinerás y Despuntadoras ---
+            const refinerasydespuntadorasNodeData = dataManager.getNodeData('Refinerías y Despuntadoras');
+            console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
+            if (refinerasydespuntadorasNodeData) {
+                const refinerasydespuntadorasIndex = addNode(refinerasydespuntadorasNodeData['Nodo Padre'], refinerasydespuntadorasNodeData.color);
+                nodeX[refinerasydespuntadorasIndex] = 0.5; // Posición horizontal
+                nodeY[refinerasydespuntadorasIndex] = 0.3; // Posición vertical;
+
+                // Calcular el desglose para el popup de Refinerías y Despuntadoras (solo energéticos primarios)
+                const refinerasydespuntadorasBreakdownForPopup = popupManager.calculateNodeBreakdown(refinerasydespuntadorasNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Refinerías y Despuntadoras] Breakdown (Primaria) para ${year}:`, refinerasydespuntadorasBreakdownForPopup);
+
+                nodeCustomdata[refinerasydespuntadorasIndex] = popupManager.generateNodePopup(
+                    refinerasydespuntadorasNodeData['Nodo Padre'],
+                    refinerasydespuntadorasNodeData,
+                    year,
+                    refinerasydespuntadorasBreakdownForPopup,
+                    'text',
+                    'Energía Primaria',
+                    'simple_source'
+                );
+            } else {
+                console.error("Error: Datos para 'Refinerías y Despuntadoras' no encontrados en DataManager.");
+            }
+
+            // --- Nodo de Centrales Eléctricas ---
+            const centraleselectricasNodeData = dataManager.getNodeData('Centrales Eléctricas');
+            console.log(`[DEBUG] Datos de Centrales Eléctricas:`, centraleselectricasNodeData);
+            if (centraleselectricasNodeData) {
+                const centraleselectricasIndex = addNode(centraleselectricasNodeData['Nodo Padre'], centraleselectricasNodeData.color);
+                nodeX[centraleselectricasIndex] = 0.5; // Posición horizontal
+                nodeY[centraleselectricasIndex] = 0.4; // Posición vertical;
+
+                // Calcular el desglose para el popup de Centrales Eléctricas (solo energéticos primarios)
+                const centraleselectricasBreakdownForPopup = popupManager.calculateNodeBreakdown(centraleselectricasNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Centrales Eléctricas] Breakdown (Primaria) para ${year}:`, centraleselectricasBreakdownForPopup);
+
+                nodeCustomdata[centraleselectricasIndex] = popupManager.generateNodePopup(
+                    centraleselectricasNodeData['Nodo Padre'],
+                    centraleselectricasNodeData,
+                    year,
+                    centraleselectricasBreakdownForPopup,
+                    'text',
+                    'Energía Primaria',
+                    'simple_source'
+                );
+            } else {
+                console.error("Error: Datos para 'Centrales Eléctricas' no encontrados en DataManager.");
+            }
+
+
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
@@ -1470,7 +1571,7 @@
             }
 
             // Enlaces de energéticos primarios a Exportación
-            if (exportacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+            if (coquizadorasyhornosNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
                 const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
 
                 primaryEnergeticsInOIB.forEach(energetic => {
@@ -1509,6 +1610,99 @@
                         linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
                         linkCustomdata.push(popupManager.generateLinkPopup(
                             energeticName, energeticValueToNoAprovechada, energeticName, 'Energía No Aprovechada', linkColor, year,
+                            { flowType: 'primary_demand' }
+                        ));
+                    }
+                });
+            }
+
+
+            // Enlaces de energéticos primarios a Coquizadoras y Hornos
+            if (coquizadorasyhornosNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueToExportacion = dataManager.getEnergeticValue('Coquizadoras y Hornos', energeticName, year);
+                    console.log(`[DEBUG - Flujo Coquizadoras y Hornos] ${energeticName}: ${energeticValueToExportacion}`);
+                    if (energeticValueToExportacion !== null && Math.abs(energeticValueToExportacion) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Coquizadoras y Hornos] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(energeticNodesMap.get(energeticName));
+                        target.push(nodeMap.get('Coquizadoras y Hornos'));
+                        value.push(Math.log10(Math.abs(energeticValueToExportacion) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueToExportacion, energeticName, 'Coquizadoras y Hornos', linkColor, year,
+                            { flowType: 'primary_demand' }
+                        ));
+                    }
+                });
+            }
+
+            // Enlaces de energéticos primarios a Plantas de Gas y Fraccionadoras
+            if (plantasdegasyfraccionadorasNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueToExportacion = dataManager.getEnergeticValue('Plantas de Gas y Fraccionadoras', energeticName, year);
+                    console.log(`[DEBUG - Flujo Plantas de Gas y Fraccionadoras] ${energeticName}: ${energeticValueToExportacion}`);
+                    if (energeticValueToExportacion !== null && Math.abs(energeticValueToExportacion) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Plantas de Gas y Fraccionadoras] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(energeticNodesMap.get(energeticName));
+                        target.push(nodeMap.get('Plantas de Gas y Fraccionadoras'));
+                        value.push(Math.log10(Math.abs(energeticValueToExportacion) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueToExportacion, energeticName, 'Plantas de Gas y Fraccionadoras', linkColor, year,
+                            { flowType: 'primary_demand' }
+                        ));
+                    }
+                });
+            }
+
+            // Enlaces de energéticos primarios a Refinerías y Despuntadoras
+            if (refinerasydespuntadorasNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueToRefinerasydespuntadoras = dataManager.getEnergeticValue('Refinerías y Despuntadoras', energeticName, year);
+                    console.log(`[DEBUG - Flujo Refinerías y Despuntadoras] ${energeticName}: ${energeticValueToRefinerasydespuntadoras}`);
+                    if (energeticValueToRefinerasydespuntadoras !== null && Math.abs(energeticValueToRefinerasydespuntadoras) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Refinerías y Despuntadoras] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(energeticNodesMap.get(energeticName));
+                        target.push(nodeMap.get('Refinerías y Despuntadoras'));
+                        value.push(Math.log10(Math.abs(energeticValueToRefinerasydespuntadoras) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueToRefinerasydespuntadoras, energeticName, 'Refinerías y Despuntadoras', linkColor, year,
+                            { flowType: 'primary_demand' }
+                        ));
+                    }
+                });
+            }
+
+            // Enlaces de energéticos primarios a Centrales Eléctricas
+            if (centraleselectricasNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueToCentraleselectricas = dataManager.getEnergeticValue('Centrales Eléctricas', energeticName, year);
+                    console.log(`[DEBUG - Flujo Centrales Eléctricas] ${energeticName}: ${energeticValueToCentraleselectricas}`);
+                    if (energeticValueToCentraleselectricas !== null && Math.abs(energeticValueToCentraleselectricas) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Centrales Eléctricas] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(energeticNodesMap.get(energeticName));
+                        target.push(nodeMap.get('Centrales Eléctricas'));
+                        value.push(Math.log10(Math.abs(energeticValueToCentraleselectricas) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueToCentraleselectricas, energeticName, 'Centrales Eléctricas', linkColor, year,
                             { flowType: 'primary_demand' }
                         ));
                     }

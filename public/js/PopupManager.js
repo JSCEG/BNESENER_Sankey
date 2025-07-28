@@ -865,16 +865,16 @@ class PopupManager {
         if (energyType === 'Carbón mineral') {
             console.log('PopupManager prepareLinkTemplateData recibió:', { energyType, value, sourceNode, targetNode });
         }
-        
+
         const absValue = Math.abs(value);
         const isNegative = value < 0;
-        
+
         // Determinar el tipo de flujo basado en el contexto
         const flowType = this.determineLinkFlowType(sourceNode, targetNode, energyType);
-        
+
         // Crear descripción del flujo
         const flowDescription = this.generateFlowDescription(energyType, sourceNode, targetNode, flowType);
-        
+
         const templateData = {
             energyType: energyType, // Usar el energyType pasado como primer argumento
             value: value,
@@ -978,7 +978,7 @@ class PopupManager {
      */
     renderLinkTemplateAsHTML(data) {
         let html = `<div class="popup-container link-popup">`;
-        
+
         // Título con color del enlace
         html += `<div class="popup-title" style="border-bottom-color: ${data.color};">`;
         html += `<span class="energy-type">${data.energyType}</span>`;
@@ -988,7 +988,7 @@ class PopupManager {
         html += `<div class="popup-section">`;
         html += `<div class="popup-section-title">Información del Flujo</div>`;
         html += `<div class="popup-fields">`;
-        
+
         // Valor del flujo
         html += `<div class="popup-field highlight">`;
         html += `<span class="popup-field-label">Valor:</span> `;
@@ -1035,7 +1035,7 @@ class PopupManager {
             console.log('PopupManager renderLinkTemplateAsText:', data);
             console.log('Valor final del popup:', `${data.energyType}: ${this.formatNumber(data.value)} ${data.unit}`);
         }
-        
+
         // Formato simplificado: Nombre del flujo y su valor.
         // Usar formattedValue para asegurar consistencia
         return `${data.energyType}: ${data.formattedValue} ${data.unit}`;
@@ -1296,24 +1296,24 @@ class PopupManager {
         switch (format) {
             case 'number':
                 return this.formatNumber(value);
-            
+
             case 'percentage':
                 return `${this.formatNumber(value)}%`;
-            
+
             case 'breakdown':
                 if (Array.isArray(value)) {
-                    return value.map(item => 
+                    return value.map(item =>
                         `${item.name}: ${this.formatNumber(item.value)} ${unit} (${item.percentage}%)`
                     ).join('\n  ');
                 }
                 return value.toString();
-            
+
             case 'currency':
                 return new Intl.NumberFormat(this.formatConfig.locale, {
                     style: 'currency',
                     currency: this.formatConfig.currency
                 }).format(value);
-            
+
             default:
                 return value.toString();
         }
