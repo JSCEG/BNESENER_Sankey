@@ -1574,95 +1574,73 @@
                 console.error("Error: Datos de 'Oferta Interna Bruta' o sus hijos no encontrados para crear energéticos secundarios.");
             }
 
-            // --- Enlaces desde nodos de transformación a energéticos secundarios ---
-            const transformationNodes = [
-                'Coquizadoras y Hornos',
-                'Refinerías y Despuntadoras',
-                'Plantas de Gas y Fraccionadoras',
-                'Centrales Eléctricas'
-            ];
-            transformationNodes.forEach(nodeName => {
-                const nodeData = dataManager.getNodeData(nodeName);
-                console.log(`[DEBUG] Procesando nodo: ${nodeName}`, nodeData);
+            // --- NODO DE IMPORTACIÓN DE ENERGÉTICOS SECUNDARIOS ---
 
-                if (nodeData && nodeData['Nodos Hijo']) {
-                    // Primero mostramos todos los hijos para depuración
-                    console.log(`[DEBUG] Todos los hijos de ${nodeName}:`,
-                        nodeData['Nodos Hijo'].map(c => ({
-                            nombre: c['Nodo Hijo'],
-                            tipo: c.tipo,
-                            isOutput: c.isOutput
-                        })));
+            if (importacionNodeData && importacionNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios
+                const secundariosImportados = importacionNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        hijo[year] > 0);
 
-                    // Luego filtramos
-                    // Modificar la sección de filtrado de salidas secundarias
-                    const outputSecondaries = nodeData['Nodos Hijo']
-                        .filter(child => {
-                            // Verificar si es un energético secundario
-                            const isSecondary = child.tipo === 'Energía Secundaria';
+                if (secundariosImportados.length > 0) {
+                    // Crear nodo de importación secundaria
+                    const importacionSecundariaIndex = addNode('Importación (Secundaria)', importacionNodeData.color);
+                    nodeX[importacionSecundariaIndex] = 0.5;
+                    nodeY[importacionSecundariaIndex] = 0.05;
 
-                            // Verificar si tiene valor para el año actual
-                            const hasValue = child[year] !== undefined && child[year] !== null && child[year] > 0;
+                    // Crear customdata para el nodo
+                    const importacionSecundariaData = {
+                        ...importacionNodeData,
+                        'Nodos Hijo': secundariosImportados
+                    };
 
-                            console.log(`[DEBUG] ${nodeName} - ${child['Nodo Hijo']}: `,
-                                `tipo=${child.tipo}, valor=${child[year]}, ` +
-                                `esSecundario=${isSecondary}, tieneValor=${hasValue}`);
+                    const importacionSecundariaBreakdown = popupManager.calculateNodeBreakdown(
+                        importacionSecundariaData,
+                        year,
+                        'Energía Secundaria'
+                    );
 
-                            return isSecondary && hasValue;
-                        });
+                    nodeCustomdata[importacionSecundariaIndex] = popupManager.generateNodePopup(
+                        'Importación (Secundaria)',
+                        importacionSecundariaData,
+                        year,
+                        importacionSecundariaBreakdown,
+                        'text',
+                        'Energía Secundaria'
+                    );
 
-                    console.log(`[DEBUG] ${nodeName} - Salidas secundarias con valor:`,
-                        outputSecondaries.map(e => `${e['Nodo Hijo']} (${e[year]})`));
-
-                    outputSecondaries.forEach(energetic => {
+                    // Crear enlaces a los energéticos secundarios
+                    secundariosImportados.forEach(energetic => {
                         const energeticName = energetic['Nodo Hijo'];
-                        console.log(`[DEBUG] Procesando enlace para ${nodeName} -> ${energeticName} `);
-
                         const targetNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
-                        if (targetNodeIndex === undefined) {
-                            console.warn(`[WARN] No se encontró el nodo destino para ${energeticName} en el mapa de nodos secundarios`);
-                            console.log('[DEBUG] Mapa actual de nodos secundarios:', [...secondaryEnergeticNodesMap.keys()]);
-                            return;
-                        }
 
-                        const sourceNodeIndex = nodeMap.get(nodeName);
-                        if (sourceNodeIndex === undefined) {
-                            console.warn(`[WARN] No se encontró el índice para el nodo fuente: ${nodeName} `);
-                            return;
-                        }
+                        if (targetNodeIndex !== undefined) {
+                            const energeticValue = parseFloat(energetic[year]) || 0;
 
-                        // Cambio importante: Usar directamente el valor del año del objeto energetic
-                        const energeticValue = parseFloat(energetic[year]) || 0;
-                        console.log(`[DEBUG] Valor obtenido para ${nodeName} -> ${energeticName}: `, energeticValue);
+                            if (energeticValue > 0) {
+                                const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
 
-                        if (energeticValue > 0) {  // Ya no necesitamos Math.abs ya que verificamos > 0
-                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+                                source.push(importacionSecundariaIndex);
+                                target.push(targetNodeIndex);
+                                value.push(Math.log10(energeticValue + 1));
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
-                            source.push(sourceNodeIndex);
-                            target.push(targetNodeIndex);
-                            value.push(Math.log10(energeticValue + 1));
-                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-
-                            console.log(`[DEBUG] Creando enlace: ${nodeName} (${sourceNodeIndex}) -> ${energeticName} (${targetNodeIndex}) = ${energeticValue}`);
-
-                            linkCustomdata.push(popupManager.generateLinkPopup(
-                                energeticName,
-                                energeticValue,
-                                nodeName,
-                                energeticName,
-                                linkColor,
-                                year,
-                                { flowType: 'secondary_output' }
-                            ));
-                        } else {
-                            console.log(`[DEBUG] Valor no válido o cero para ${nodeName} -> ${energeticName}: `, energeticValue);
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    energeticName,
+                                    energeticValue,
+                                    'Importación (Secundaria)',
+                                    energeticName,
+                                    linkColor,
+                                    year,
+                                    { flowType: 'import_secondary' }
+                                ));
+                            }
                         }
                     });
-                } else {
-                    console.warn(`[WARN] No se encontraron datos o hijos para el nodo: ${nodeName} `);
                 }
-            });
-
+            }
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
@@ -2006,6 +1984,94 @@
                 });
             }
 
+            // --- Enlaces desde nodos de transformación a energéticos secundarios ---
+            const transformationNodes = [
+                'Coquizadoras y Hornos',
+                'Refinerías y Despuntadoras',
+                'Plantas de Gas y Fraccionadoras',
+                'Centrales Eléctricas'
+            ];
+            transformationNodes.forEach(nodeName => {
+                const nodeData = dataManager.getNodeData(nodeName);
+                console.log(`[DEBUG] Procesando nodo: ${nodeName}`, nodeData);
+
+                if (nodeData && nodeData['Nodos Hijo']) {
+                    // Primero mostramos todos los hijos para depuración
+                    console.log(`[DEBUG] Todos los hijos de ${nodeName}:`,
+                        nodeData['Nodos Hijo'].map(c => ({
+                            nombre: c['Nodo Hijo'],
+                            tipo: c.tipo,
+                            isOutput: c.isOutput
+                        })));
+
+                    // Luego filtramos
+                    // Modificar la sección de filtrado de salidas secundarias
+                    const outputSecondaries = nodeData['Nodos Hijo']
+                        .filter(child => {
+                            // Verificar si es un energético secundario
+                            const isSecondary = child.tipo === 'Energía Secundaria';
+
+                            // Verificar si tiene valor para el año actual
+                            const hasValue = child[year] !== undefined && child[year] !== null && child[year] > 0;
+
+                            console.log(`[DEBUG] ${nodeName} - ${child['Nodo Hijo']}: `,
+                                `tipo=${child.tipo}, valor=${child[year]}, ` +
+                                `esSecundario=${isSecondary}, tieneValor=${hasValue}`);
+
+                            return isSecondary && hasValue;
+                        });
+
+                    console.log(`[DEBUG] ${nodeName} - Salidas secundarias con valor:`,
+                        outputSecondaries.map(e => `${e['Nodo Hijo']} (${e[year]})`));
+
+                    outputSecondaries.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        console.log(`[DEBUG] Procesando enlace para ${nodeName} -> ${energeticName} `);
+
+                        const targetNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        if (targetNodeIndex === undefined) {
+                            console.warn(`[WARN] No se encontró el nodo destino para ${energeticName} en el mapa de nodos secundarios`);
+                            console.log('[DEBUG] Mapa actual de nodos secundarios:', [...secondaryEnergeticNodesMap.keys()]);
+                            return;
+                        }
+
+                        const sourceNodeIndex = nodeMap.get(nodeName);
+                        if (sourceNodeIndex === undefined) {
+                            console.warn(`[WARN] No se encontró el índice para el nodo fuente: ${nodeName} `);
+                            return;
+                        }
+
+                        // Cambio importante: Usar directamente el valor del año del objeto energetic
+                        const energeticValue = parseFloat(energetic[year]) || 0;
+                        console.log(`[DEBUG] Valor obtenido para ${nodeName} -> ${energeticName}: `, energeticValue);
+
+                        if (energeticValue > 0) {  // Ya no necesitamos Math.abs ya que verificamos > 0
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                            source.push(sourceNodeIndex);
+                            target.push(targetNodeIndex);
+                            value.push(Math.log10(energeticValue + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            console.log(`[DEBUG] Creando enlace: ${nodeName} (${sourceNodeIndex}) -> ${energeticName} (${targetNodeIndex}) = ${energeticValue}`);
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,
+                                nodeName,
+                                energeticName,
+                                linkColor,
+                                year,
+                                { flowType: 'secondary_output' }
+                            ));
+                        } else {
+                            console.log(`[DEBUG] Valor no válido o cero para ${nodeName} -> ${energeticName}: `, energeticValue);
+                        }
+                    });
+                } else {
+                    console.warn(`[WARN] No se encontraron datos o hijos para el nodo: ${nodeName} `);
+                }
+            });
 
 
             const data = {
