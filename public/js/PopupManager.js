@@ -197,22 +197,16 @@ class PopupManager {
             // 'Producción',
             // 'Importación',
             'Oferta Interna Bruta',
-            'Exportación',
             'Consumo Propio del Sector',
             'Coquizadoras y Hornos',
             'Refinerías y Despuntadoras',
             'Plantas de Gas y Fraccionadoras',
             'Centrales Eléctricas',
-            'Energía No Aprovechada',
             'Carbón mineral', 'Petróleo crudo', 'Condensados', 'Gas natural',
             'Energía Nuclear', 'Energia Hidraúlica', 'Energía Hidráulica',
             'Geoenergía', 'Energía solar', 'Energía eólica', 'Bagazo de caña',
             'Leña', 'Biogás'
         ];
-
-        if (simpleSourceNodes.includes(nodeName)) {
-            // return 'simple_source'; // Deshabilitado para permitir mapeos más específicos
-        }
 
         // Mapeo de nombres de nodos a tipos de template
         const nodeTypeMapping = {
@@ -228,7 +222,9 @@ class PopupManager {
             'Importación': 'simple_source',
             'Producción': 'simple_source',
             'Variación de Inventarios': 'inventory_variation',
-            'Oferta Interna Bruta': 'simple_source' // Añadido para que use el template simplificado
+            'Oferta Interna Bruta': 'simple_source',
+            'Exportación': 'simple_source',
+            'Energía No Aprovechada': 'simple_source'
         };
 
         // Verificar mapeo directo
@@ -880,7 +876,7 @@ class PopupManager {
         const flowDescription = this.generateFlowDescription(energyType, sourceNode, targetNode, flowType);
         
         const templateData = {
-            energyType: energyType,
+            energyType: energyType, // Usar el energyType pasado como primer argumento
             value: value,
             absValue: absValue,
             formattedValue: this.formatNumber(absValue),

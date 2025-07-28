@@ -1349,6 +1349,54 @@
                 console.error("Error: Datos de 'Oferta Interna Bruta' o sus hijos no encontrados para crear energéticos primarios.");
             }
 
+            // --- Nodo de Exportación ---
+            const exportacionNodeData = dataManager.getNodeData('Exportación');
+            console.log(`[DEBUG] Datos de Exportación:`, exportacionNodeData);
+            if (exportacionNodeData) {
+                const exportacionIndex = addNode(exportacionNodeData['Nodo Padre'], exportacionNodeData.color);
+                nodeX[exportacionIndex] = 0.6; // Posición horizontal
+                nodeY[exportacionIndex] = 0.7; // Posición vertical;
+
+                // Calcular el desglose para el popup de Exportación (solo energéticos primarios)
+                const exportacionBreakdownForPopup = popupManager.calculateNodeBreakdown(exportacionNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Exportación] Breakdown (Primaria) para ${year}:`, exportacionBreakdownForPopup);
+
+                nodeCustomdata[exportacionIndex] = popupManager.generateNodePopup(
+                    exportacionNodeData['Nodo Padre'],
+                    exportacionNodeData,
+                    year,
+                    exportacionBreakdownForPopup,
+                    'text',
+                    'Energía Primaria'
+                );
+            } else {
+                console.error("Error: Datos para 'Exportación' no encontrados en DataManager.");
+            }
+
+            // --- Nodo de Energía No Aprovechada ---
+            const energiaNoAprovechadaNodeData = dataManager.getNodeData('Energía No Aprovechada');
+            console.log(`[DEBUG] Datos de Energía No Aprovechada:`, energiaNoAprovechadaNodeData);
+            if (energiaNoAprovechadaNodeData) {
+                const energiaNoAprovechadaIndex = addNode(energiaNoAprovechadaNodeData['Nodo Padre'], energiaNoAprovechadaNodeData.color);
+                nodeX[energiaNoAprovechadaIndex] = 0.6; // Posición horizontal
+                nodeY[energiaNoAprovechadaIndex] = 0.9; // Posición vertical;
+
+                // Calcular el desglose para el popup de Energía No Aprovechada (solo energéticos primarios)
+                const energiaNoAprovechadaBreakdownForPopup = popupManager.calculateNodeBreakdown(energiaNoAprovechadaNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Energía No Aprovechada] Breakdown (Primaria) para ${year}:`, energiaNoAprovechadaBreakdownForPopup);
+
+                nodeCustomdata[energiaNoAprovechadaIndex] = popupManager.generateNodePopup(
+                    energiaNoAprovechadaNodeData['Nodo Padre'],
+                    energiaNoAprovechadaNodeData,
+                    year,
+                    energiaNoAprovechadaBreakdownForPopup,
+                    'text',
+                    'Energía Primaria'
+                );
+            } else {
+                console.error("Error: Datos para 'Energía No Aprovechada' no encontrados en DataManager.");
+            }
+
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
@@ -1367,7 +1415,7 @@
                         linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
                         linkCustomdata.push(popupManager.generateLinkPopup(
                             energeticName, energeticValueFromImportacion, 'Importación', energeticName, linkColor, year,
-                            { flowType: 'primary_supply', energyType: 'Energía Primaria' }
+                            { flowType: 'primary_supply' }
                         ));
                     }
                 });
@@ -1390,7 +1438,7 @@
                         linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
                         linkCustomdata.push(popupManager.generateLinkPopup(
                             energeticName, energeticValueFromProduccion, 'Producción', energeticName, linkColor, year,
-                            { flowType: 'primary_supply', energyType: 'Energía Primaria' }
+                            { flowType: 'primary_supply' }
                         ));
                     }
                 });
@@ -1415,13 +1463,58 @@
                         linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
                         linkCustomdata.push(popupManager.generateLinkPopup(
                             energeticName, energeticValueFromVariacion, 'Variación de Inventarios', energeticName, linkColor, year,
-                            { flowType: 'primary_supply', energyType: 'Energía Primaria' }
+                            { flowType: 'primary_supply' }
                         ));
                     }
                 });
             }
 
-            // Configuración del diagrama de Sankey
+            // Enlaces de energéticos primarios a Exportación
+            if (exportacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueToExportacion = dataManager.getEnergeticValue('Exportación', energeticName, year);
+                    console.log(`[DEBUG - Flujo Exportación] ${energeticName}: ${energeticValueToExportacion}`);
+                    if (energeticValueToExportacion !== null && Math.abs(energeticValueToExportacion) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Exportación] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(energeticNodesMap.get(energeticName));
+                        target.push(nodeMap.get('Exportación'));
+                        value.push(Math.log10(Math.abs(energeticValueToExportacion) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueToExportacion, energeticName, 'Exportación', linkColor, year,
+                            { flowType: 'primary_demand' }
+                        ));
+                    }
+                });
+            }
+
+            // Enlaces de energéticos primarios a Energía No Aprovechada
+            if (energiaNoAprovechadaNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueToNoAprovechada = dataManager.getEnergeticValue('Energía No Aprovechada', energeticName, year);
+                    console.log(`[DEBUG - Flujo Energía No Aprovechada] ${energeticName}: ${energeticValueToNoAprovechada}`);
+                    if (energeticValueToNoAprovechada !== null && Math.abs(energeticValueToNoAprovechada) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Energía No Aprovechada] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(energeticNodesMap.get(energeticName));
+                        target.push(nodeMap.get('Energía No Aprovechada'));
+                        value.push(Math.log10(Math.abs(energeticValueToNoAprovechada) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueToNoAprovechada, energeticName, 'Energía No Aprovechada', linkColor, year,
+                            { flowType: 'primary_demand' }
+                        ));
+                    }
+                });
+            }
+
             const data = {
                 type: "sankey",
                 orientation: "h",
@@ -1440,7 +1533,7 @@
                     source: source,
                     target: target,
                     value: value,
-                    color: linkColors.map(hex => styleManager ? styleManager.hexToRgba(hex, 0.5) : hex),
+                    color: linkColors,
                     customdata: linkCustomdata,
                     hovertemplate: '%{customdata}<extra></extra>'
                 }
