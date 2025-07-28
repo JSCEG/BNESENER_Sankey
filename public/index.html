@@ -1575,7 +1575,6 @@
             }
 
             // --- NODO DE IMPORTACIÓN DE ENERGÉTICOS SECUNDARIOS ---
-
             if (importacionNodeData && importacionNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios
                 const secundariosImportados = importacionNodeData['Nodos Hijo']
@@ -1641,6 +1640,105 @@
                     });
                 }
             }
+
+            // --- NODO DE VARIACIÓN DE INVENTARIOS DE ENERGÉTICOS SECUNDARIOS ---
+            if (variacionNodeData && variacionNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios
+                const secundariosVariacion = variacionNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        Math.abs(hijo[year]) > 0);  // Usamos Math.abs para incluir tanto positivos como negativos
+
+                if (secundariosVariacion.length > 0) {
+                    // Crear nodo de variación de inventarios secundarios
+                    const variacionSecundariaIndex = addNode('Variación de Inventarios ES', variacionNodeData.color);
+                    nodeX[variacionSecundariaIndex] = 0.45;
+                    nodeY[variacionSecundariaIndex] = 0.15; // Posición vertical ajustada
+
+                    // Crear customdata para el nodo
+                    const variacionSecundariaData = {
+                        ...variacionNodeData,
+                        'Nodos Hijo': secundariosVariacion
+                    };
+
+                    // Calcular el desglose para el popup
+                    const variacionSecundariaBreakdown = popupManager.calculateNodeBreakdown(
+                        variacionSecundariaData,
+                        year,
+                        'Energía Secundaria'
+                    );
+
+                    // Preparar datos para el popup
+                    let variacionSecundariaPopupData = {};
+                    if (variacionSecundariaBreakdown.input_total > 0) {
+                        variacionSecundariaPopupData.variacion_positiva = variacionSecundariaBreakdown.input_total;
+                    }
+                    if (variacionSecundariaBreakdown.output_total > 0) {
+                        variacionSecundariaPopupData.variacion_negativa = variacionSecundariaBreakdown.output_total;
+                    }
+
+                    // Generar el popup
+                    nodeCustomdata[variacionSecundariaIndex] = popupManager.generateNodePopup(
+                        'Variación de Inventarios (Secundaria)',
+                        variacionSecundariaData,
+                        year,
+                        variacionSecundariaPopupData,
+                        'text',
+                        'Energía Secundaria'
+                    );
+
+                    // Crear enlaces a los energéticos secundarios
+                    secundariosVariacion.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const targetNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        const energeticValue = parseFloat(energetic[year]) || 0;
+
+                        if (targetNodeIndex !== undefined && energeticValue !== 0) {
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+                            const absValue = Math.abs(energeticValue);
+
+                            // Para valores positivos (incremento de inventario)
+                            if (energeticValue > 0) {
+                                source.push(variacionSecundariaIndex);
+                                target.push(targetNodeIndex);
+                                value.push(Math.log10(absValue + 1));
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    energeticName,
+                                    absValue,
+                                    'Variación de Inventarios (Secundaria)',
+                                    energeticName,
+                                    linkColor,
+                                    year,
+                                    { flowType: 'inventory_change_secondary' }
+                                ));
+                            }
+                            // Para valores negativos (decremento de inventario)
+                            else if (energeticValue < 0) {
+                                source.push(targetNodeIndex);  // Fuente es el energético
+                                target.push(variacionSecundariaIndex);  // Destino es la variación
+                                value.push(Math.log10(absValue + 1));
+                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                                linkCustomdata.push(popupManager.generateLinkPopup(
+                                    energeticName,
+                                    absValue,
+                                    energeticName,
+                                    'Variación de Inventarios (Secundaria)',
+                                    linkColor,
+                                    year,
+                                    { flowType: 'inventory_change_secondary' }
+                                ));
+                            }
+                        }
+                    });
+                }
+            }
+
+
+
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
