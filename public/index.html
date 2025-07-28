@@ -1232,7 +1232,7 @@
             if (importacionNodeData) {
                 const importacionIndex = addNode(importacionNodeData['Nodo Padre'], importacionNodeData.color);
                 nodeX[importacionIndex] = 0.05;
-                nodeY[importacionIndex] = 0.3; // Ahora el más arriba
+                nodeY[importacionIndex] = 0.05; // Ahora el más arriba
                 // Generar customdata específico para Importación
                 const importacionBreakdownForPopup = popupManager.calculateNodeBreakdown(importacionNodeData, year, 'Energía Primaria');
                 console.log(`[DEBUG - Importación] Breakdown (Primaria) para ${year}:`, importacionBreakdownForPopup);
@@ -1252,7 +1252,7 @@
             if (produccionNodeData) {
                 const produccionIndex = addNode(produccionNodeData['Nodo Padre'], produccionNodeData.color);
                 nodeX[produccionIndex] = 0.05;
-                nodeY[produccionIndex] = 0.7; // Ahora el más abajo
+                nodeY[produccionIndex] = 0.4; // Ahora el más abajo
                 // Generar customdata específico para Producción
                 const produccionBreakdownForPopup = popupManager.calculateNodeBreakdown(produccionNodeData, year, 'Energía Primaria');
                 console.log(`[DEBUG - Producción] Breakdown (Primaria) para ${year}:`, produccionBreakdownForPopup);
@@ -1273,7 +1273,7 @@
             if (variacionNodeData) {
                 const variacionIndex = addNode(variacionNodeData['Nodo Padre'], variacionNodeData.color);
                 nodeX[variacionIndex] = 0.05;
-                nodeY[variacionIndex] = 0.5; // Ahora en el medio
+                nodeY[variacionIndex] = 0.2; // Ahora en el medio
 
                 // Calcular el desglose completo para la variación de inventarios para el popup
                 const variacionBreakdownForPopup = popupManager.calculateNodeBreakdown(variacionNodeData, year, 'Energía Primaria');
@@ -1325,7 +1325,7 @@
                     const energeticIndex = addNode(energeticName, energeticColor);
                     energeticNodesMap.set(energeticName, energeticIndex); // Guardar el índice
 
-                    nodeX[energeticIndex] = 0.3; // Columna de Oferta Interna Bruta
+                    nodeX[energeticIndex] = 0.2; // Columna de Oferta Interna Bruta
                     nodeY[energeticIndex] = startY + (index * stepY); // Distribuir verticalmente
 
                     // Generar customdata sencillo para cada energético
@@ -1354,8 +1354,8 @@
             console.log(`[DEBUG] Datos de Exportación:`, exportacionNodeData);
             if (exportacionNodeData) {
                 const exportacionIndex = addNode(exportacionNodeData['Nodo Padre'], exportacionNodeData.color);
-                nodeX[exportacionIndex] = 0.6; // Posición horizontal
-                nodeY[exportacionIndex] = 0.7; // Posición vertical;
+                nodeX[exportacionIndex] = 0.3; // Posición horizontal
+                nodeY[exportacionIndex] = 0.99; // Posición vertical;
 
                 // Calcular el desglose para el popup de Exportación (solo energéticos primarios)
                 const exportacionBreakdownForPopup = popupManager.calculateNodeBreakdown(exportacionNodeData, year, 'Energía Primaria');
@@ -1378,7 +1378,7 @@
             console.log(`[DEBUG] Datos de Energía No Aprovechada:`, energiaNoAprovechadaNodeData);
             if (energiaNoAprovechadaNodeData) {
                 const energiaNoAprovechadaIndex = addNode(energiaNoAprovechadaNodeData['Nodo Padre'], energiaNoAprovechadaNodeData.color);
-                nodeX[energiaNoAprovechadaIndex] = 0.6; // Posición horizontal
+                nodeX[energiaNoAprovechadaIndex] = 0.35; // Posición horizontal
                 nodeY[energiaNoAprovechadaIndex] = 0.9; // Posición vertical;
 
                 // Calcular el desglose para el popup de Energía No Aprovechada (solo energéticos primarios)
@@ -1402,7 +1402,7 @@
             console.log(`[DEBUG] Datos de Coquizadoras y Hornos:`, coquizadorasyhornosNodeData);
             if (coquizadorasyhornosNodeData) {
                 const coquizadorasyhornosIndex = addNode(coquizadorasyhornosNodeData['Nodo Padre'], coquizadorasyhornosNodeData.color);
-                nodeX[coquizadorasyhornosIndex] = 0.5; // Posición horizontal
+                nodeX[coquizadorasyhornosIndex] = 0.35; // Posición horizontal
                 nodeY[coquizadorasyhornosIndex] = 0.1; // Posición vertical;
 
                 // Calcular el desglose para el popup de Coquizadoras y Hornos (solo energéticos primarios)
@@ -1427,8 +1427,8 @@
             console.log(`[DEBUG] Datos de Plantas de Gas y Fraccionadoras:`, plantasdegasyfraccionadorasNodeData);
             if (plantasdegasyfraccionadorasNodeData) {
                 const plantasdegasyfraccionadorasIndex = addNode(plantasdegasyfraccionadorasNodeData['Nodo Padre'], plantasdegasyfraccionadorasNodeData.color);
-                nodeX[plantasdegasyfraccionadorasIndex] = 0.5; // Posición horizontal
-                nodeY[plantasdegasyfraccionadorasIndex] = 0.2; // Posición vertical;
+                nodeX[plantasdegasyfraccionadorasIndex] = 0.35; // Posición horizontal
+                nodeY[plantasdegasyfraccionadorasIndex] = 0.25; // Posición vertical;
 
                 // Calcular el desglose para el popup de Plantas de Gas y Fraccionadoras (solo energéticos primarios)
                 const plantasdegasyfraccionadorasBreakdownForPopup = popupManager.calculateNodeBreakdown(plantasdegasyfraccionadorasNodeData, year, 'Energía Primaria');
@@ -1452,8 +1452,8 @@
             console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
             if (refinerasydespuntadorasNodeData) {
                 const refinerasydespuntadorasIndex = addNode(refinerasydespuntadorasNodeData['Nodo Padre'], refinerasydespuntadorasNodeData.color);
-                nodeX[refinerasydespuntadorasIndex] = 0.5; // Posición horizontal
-                nodeY[refinerasydespuntadorasIndex] = 0.3; // Posición vertical;
+                nodeX[refinerasydespuntadorasIndex] = 0.35; // Posición horizontal
+                nodeY[refinerasydespuntadorasIndex] = 0.7; // Posición vertical;
 
                 // Calcular el desglose para el popup de Refinerías y Despuntadoras (solo energéticos primarios)
                 const refinerasydespuntadorasBreakdownForPopup = popupManager.calculateNodeBreakdown(refinerasydespuntadorasNodeData, year, 'Energía Primaria');
@@ -1477,8 +1477,8 @@
             console.log(`[DEBUG] Datos de Centrales Eléctricas:`, centraleselectricasNodeData);
             if (centraleselectricasNodeData) {
                 const centraleselectricasIndex = addNode(centraleselectricasNodeData['Nodo Padre'], centraleselectricasNodeData.color);
-                nodeX[centraleselectricasIndex] = 0.55; // Posición horizontal
-                nodeY[centraleselectricasIndex] = 0.4; // Posición vertical;
+                nodeX[centraleselectricasIndex] = 0.45; // Posición horizontal
+                nodeY[centraleselectricasIndex] = 0.45; // Posición vertical;
 
                 // Calcular el desglose para el popup de Centrales Eléctricas
                 const centraleselectricasBreakdownForPopup = popupManager.calculateNodeBreakdown(centraleselectricasNodeData, year, 'Energía Secundaria');
@@ -1544,7 +1544,7 @@
                     const energeticIndex = addNode(energeticName, energeticColor);
                     secondaryEnergeticNodesMap.set(energeticName, energeticIndex);
 
-                    nodeX[energeticIndex] = 0.6; // Posición X a la derecha
+                    nodeX[energeticIndex] = 0.65; // Posición X a la derecha
                     nodeY[energeticIndex] = startY + (index * stepY);
 
                     // Obtener el valor del energético
