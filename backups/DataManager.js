@@ -183,28 +183,6 @@ class DataManager {
     }
 
     /**
-     * Obtiene el valor de un energético (nodo hijo) específico dentro de un nodo padre para un año dado.
-     * @param {string} parentNodeName - Nombre del nodo padre (ej. 'Oferta Interna Bruta').
-     * @param {string} energeticName - Nombre del energético (nodo hijo, ej. 'Carbón mineral').
-     * @param {string} year - Año para el cual obtener el valor.
-     * @returns {number|null} El valor del energético para el año o null si no se encuentra.
-     */
-    getEnergeticValue(parentNodeName, energeticName, year) {
-        const nodeData = this.getNodeData(parentNodeName);
-        if (!nodeData || !nodeData['Nodos Hijo']) {
-            return null;
-        }
-
-        const child = nodeData['Nodos Hijo'].find(c => c['Nodo Hijo'] === energeticName);
-        if (child && child[year] !== undefined) {
-            const value = parseFloat(child[year]);
-            return isNaN(value) ? null : value;
-        }
-
-        return null;
-    }
-
-    /**
      * Obtiene todos los años disponibles en los datos
      * @returns {Array} Array de años ordenados de mayor a menor
      */

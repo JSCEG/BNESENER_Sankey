@@ -336,9 +336,8 @@ class StyleManager {
         const validHex = this.validateColor(hex);
         const rgb = this.hexToRgb(validHex);
         if (!rgb) {
-            // Fallback si el color hex es inválido, deberíamos usar el color base de fallback en lugar de validHex
-            console.warn(`Color hexadecimal inválido para RGBA: ${hex}. Usando color por defecto.`);
-            return `rgba(128, 128, 128, ${opacity})`; // Gris como fallback explícito
+            // Fallback si el color hex es inválido
+            return validHex;
         }
         return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
     }

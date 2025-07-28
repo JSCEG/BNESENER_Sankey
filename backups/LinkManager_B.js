@@ -40,112 +40,112 @@ class LinkManager {
         };
 
         // Inicializar mapeos por defecto
-        // this.initializeDefaultMappings(); // Deshabilitado para crear mapeos manualmente
+        this.initializeDefaultMappings();
 
         // Los colores se obtendrán del StyleManager, no hardcodeados
 
         console.log('LinkManager inicializado');
     }
 
-    // /**
-    //  * Inicializa los mapeos de conexiones por defecto del sistema energético
-    //  */
-    // initializeDefaultMappings() {
-    //     // === MAPEO COMBUSTIBLES -> TECNOLOGÍAS DE GENERACIÓN ===
-    //     this.registerConnectionMap('fuel-to-generation', new Map([
-    //         // Combustibles sólidos - Carbón mineral va desde Oferta Interna Bruta
-    //         // ['Carbón mineral', ['Carboeléctrica']], // Manejado por distribution-to-transformation
-    //         ['Coque de carbón', ['Carboeléctrica']],
+    /**
+     * Inicializa los mapeos de conexiones por defecto del sistema energético
+     */
+    initializeDefaultMappings() {
+        // === MAPEO COMBUSTIBLES -> TECNOLOGÍAS DE GENERACIÓN ===
+        this.registerConnectionMap('fuel-to-generation', new Map([
+            // Combustibles sólidos - Carbón mineral va desde Oferta Interna Bruta
+            // ['Carbón mineral', ['Carboeléctrica']], // Manejado por distribution-to-transformation
+            ['Coque de carbón', ['Carboeléctrica']],
 
-    //         // Combustibles líquidos
-    //         ['Petróleo crudo', ['Térmica Convencional']],
-    //         ['Diesel', ['Térmica Convencional', 'Combustión Interna']],
-    //         ['Combustóleo', ['Térmica Convencional']],
-    //         ['Gasolinas y naftas', ['Combustión Interna']],
+            // Combustibles líquidos
+            ['Petróleo crudo', ['Térmica Convencional']],
+            ['Diesel', ['Térmica Convencional', 'Combustión Interna']],
+            ['Combustóleo', ['Térmica Convencional']],
+            ['Gasolinas y naftas', ['Combustión Interna']],
 
-    //         // Combustibles gaseosos
-    //         ['Gas natural', ['Térmica Convencional', 'Turbogás', 'Cogeneración']],
-    //         ['Gas natural seco', ['Térmica Convencional', 'Turbogás', 'Ciclo Combinado', 'Cogeneración']],
-    //         ['Gas licuado de petróleo', ['Turbogás']],
-    //         ['Biogás', ['Cogeneración']],
+            // Combustibles gaseosos
+            ['Gas natural', ['Térmica Convencional', 'Turbogás', 'Cogeneración']],
+            ['Gas natural seco', ['Térmica Convencional', 'Turbogás', 'Ciclo Combinado', 'Cogeneración']],
+            ['Gas licuado de petróleo', ['Turbogás']],
+            ['Biogás', ['Cogeneración']],
 
-    //         // Biomasa
-    //         ['Bagazo de caña', ['Cogeneración']],
-    //         ['Leña', ['Cogeneración']]
-    //     ]));
+            // Biomasa
+            ['Bagazo de caña', ['Cogeneración']],
+            ['Leña', ['Cogeneración']]
+        ]));
 
-    //      // === MAPEO Inicial Importación, Producción, Variación -> Energéticos Primarios ===
-    //     this.registerConnectionMap('sources-to-hub', new Map([
-    //         ['Producción', ['Oferta Total']],
-    //         ['Importación de energéticos primarios', ['Oferta Total']],
-    //         ['Variación de inventarios de Energéticos primarios', ['Oferta Total']]
-    //     ]));
+         // === MAPEO Inicial Importación, Producción, Variación -> Energéticos Primarios ===
+        this.registerConnectionMap('sources-to-hub', new Map([
+            ['Producción', ['Oferta Total']],
+            ['Importación de energéticos primarios', ['Oferta Total']],
+            ['Variación de inventarios de Energéticos primarios', ['Oferta Total']]
+        ]));
 
 
-    //     // === MAPEO ENERGÉTICOS PRIMARIOS DIRECTOS -> CENTRALES ELÉCTRICAS ===
-    //     this.registerConnectionMap('primary-to-centrales', new Map([
-    //         ['Energía Nuclear', ['Centrales Eléctricas']],
-    //         ['Energía Hidráulica', ['Centrales Eléctricas']],
-    //         ['Geoenergía', ['Centrales Eléctricas']],
-    //         ['Energía solar', ['Centrales Eléctricas']],
-    //         ['Energía eólica', ['Centrales Eléctricas']]
-    //     ]));
+        // === MAPEO ENERGÉTICOS PRIMARIOS DIRECTOS -> CENTRALES ELÉCTRICAS ===
+        this.registerConnectionMap('primary-to-centrales', new Map([
+            ['Energía Nuclear', ['Centrales Eléctricas']],
+            ['Energía Hidráulica', ['Centrales Eléctricas']],
+            ['Geoenergía', ['Centrales Eléctricas']],
+            ['Energía solar', ['Centrales Eléctricas']],
+            ['Energía eólica', ['Centrales Eléctricas']]
+        ]));
 
-    //   
+      
 
-    //     // === MAPEO HUB -> DISTRIBUCIÓN ===
-    //     this.registerConnectionMap('hub-to-distribution', new Map([
-    //         ['Oferta Total', [
-    //             //'Oferta Interna Bruta',
-    //             'Exportación',
-    //             'Energía No Aprovechada'
-    //         ]]
-    //     ]));
+        // === MAPEO HUB -> DISTRIBUCIÓN ===
+        this.registerConnectionMap('hub-to-distribution', new Map([
+            ['Oferta Total', [
+                //'Oferta Interna Bruta',
+                'Exportación',
+                'Energía No Aprovechada'
+            ]]
+        ]));
 
-    //     // === MAPEO DISTRIBUCIÓN -> TRANSFORMACIÓN ===
-    //     this.registerConnectionMap('distribution-to-transformation', new Map([
-    //         ['Oferta Interna Bruta', [
-    //             'Consumo Propio del Sector',
-    //             'Refinerías y Despuntadoras',
-    //             'Plantas de Gas y Fraccionadoras',
-    //             'Coquizadoras y Hornos',
-    //             'Combustión Interna',
-    //             'Carboeléctrica',
-    //             'Térmica Convencional',
-    //             'Turbogás',
-    //             'Ciclo Combinado'
-    //         ]]
-    //     ]));
+        // === MAPEO DISTRIBUCIÓN -> TRANSFORMACIÓN ===
+        this.registerConnectionMap('distribution-to-transformation', new Map([
+            ['Oferta Interna Bruta', [
+                'Consumo Propio del Sector',
+                'Refinerías y Despuntadoras',
+                'Plantas de Gas y Fraccionadoras',
+                'Coquizadoras y Hornos',
+                'Combustión Interna',
+                'Carboeléctrica',
+                'Térmica Convencional',
+                'Turbogás',
+                'Ciclo Combinado'
+            ]]
+        ]));
 
-    //     // === MAPEO CENTROS DE TRANSFORMACIÓN -> TECNOLOGÍAS DE GENERACIÓN ===
-    //     this.registerConnectionMap('transformation-to-generation', new Map([
-    //         ['Refinerías y Despuntadoras', [
-    //             { target: 'Térmica Convencional', energetics: ['Combustóleo', 'Coque de petróleo'] },
-    //             { target: 'Combustión Interna', energetics: ['Diesel', 'Combustóleo'] },
-    //             { target: 'Turbogás', energetics: ['Diesel'] },
-    //             { target: 'Cogeneración', energetics: ['Diesel', 'Combustóleo'] }
-    //         ]],
-    //         ['Plantas de Gas y Fraccionadoras', [
-    //             { target: 'Térmica Convencional', energetics: ['Gas natural seco'] },
-    //             { target: 'Combustión Interna', energetics: ['Gas natural seco'] },
-    //             { target: 'Turbogás', energetics: ['Gas natural seco'] },
-    //             { target: 'Ciclo Combinado', energetics: ['Gas natural seco'] },
-    //             { target: 'Cogeneración', energetics: ['Gas natural seco'] }
-    //         ]]
-    //     ]));
+        // === MAPEO CENTROS DE TRANSFORMACIÓN -> TECNOLOGÍAS DE GENERACIÓN ===
+        this.registerConnectionMap('transformation-to-generation', new Map([
+            ['Refinerías y Despuntadoras', [
+                { target: 'Térmica Convencional', energetics: ['Combustóleo', 'Coque de petróleo'] },
+                { target: 'Combustión Interna', energetics: ['Diesel', 'Combustóleo'] },
+                { target: 'Turbogás', energetics: ['Diesel'] },
+                { target: 'Cogeneración', energetics: ['Diesel', 'Combustóleo'] }
+            ]],
+            ['Plantas de Gas y Fraccionadoras', [
+                { target: 'Térmica Convencional', energetics: ['Gas natural seco'] },
+                { target: 'Combustión Interna', energetics: ['Gas natural seco'] },
+                { target: 'Turbogás', energetics: ['Gas natural seco'] },
+                { target: 'Ciclo Combinado', energetics: ['Gas natural seco'] },
+                { target: 'Cogeneración', energetics: ['Gas natural seco'] }
+            ]]
+        ]));
 
-    //     // === MAPEO GENERACIÓN -> CENTRALES ===
-    //     this.registerConnectionMap('generation-to-centrales', new Map([
-    //         ['Carboeléctrica', ['Centrales Eléctricas']],
-    //         ['Térmica Convencional', ['Centrales Eléctricas']],
-    //         ['Combustión Interna', ['Centrales Eléctricas']],
-    //         ['Turbogás', ['Centrales Eléctricas']],
-    //         ['Ciclo Combinado', ['Centrales Eléctricas']],
-    //         ['Cogeneración', ['Centrales Eléctricas']]
-    //     ]));
+        // === MAPEO GENERACIÓN -> CENTRALES ===
+        this.registerConnectionMap('generation-to-centrales', new Map([
+            ['Carboeléctrica', ['Centrales Eléctricas']],
+            ['Térmica Convencional', ['Centrales Eléctricas']],
+            ['Combustión Interna', ['Centrales Eléctricas']],
+            ['Turbogás', ['Centrales Eléctricas']],
+            ['Ciclo Combinado', ['Centrales Eléctricas']],
+            ['Cogeneración', ['Centrales Eléctricas']]
+        ]));
 
-    //     console.log(`Inicializados ${this.connectionMaps.size} mapeos de conexiones`);
-    // }
+        console.log(`Inicializados ${this.connectionMaps.size} mapeos de conexiones`);
+    }
 
     /**
      * Genera enlaces de datos basados en los mapeos de conexiones y datos de nodos
@@ -1253,7 +1253,7 @@ class LinkManager {
         this.connectionMaps.clear();
         this.connectionRules.clear();
         this.connectionHistory.clear();
-        // this.initializeDefaultMappings(); // Deshabilitado para evitar recargar mapeos por defecto
+        this.initializeDefaultMappings();
         console.log('LinkManager reiniciado');
     }
 }

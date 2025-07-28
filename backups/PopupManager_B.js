@@ -91,7 +91,16 @@ class PopupManager {
 
         // === TEMPLATE PARA VARIACIÓN DE INVENTARIOS ===
         const inventoryVariationTemplate = {
-            type: 'inventory_variation'
+            title: '%{label}',
+            sections: [
+                {
+                    title: '',
+                    fields: [
+                        { key: 'variacion_positiva', label: 'Incremento', value: '%{variacion_positiva}', format: 'number', unit: 'PJ', highlight: true, condition: 'hasPositiveVariation' },
+                        { key: 'variacion_negativa', label: 'Disminución', value: '%{variacion_negativa}', format: 'number', unit: 'PJ', highlight: true, condition: 'hasNegativeVariation' }
+                    ]
+                }
+            ]
         };
 
         // === TEMPLATE SIMPLIFICADO PARA HUBS ===
@@ -136,23 +145,21 @@ class PopupManager {
      * @param {string} year - Año actual
      * @param {Object} additionalData - Datos adicionales para el popup
      * @param {string} format - Formato del popup ('html' o 'text')
-     * @param {string|null} energyTypeToInclude - Tipo de energía a incluir
-     * @param {string|null} explicitTemplateType - Permite especificar directamente el tipo de plantilla a usar (ej. 'simple_source', 'inventory_variation').
      * @returns {string} Popup formateado
      */
-    generateNodePopup(nodeName, nodeData, year, additionalData = {}, format = 'text', energyTypeToInclude = null, explicitTemplateType = null) {
+    generateNodePopup(nodeName, nodeData, year, additionalData = {}, format = 'text') {
         try {
             // Determinar el tipo de template a usar
-            const templateType = explicitTemplateType || this.determineNodeTemplateType(nodeName, nodeData);
+            const templateType = this.determineNodeTemplateType(nodeName, nodeData);
             const template = this.nodeTemplates.get(templateType);
 
             if (!template) {
                 console.warn(`Template "${templateType}" no encontrado, usando template por defecto`);
-                return this.generateDefaultNodePopup(nodeName, nodeData, year, additionalData, format, energyTypeToInclude);
+                return this.generateDefaultNodePopup(nodeName, nodeData, year, additionalData, format);
             }
 
             // Preparar datos para el template
-            const templateData = this.prepareNodeTemplateData(nodeName, nodeData, year, additionalData, energyTypeToInclude);
+            const templateData = this.prepareNodeTemplateData(nodeName, nodeData, year, additionalData);
 
             // Generar popup según el formato solicitado
             if (format === 'html') {
@@ -194,8 +201,8 @@ class PopupManager {
 
         // Lista de nodos que usarán el popup simplificado
         const simpleSourceNodes = [
-            // 'Producción',
-            // 'Importación',
+            'Producción',
+            'Importación de energéticos primarios',
             'Oferta Interna Bruta',
             'Exportación',
             'Consumo Propio del Sector',
@@ -211,7 +218,7 @@ class PopupManager {
         ];
 
         if (simpleSourceNodes.includes(nodeName)) {
-            // return 'simple_source'; // Deshabilitado para permitir mapeos más específicos
+            return 'simple_source';
         }
 
         // Mapeo de nombres de nodos a tipos de template
@@ -225,10 +232,8 @@ class PopupManager {
             'Consumo Final': 'consumption',
 
             // Nodos de flujo
-            'Importación': 'simple_source',
-            'Producción': 'simple_source',
-            'Variación de Inventarios': 'inventory_variation',
-            'Oferta Interna Bruta': 'simple_source' // Añadido para que use el template simplificado
+            'Importación de energéticos primarios': 'consumption',
+            'Variación de inventarios de Energéticos primarios': 'inventory_variation'
         };
 
         // Verificar mapeo directo
@@ -277,10 +282,9 @@ class PopupManager {
      * @param {Object} nodeData - Datos del nodo
      * @param {string} year - Año actual
      * @param {Object} additionalData - Datos adicionales
-     * @param {string|null} energyTypeToInclude - Tipo de energía a incluir
      * @returns {Object} Datos preparados para el template
      */
-    prepareNodeTemplateData(nodeName, nodeData, year, additionalData, energyTypeToInclude = null) {
+    prepareNodeTemplateData(nodeName, nodeData, year, additionalData) {
         const templateData = {
             label: nodeName,
             year: year,
@@ -308,12 +312,7 @@ class PopupManager {
         }
         // Procesar datos específicos según el tipo de nodo
         if (nodeData && nodeData['Nodos Hijo']) {
-            // Si ya se proporcionó un desglose precalculado en additionalData, usarlo
-            // Esto es crucial para nodos como Importación/Producción/Variación donde ya filtramos los hijos
-            const breakdown = additionalData.total !== undefined || additionalData.input_total !== undefined || additionalData.output_total !== undefined
-                ? additionalData // Si ya tiene totales, asumimos que es un desglose precalculado
-                : this.calculateNodeBreakdown(nodeData, year, energyTypeToInclude);
-
+            const breakdown = this.calculateNodeBreakdown(nodeData, year);
             Object.assign(templateData, breakdown);
 
             // Agregar condiciones para mostrar campos dinámicamente
@@ -326,35 +325,21 @@ class PopupManager {
             templateData.hasTotal = breakdown.total !== 0;
 
             // Crear texto descriptivo de tipos de energía
-            if (breakdown.energy_types && breakdown.energy_types.length > 0) {
+            if (breakdown.energy_types.length > 0) {
                 templateData.energy_types_text = breakdown.energy_types.join(', ');
             } else {
                 templateData.energy_types_text = 'No especificado';
             }
         } else {
-            // Para nodos sin hijos, pero con datos en additionalData (ej. Variación de Inventarios que ya tiene variacion_positiva/negativa)
-            if (additionalData.total !== undefined || additionalData.input_total !== undefined || additionalData.output_total !== undefined) {
-                // Si additionalData tiene totales, asignarlos directamente
-                Object.assign(templateData, additionalData);
-                templateData.hasInputs = additionalData.input_total > 0;
-                templateData.hasOutputs = additionalData.output_total > 0;
-                templateData.hasTotal = additionalData.total !== 0;
-
-                // Asegurarse de que energy_types_text no sea indefinido si no hay hijos para calcularlo
-                if (!templateData.energy_types_text) {
-                    templateData.energy_types_text = 'No especificado';
-                }
-            } else {
-                // Para nodos sin hijos y sin totales en additionalData, establecer condiciones por defecto
-                templateData.hasInputs = false;
-                templateData.hasOutputs = false;
-                templateData.hasPrimaryInputs = false;
-                templateData.hasPrimaryOutputs = false;
-                templateData.hasSecondaryInputs = false;
-                templateData.hasSecondaryOutputs = false;
-                templateData.hasTotal = false;
-                templateData.energy_types_text = 'No especificado';
-            }
+            // Para nodos sin hijos, establecer condiciones por defecto
+            templateData.hasInputs = false;
+            templateData.hasOutputs = false;
+            templateData.hasPrimaryInputs = false;
+            templateData.hasPrimaryOutputs = false;
+            templateData.hasSecondaryInputs = false;
+            templateData.hasSecondaryOutputs = false;
+            templateData.hasTotal = false;
+            templateData.energy_types_text = 'No especificado';
         }
 
         return templateData;
@@ -364,10 +349,9 @@ class PopupManager {
      * Calcula el desglose de un nodo basado en sus hijos
      * @param {Object} nodeData - Datos del nodo
      * @param {string} year - Año a procesar
-     * @param {string|null} energyTypeToInclude - Opcional. Si se especifica, solo incluye este tipo de energía ('Energía Primaria', 'Energía Secundaria')
      * @returns {Object} Desglose calculado
      */
-    calculateNodeBreakdown(nodeData, year, energyTypeToInclude = null) {
+    calculateNodeBreakdown(nodeData, year) {
         const breakdown = {
             // Totales por tipo de energía
             energia_primaria: 0,
@@ -406,11 +390,6 @@ class PopupManager {
                 const childName = child['Nodo Hijo'];
                 const childType = child.tipo || 'Unknown';
                 const absValue = Math.abs(value);
-
-                // APLICAR FILTRO DE TIPO DE ENERGÍA AQUÍ
-                if (energyTypeToInclude && childType !== energyTypeToInclude) {
-                    continue; // Saltar si el tipo de energía no coincide con el filtro
-                }
 
                 // Sumar al total general
                 breakdown.total += value;
@@ -537,16 +516,15 @@ class PopupManager {
     renderNodeTemplateAsText(template, data) {
         // Lógica especial para el template simplificado de nodos fuente
         if (template.type === 'simple_source') {
-            console.log(`[DEBUG - PopupManager - SimpleSource] Data recibida:`, data);
             const totalValue = data.total_input ?? data.total ?? 0;
             return `${data.label}: ${this.formatNumber(totalValue)} ${data.unit || 'PJ'}`;
         }
 
         // Lógica especial para nodos de generación eléctrica
         if (template.type === 'generation') {
-            const entrada = this.formatNumber(data.input_total || 0);
-            const salida = this.formatNumber(data.output_total || 0);
-            const eficiencia = data.efficiency ? this.formatNumber(data.efficiency) : 'N/A';
+            const entrada = this.formatNumber(data.total_input || 0);
+            const salida = this.formatNumber(data.total_output || 0);
+            const eficiencia = data.efficiency || 0;
             return `${data.label}\n↓${entrada}PJ ↑${salida}PJ ⚡${eficiencia}%`;
         }
 
@@ -556,54 +534,34 @@ class PopupManager {
             return `${data.label}: ${totalValue} PJ`;
         }
 
-        // Lógica especial para Variación de Inventarios (reintroducida y corregida)
-        if (template.type === 'inventory_variation') {
-            let text = `${data.label}\n`; // Título del nodo
-            if (data.variacion_positiva) {
-                text += `↑ ${this.formatNumber(data.variacion_positiva)} PJ\n`;
-            }
-            if (data.variacion_negativa) {
-                text += `↓ ${this.formatNumber(data.variacion_negativa)} PJ\n`;
-            }
-            // Se eliminan las líneas para el Total y el Año
-            // if (data.total !== undefined && data.total !== 0) {
-            //     text += `Total: ${this.formatNumber(data.total)} PJ\n`;
-            // }
-            // text += `\nAño: ${data.year}`;
-            return text;
-        }
-
         let text = `${this.interpolateTemplate(template.title, data)}\n`;
 
         // Renderizar secciones
         for (const section of template.sections) {
-            if (section.title) {
-                text += `\n${section.title}:\n`;
-            }
-
-            for (const field of section.fields) {
-                // Evaluar condición si existe
-                if (field.condition && !data[field.condition]) {
-                    continue; // Saltar este campo si la condición no se cumple
+            if (section.title === 'Descripción') {
+                // Manejar la descripción de manera especial
+                const description = data.description;
+                if (description && description !== 'Sin descripción disponible' && description.trim() !== '') {
+                    text += `\n${description}\n`;
+                }
+            } else {
+                if (section.title) {
+                    text += `\n${section.title}:\n`;
                 }
 
-                const value = this.getFieldValue(field, data);
-                // Solo saltar si el valor es estrictamente undefined, null, '', o 'N/A'
-                // No saltar si el valor es 0, ya que 0 puede ser un flujo válido.
-                if (value === undefined || value === null || value === '' || value === 'N/A') {
-                    continue; // Saltar campos vacíos
-                }
+                for (const field of section.fields) {
+                    // Evaluar condición si existe
+                    if (field.condition && !data[field.condition]) {
+                        continue; // Saltar este campo si la condición no se cumple
+                    }
 
-                const formattedValue = this.formatFieldValue(value, field.format, field.unit);
-                const prefix = field.highlight ? '• ' : '  ';
-                const label = field.label ? `${field.label}: ` : '';
-
-                // Lógica especial para la descripción, mostrarla sin etiqueta si no hay un label explícito
-                if (field.key === 'description' && data.description && data.description.trim() !== '' && data.description !== 'Sin descripción disponible') {
-                    text += `\n${data.description}\n`; // La descripción va sin prefijo/label en una línea separada
-                } else {
-                    // Para todos los demás campos, aplicar el formato estándar
-                    text += `${prefix}${label}${formattedValue}\n`;
+                    const value = this.getFieldValue(field, data);
+                    if (value !== undefined && value !== null && value !== '' && value !== 'N/A' && value !== 0) {
+                        const formattedValue = this.formatFieldValue(value, field.format, field.unit);
+                        const prefix = field.highlight ? '• ' : '  ';
+                        const label = field.label ? `${field.label}: ` : '';
+                        text += `${prefix}${label}${formattedValue}\n`;
+                    }
                 }
             }
         }
@@ -623,14 +581,13 @@ class PopupManager {
      * @returns {*} Valor del campo
      */
     getFieldValue(field, data) {
-        // Si el valor es una cadena y empieza con '%{', es un placeholder a interpolar
-        if (typeof field.value === 'string' && field.value.startsWith('%{')) {
+        if (field.value.startsWith('%{customdata.')) {
+            const key = field.value.replace('%{customdata.', '').replace('}', '');
+            return data[key];
+        } else if (field.value.startsWith('%{')) {
             return this.interpolateTemplate(field.value, data);
-        } else if (typeof field.value === 'string' && data.hasOwnProperty(field.value)) {
-            // Si es una cadena y coincide con una propiedad directa en data
-            return data[field.value];
         } else {
-            return field.value; // Devolver el valor literal si no es un placeholder ni una clave directa
+            return field.value;
         }
     }
 
@@ -727,8 +684,8 @@ class PopupManager {
      * @param {string} format - Formato del popup ('html' o 'text')
      * @returns {string} Popup por defecto formateado
      */
-    generateDefaultNodePopup(nodeName, nodeData, year, additionalData, format = 'text', energyTypeToInclude = null) {
-        const breakdown = nodeData ? this.calculateNodeBreakdown(nodeData, year, energyTypeToInclude) : {};
+    generateDefaultNodePopup(nodeName, nodeData, year, additionalData, format = 'text') {
+        const breakdown = nodeData ? this.calculateNodeBreakdown(nodeData, year) : {};
 
         if (format === 'html') {
             let html = `<div class="popup-container">`;

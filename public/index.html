@@ -775,6 +775,18 @@
         let exportManager = null;
         let columnLabelsManager = null;
 
+        // Export Configuration Management
+        let exportConfig = {
+            png: {
+                width: 1920,
+                height: 1080,
+                scale: 2
+            },
+            transparentBg: true,
+            includeColumnLabels: true,
+            filenamePrefix: 'sankey_energia'
+        };
+
         // Cargar los datos desde el archivo JSON y inicializar DataManager
         fetch('datos_energia_completo.json')
             .then(response => response.json())
@@ -892,18 +904,6 @@
                 updateSankey(event.target.value);
             });
         }
-
-        // Export Configuration Management
-        let exportConfig = {
-            png: {
-                width: 1920,
-                height: 1080,
-                scale: 2
-            },
-            transparentBg: true,
-            includeColumnLabels: true,
-            filenamePrefix: 'sankey_energia'
-        };
 
         // Initialize export functionality
         function initializeExportControls() {
@@ -1196,41 +1196,14 @@
 
             Plotly.purge(sankeyDiv);
 
-            function getNodeData(nodeName) {
-                if (!dataManager) {
-                    console.error('DataManager no está disponible');
-                    return null;
-                }
-                return dataManager.getNodeData(nodeName);
-            }
-
-            const nodeData = {
-                produccion: getNodeData('Producción'),
-                importacion: getNodeData('Importación'),
-                variacion: getNodeData('Variación de Inventarios'),
-                exportacion: getNodeData('Exportación'),
-                //ofertaInternaBruta: getNodeData('Oferta Interna Bruta'),
-                energiaNoAprovechada: getNodeData('Energía No Aprovechada'),
-                coquizadorasHornos: getNodeData('Coquizadoras y Hornos'),
-                refineriasDespuntadoras: getNodeData('Refinerías y Despuntadoras'),
-                plantasGasFraccionadoras: getNodeData('Plantas de Gas y Fraccionadoras'),
-                centralesElectricas: getNodeData('Centrales Eléctricas')
-                //ofertaTotal: getNodeData('Oferta Total')
-            };
-
-            if (Object.values(nodeData).some(d => !d)) {
-                console.error('Faltan datos de nodos padres');
-                Plotly.react(sankeyDiv, [], { title: `Datos incompletos para ${year}` });
-                return;
-            }
-
             const labels = [];
             const nodeColors = [];
             const nodeMap = new Map();
-            const primaryEnergyTotals = new Map();
-            const primaryEnergyBreakdown = new Map(); // Para el desglose del popup
-            const secondaryNodeBreakdowns = new Map(); // Para el desglose de nodos secundarios
+            const nodeX = []; // Inicializar arrays de posiciones
+            const nodeY = []; // Inicializar arrays de posiciones
+            const nodeCustomdata = []; // Nuevo array para el customdata de cada nodo
 
+            // --- ARRAYS PARA LOS ENLACES DEL DIAGRAMA SANKEY ---
             const source = [];
             const target = [];
             const value = [];
@@ -1238,954 +1211,236 @@
             const linkCustomdata = [];
 
             function addNode(name, color, nodeType = 'default') {
-                // Verificar si el nodo ya existe
                 if (nodeMap.has(name)) {
                     return nodeMap.get(name);
                 }
-
-                // Usar NodeFactory para crear el nodo si está disponible
-                let finalColor;
-                if (nodeFactory) {
-                    try {
-                        // Intentar obtener o crear el nodo usando NodeFactory
-                        let node = nodeFactory.getNodeByName(name);
-                        if (!node) {
-                            // Inferir el tipo de nodo basado en el nombre
-                            const inferredType = nodeFactory.inferNodeType(name);
-
-                            // Crear configuración del nodo
-                            const nodeConfig = {
-                                name: name,
-                                color: null, // <-- ¡Esta es la línea clave!
-                                properties: {
-                                    nodeType: nodeType
-                                }
-                            };
-
-                            // Crear el nodo usando NodeFactory
-                            node = nodeFactory.createNode(inferredType, nodeConfig);
-                        }
-
-                        finalColor = node.color;
-                    } catch (error) {
-                        console.warn(`Error creando nodo con NodeFactory para "${name}":`, error);
-                        // Fallback al método anterior
-                        finalColor = styleManager ?
-                            (color && typeof color === 'string' ?
-                                styleManager.validateColor(color) :
-                                styleManager.getEnergyColor(name, nodeType)) :
-                            (typeof color === 'string' ? color : '#888');
-                    }
-                } else {
-                    // Fallback si NodeFactory no está disponible
-                    finalColor = styleManager ?
-                        (color && typeof color === 'string' ?
-                            styleManager.validateColor(color) :
-                            styleManager.getEnergyColor(name, nodeType)) :
-                        (typeof color === 'string' ? color : '#888');
+                let finalColor = color;
+                if (styleManager) {
+                    finalColor = styleManager.getEnergyColor(name, nodeType) || color;
                 }
 
-                // Agregar el nodo al mapa y arrays
                 const nodeIndex = labels.length;
                 nodeMap.set(name, nodeIndex);
                 labels.push(name);
                 nodeColors.push(finalColor);
-
+                nodeCustomdata.push(''); // Inicializar con placeholder, se llenará después
                 return nodeIndex;
             }
 
-            // --- 1. Definir Nodos Principales ---
-            const importacionIndex = addNode(String('Importación de energéticos primarios'), nodeData.importacion.color);
-            const variacionIndex = addNode(String('Variación de inventarios de Energéticos primarios'), nodeData.variacion.color);
-            const produccionIndex = addNode(String('Producción'), nodeData.produccion.color);
-            const exportacionIndex = addNode(String('Exportación'), nodeData.exportacion.color);
-            const energiaNoAprovechadaIndex = addNode(String('Energía No Aprovechada'), nodeData.energiaNoAprovechada.color);
-            const coquizadorasHornosIndex = addNode(String('Coquizadoras y Hornos'), nodeData.coquizadorasHornos.color);
-            const refineriasDespuntadorasIndex = addNode(String('Refinerías y Despuntadoras'), nodeData.refineriasDespuntadoras.color);
-            const plantasGasFraccionadorasIndex = addNode(String('Plantas de Gas y Fraccionadoras'), nodeData.plantasGasFraccionadoras.color);
-            const centralesElectricasIndex = addNode(String('Centrales Eléctricas'), nodeData.centralesElectricas.color);
-
-            // --- 2. Procesar Flujos de Entrada (Fuentes -> Tipos de Energía) ---
-            const linkSigns = [];
-            const processParentNode = (nodeData, parentIndex, parentName, allowNegatives = false) => {
-                // Ordenar nodos hijo por id_hijo de menor a mayor
-                const hijosOrdenados = [...nodeData['Nodos Hijo']].sort((a, b) => {
-                    // Si no existe id_hijo, lo ponemos al final
-                    if (a.id_hijo === undefined) return 1;
-                    if (b.id_hijo === undefined) return -1;
-                    return a.id_hijo - b.id_hijo;
-                });
-                hijosOrdenados.forEach(child => {
-                    const flowValue = child[year];
-                    if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                        const childName = child['Nodo Hijo'];
-                        const childColor = child.color;
-                        const childIndex = addNode(childName, childColor);
-                        source.push(parentIndex);
-                        target.push(childIndex);
-                        value.push(Math.log10(Math.abs(flowValue) + 1));
-                        // El color del enlace debe ser el del nodo de energía al que fluye
-                        const finalLinkColor = nodeColors[childIndex];
-                        linkColors.push(finalLinkColor);
-
-                        // Usar PopupManager para generar popup de enlace mejorado
-                        if (popupManager) {
-                            const linkPopup = popupManager.generateLinkPopup(
-                                childName,
-                                flowValue,
-                                parentName,
-                                childName, // El destino es el nodo hijo, no el hub
-                                finalLinkColor,
-                                year,
-                                { flowType: 'primary_supply' }
-                            );
-                            linkCustomdata.push(linkPopup);
-                        } else {
-                            // Fallback al formato anterior
-                            if (parentName === 'Variación de inventarios de Energéticos primarios') {
-                                linkCustomdata.push(`${childName}: ${flowValue.toLocaleString()} PJ`);
-                            } else {
-                                linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                            }
-                        }
-                        linkSigns.push(flowValue > 0 ? '+' : '-');
-
-                        // Actualizar totales y desglose
-                        primaryEnergyTotals.set(childName, (primaryEnergyTotals.get(childName) || 0) + flowValue);
-
-                        if (!primaryEnergyBreakdown.has(childName)) {
-                            primaryEnergyBreakdown.set(childName, { importacion: 0, variacion: 0, produccion: 0 });
-                        }
-                        const breakdown = primaryEnergyBreakdown.get(childName);
-                        if (parentName === 'Importación de energéticos primarios') {
-                            breakdown.importacion += flowValue;
-                        } else if (parentName === 'Variación de inventarios de Energéticos primarios') {
-                            breakdown.variacion += flowValue;
-                        } else if (parentName === 'Producción') {
-                            breakdown.produccion += flowValue;
-                        }
-                    }
-                });
-            };
-            processParentNode(nodeData.importacion, importacionIndex, 'Importación de energéticos primarios');
-            processParentNode(nodeData.variacion, variacionIndex, 'Variación de inventarios de Energéticos primarios', true);
-            processParentNode(nodeData.produccion, produccionIndex, 'Producción');
-
-
-
-
-
-            // --- 5. Procesar Flujos de Salida (EP -> Exportación) ---
-            const exportacionBreakdown = {};
-            let exportacionTotal = 0;
-            nodeData.exportacion['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    const childName = child['Nodo Hijo'];
-                    const energyNodeIndex = nodeMap.get(childName);
-                    if (energyNodeIndex === undefined) return;
-
-                    const link_color = nodeColors[energyNodeIndex];
-
-                    source.push(energyNodeIndex);
-                    target.push(exportacionIndex);
-                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                    linkColors.push(link_color);
-
-                    // Usar PopupManager para generar popup de enlace mejorado
-                    if (popupManager) {
-                        const linkPopup = popupManager.generateLinkPopup(
-                            childName,
-                            flowValue,
-                            childName,
-                            'Exportación',
-                            link_color,
-                            year,
-                            { flowType: 'hub_distribution' }
-                        );
-                        linkCustomdata.push(linkPopup);
-                    } else {
-                        // Fallback al formato anterior
-                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                    }
-                    exportacionBreakdown[childName] = (exportacionBreakdown[childName] || 0) + flowValue;
-                    exportacionTotal += flowValue;
-                }
-            });
-            secondaryNodeBreakdowns.set('Exportación', { breakdown: exportacionBreakdown, total: exportacionTotal });
-
-            // --- 6. Procesar Flujos de Salida (EP -> Energía No Aprovechada) ---
-            const enaBreakdown = {};
-            let enaTotal = 0;
-            nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    const childName = child['Nodo Hijo'];
-                    const energyNodeIndex = nodeMap.get(childName);
-                    if (energyNodeIndex === undefined) return;
-
-                    const link_color = nodeColors[energyNodeIndex];
-
-                    source.push(energyNodeIndex);
-                    target.push(energiaNoAprovechadaIndex);
-                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                    linkColors.push(link_color);
-
-                    // Usar PopupManager para generar popup de enlace mejorado
-                    if (popupManager) {
-                        const linkPopup = popupManager.generateLinkPopup(
-                            childName,
-                            flowValue,
-                            childName,
-                            'Energía No Aprovechada',
-                            link_color,
-                            year,
-                            { flowType: 'hub_distribution' }
-                        );
-                        linkCustomdata.push(linkPopup);
-                    } else {
-                        // Fallback al formato anterior
-                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                    }
-                    enaBreakdown[childName] = (enaBreakdown[childName] || 0) + flowValue;
-                    enaTotal += flowValue;
-                }
-            });
-            secondaryNodeBreakdowns.set('Energía No Aprovechada', { breakdown: enaBreakdown, total: enaTotal });
-
-            // --- 7. Procesar Flujos (EP -> Coquizadoras y Hornos) ---
-            const coquizadorasBreakdown = {};
-            let coquizadorasTotal = 0;
-            nodeData.coquizadorasHornos['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    const childName = child['Nodo Hijo'];
-                    const energyNodeIndex = nodeMap.get(childName);
-                    if (energyNodeIndex === undefined) return;
-
-                    const link_color = nodeColors[energyNodeIndex];
-
-                    source.push(energyNodeIndex);
-                    target.push(coquizadorasHornosIndex);
-                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                    linkColors.push(link_color);
-
-                    // Usar PopupManager para generar popup de enlace mejorado
-                    if (popupManager) {
-                        const linkPopup = popupManager.generateLinkPopup(
-                            childName,
-                            flowValue,
-                            childName,
-                            'Coquizadoras y Hornos',
-                            link_color,
-                            year,
-                            { flowType: 'transformation_input' }
-                        );
-                        linkCustomdata.push(linkPopup);
-                    } else {
-                        // Fallback al formato anterior
-                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                    }
-                    coquizadorasBreakdown[childName] = (coquizadorasBreakdown[childName] || 0) + flowValue;
-                    coquizadorasTotal += flowValue;
-                }
-            });
-            secondaryNodeBreakdowns.set('Coquizadoras y Hornos', { breakdown: coquizadorasBreakdown, total: coquizadorasTotal });
-
-            // --- 7. Procesar Flujos (EP -> Refinerías y Despuntadoras) ---
-            const refineriasBreakdown = {};
-            let refineriasTotal = 0;
-            nodeData.refineriasDespuntadoras['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    const childName = child['Nodo Hijo'];
-                    const energyNodeIndex = nodeMap.get(childName);
-                    if (energyNodeIndex === undefined) return;
-
-                    const link_color = nodeColors[energyNodeIndex];
-
-                    source.push(energyNodeIndex);
-                    target.push(refineriasDespuntadorasIndex);
-                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                    linkColors.push(link_color);
-
-                    // Usar PopupManager para generar popup de enlace mejorado
-                    if (popupManager) {
-                        const linkPopup = popupManager.generateLinkPopup(
-                            childName,
-                            flowValue,
-                            childName,
-                            'Refinerías y Despuntadoras',
-                            link_color,
-                            year,
-                            { flowType: 'transformation_input' }
-                        );
-                        linkCustomdata.push(linkPopup);
-                    } else {
-                        // Fallback al formato anterior
-                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                    }
-                    refineriasBreakdown[childName] = (refineriasBreakdown[childName] || 0) + flowValue;
-                    refineriasTotal += flowValue;
-                }
-            });
-            secondaryNodeBreakdowns.set('Refinerías y Despuntadoras', { breakdown: refineriasBreakdown, total: refineriasTotal });
-
-            // --- 8. Procesar Flujos (EP -> Plantas de Gas y Fraccionadoras) ---
-            const plantasGasBreakdown = {};
-            let plantasGasTotal = 0;
-            nodeData.plantasGasFraccionadoras['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    const childName = child['Nodo Hijo'];
-                    const energyNodeIndex = nodeMap.get(childName);
-                    if (energyNodeIndex === undefined) return;
-
-                    const link_color = nodeColors[energyNodeIndex];
-
-                    source.push(energyNodeIndex);
-                    target.push(plantasGasFraccionadorasIndex);
-                    value.push(Math.log10(Math.abs(flowValue) + 1));
-                    linkColors.push(link_color);
-
-                    // Usar PopupManager para generar popup de enlace mejorado
-                    if (popupManager) {
-                        const linkPopup = popupManager.generateLinkPopup(
-                            childName,
-                            flowValue,
-                            childName,
-                            'Plantas de Gas y Fraccionadoras',
-                            link_color,
-                            year,
-                            { flowType: 'transformation_input' }
-                        );
-                        linkCustomdata.push(linkPopup);
-                    } else {
-                        // Fallback al formato anterior
-                        linkCustomdata.push(`${childName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                    }
-                    plantasGasBreakdown[childName] = (plantasGasBreakdown[childName] || 0) + flowValue;
-                    plantasGasTotal += flowValue;
-                }
-            });
-            secondaryNodeBreakdowns.set('Plantas de Gas y Fraccionadoras', { breakdown: plantasGasBreakdown, total: plantasGasTotal });
-
-
-            // --- 11. Lógica para Energéticos Secundarios ---
-            console.log('DEBUG: ===== INICIANDO SECCIÓN 11 - ENERGÉTICOS SECUNDARIOS =====');
-            const secondaryEnergyTotals = new Map();
-            const secondaryEnergyData = new Map(); // Para almacenar datos detallados de energéticos secundarios
-
-            // 11.0: Crear nodo de Importación de energéticos secundarios
-            let totalImportacionSecundarios = 0;
-
-            // Calcular total de importación para energéticos secundarios
-            console.log('DEBUG: Verificando datos de importación...');
-            if (nodeData.importacion && nodeData.importacion['Nodos Hijo']) {
-                console.log('DEBUG: Nodos hijo de importación:', nodeData.importacion['Nodos Hijo'].length);
-                nodeData.importacion['Nodos Hijo'].forEach(child => {
-                    console.log(`DEBUG: ${child['Nodo Hijo']} - Tipo: ${child.tipo} - Valor ${year}: ${child[year]}`);
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        totalImportacionSecundarios += flowValue;
-                        console.log(`DEBUG: Agregando ${child['Nodo Hijo']}: ${flowValue} PJ`);
-                    }
-                });
-            }
-
-            console.log(`DEBUG: Total importación secundarios: ${totalImportacionSecundarios} PJ`);
-
-            // Crear los nodos hub para energéticos secundarios PRIMERO
-            // const ofertaTotalSecundariosIndex = addNode('Oferta Total (Energéticos Secundarios)', '#2ecc71');
-            // const ofertaInternaBrutaSecundariosIndex = addNode('Oferta Interna Bruta de energéticos secundarios', '#27ae60');
-
-            // 11.0.1: Crear nodo de Variación de inventarios de energéticos secundarios
-            let totalVariacionSecundarios = 0;
-            let variacionPositivaSecundarios = 0;
-            let variacionNegativaSecundarios = 0;
-
-            // Calcular total de variación para energéticos secundarios
-            console.log('DEBUG: Verificando datos de variación...');
-            if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
-                console.log('DEBUG: Nodos hijo de variación:', nodeData.variacion['Nodos Hijo'].length);
-                nodeData.variacion['Nodos Hijo'].forEach(child => {
-                    console.log(`DEBUG: ${child['Nodo Hijo']} - Tipo: ${child.tipo} - Valor ${year}: ${child[year]}`);
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        totalVariacionSecundarios += flowValue;
-
-                        if (flowValue > 0) {
-                            variacionPositivaSecundarios += flowValue;
-                        } else {
-                            variacionNegativaSecundarios += flowValue;
-                        }
-                        console.log(`DEBUG: Agregando variación ${child['Nodo Hijo']}: ${flowValue} PJ`);
-                    }
-                });
-            }
-
-            console.log(`DEBUG: Total variación secundarios: ${totalVariacionSecundarios} PJ`);
-
-            // Crear el nodo siempre para testing (cambiar condición temporalmente)
-            let variacionSecundariosIndex = null;
-            // TEMPORAL: Crear el nodo aunque no haya datos para ver la estructura
-            if (nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
-                const hasSecondaryVariation = nodeData.variacion['Nodos Hijo'].some(child =>
-                    child.tipo === 'Energía Secundaria' && child[year] !== undefined
+            // --- AQUÍ EMPEZAREMOS A CREAR Y POSICIONAR LOS NODOS ---
+            const importacionNodeData = dataManager.getNodeData('Importación');
+            if (importacionNodeData) {
+                const importacionIndex = addNode(importacionNodeData['Nodo Padre'], importacionNodeData.color);
+                nodeX[importacionIndex] = 0.05;
+                nodeY[importacionIndex] = 0.3; // Ahora el más arriba
+                // Generar customdata específico para Importación
+                const importacionBreakdownForPopup = popupManager.calculateNodeBreakdown(importacionNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Importación] Breakdown (Primaria) para ${year}:`, importacionBreakdownForPopup);
+                nodeCustomdata[importacionIndex] = popupManager.generateNodePopup(
+                    importacionNodeData['Nodo Padre'],
+                    importacionNodeData, // Pasar todos los datos del nodo padre para la descripción
+                    year,
+                    importacionBreakdownForPopup, // Pasar el breakdown calculado como additionalData
+                    'text',
+                    'Energía Primaria'
                 );
-
-                if (hasSecondaryVariation) {
-                    variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
-                    console.log(`DEBUG: Creado nodo Variación de energéticos secundarios: ${totalVariacionSecundarios} PJ`);
-                } else {
-                    console.log('DEBUG: No hay datos de variación para energéticos secundarios - CREANDO NODO TEMPORAL');
-                    // Crear el nodo temporal para mostrar la estructura
-                    variacionSecundariosIndex = addNode('Variación de inventarios de energéticos secundarios', '#e74c3c');
-
-                    // Crear un enlace temporal hacia "Oferta Total" para que sea visible
-                    source.push(variacionSecundariosIndex);
-                    target.push(ofertaTotalSecundariosIndex);
-                    value.push(Math.log10(1 + 1)); // Valor mínimo
-                    linkColors.push('#e74c3c');
-                    linkCustomdata.push(`Variación energéticos secundarios: 0 PJ (sin datos)`);
-                    console.log('DEBUG: Creado enlace temporal de variación');
-                }
-            }
-
-            // Crear el nodo siempre para testing (cambiar condición temporalmente)
-            let importacionSecundariosIndex = null;
-            if (totalImportacionSecundarios !== 0) { // Cambiar > 0 por !== 0 para incluir negativos
-                importacionSecundariosIndex = addNode('Importación de energéticos secundarios', '#3498db');
-                console.log(`DEBUG: Creado nodo Importación de energéticos secundarios: ${totalImportacionSecundarios} PJ`);
-
-                // Crear enlaces hacia cada energético secundario individual
-                if (nodeData.importacion && nodeData.importacion['Nodos Hijo']) {
-                    nodeData.importacion['Nodos Hijo'].forEach(child => {
-                        if (child.tipo === 'Energía Secundaria') {
-                            const flowValue = child[year] || 0;
-                            if (flowValue > 0) {
-                                const energeticName = child['Nodo Hijo'];
-                                const energeticColor = child.color || '#3498db';
-
-                                // Crear el nodo del energético si no existe
-                                const energeticIndex = addNode(energeticName, energeticColor);
-
-                                source.push(importacionSecundariosIndex);
-                                target.push(energeticIndex);
-                                value.push(Math.log10(flowValue + 1));
-                                linkColors.push(energeticColor);
-                                linkCustomdata.push(`${energeticName} importado: ${flowValue.toLocaleString()} PJ`);
-
-                                console.log(`DEBUG: Enlace importación → ${energeticName}: ${flowValue} PJ`);
-                            }
-                        }
-                    });
-                }
             } else {
-                console.log('DEBUG: No se creó el nodo porque totalImportacionSecundarios es 0');
+                console.error("Error: Datos para 'Importación' no encontrados en DataManager.");
             }
 
-            // Crear enlaces desde Variación hacia cada energético secundario individual
-            if (variacionSecundariosIndex !== null && nodeData.variacion && nodeData.variacion['Nodos Hijo']) {
-                console.log('DEBUG: Creando enlaces de variación...');
-                nodeData.variacion['Nodos Hijo'].forEach(child => {
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year];
-                        if (flowValue !== undefined && flowValue !== 0) {
-                            const energeticName = child['Nodo Hijo'];
-                            const energeticColor = child.color || '#e74c3c';
-
-                            // Crear el nodo del energético si no existe
-                            const energeticIndex = addNode(energeticName, energeticColor);
-
-                            source.push(variacionSecundariosIndex);
-                            target.push(energeticIndex);
-                            value.push(Math.log10(Math.abs(flowValue) + 1));
-                            linkColors.push(energeticColor);
-                            linkCustomdata.push(`${energeticName} variación: ${flowValue.toLocaleString()} PJ`);
-
-                            console.log(`DEBUG: Creado enlace variación → ${energeticName}: ${flowValue} PJ`);
-                        } else {
-                            console.log(`DEBUG: Saltando ${child['Nodo Hijo']} - valor: ${flowValue}`);
-                        }
-                    }
-                });
+            const produccionNodeData = dataManager.getNodeData('Producción');
+            if (produccionNodeData) {
+                const produccionIndex = addNode(produccionNodeData['Nodo Padre'], produccionNodeData.color);
+                nodeX[produccionIndex] = 0.05;
+                nodeY[produccionIndex] = 0.7; // Ahora el más abajo
+                // Generar customdata específico para Producción
+                const produccionBreakdownForPopup = popupManager.calculateNodeBreakdown(produccionNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Producción] Breakdown (Primaria) para ${year}:`, produccionBreakdownForPopup);
+                nodeCustomdata[produccionIndex] = popupManager.generateNodePopup(
+                    produccionNodeData['Nodo Padre'],
+                    produccionNodeData,
+                    year,
+                    produccionBreakdownForPopup,
+                    'text',
+                    'Energía Primaria'
+                );
             } else {
-                console.log('DEBUG: No se crearon enlaces de variación - nodo no existe o sin datos');
+                console.error("Error: Datos para 'Producción' no encontrados en DataManager.");
             }
 
-            // 11.0.2: Crear nodo de Exportación de energéticos secundarios
-            let totalExportacionSecundarios = 0;
+            // Agregar Variación de Inventarios
+            const variacionNodeData = dataManager.getNodeData('Variación de Inventarios');
+            if (variacionNodeData) {
+                const variacionIndex = addNode(variacionNodeData['Nodo Padre'], variacionNodeData.color);
+                nodeX[variacionIndex] = 0.05;
+                nodeY[variacionIndex] = 0.5; // Ahora en el medio
 
-            // Calcular total de exportación para energéticos secundarios
-            console.log('DEBUG: Verificando datos de exportación...');
-            if (nodeData.exportacion && nodeData.exportacion['Nodos Hijo']) {
-                nodeData.exportacion['Nodos Hijo'].forEach(child => {
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        totalExportacionSecundarios += flowValue;
-                        console.log(`DEBUG: Agregando exportación ${child['Nodo Hijo']}: ${flowValue} PJ`);
-                    }
-                });
-            }
-            console.log(`DEBUG: Total exportación secundarios: ${totalExportacionSecundarios} PJ`);
+                // Calcular el desglose completo para la variación de inventarios para el popup
+                const variacionBreakdownForPopup = popupManager.calculateNodeBreakdown(variacionNodeData, year, 'Energía Primaria');
+                console.log(`[DEBUG - Variación de Inventarios] Breakdown Total (Primaria) para ${year}:`, variacionBreakdownForPopup.total);
 
-            // Crear nodo de exportación si hay datos
-            let exportacionSecundariosIndex = null;
-            if (totalExportacionSecundarios !== 0) {
-                exportacionSecundariosIndex = addNode('Exportación de energéticos secundarios', '#f39c12');
-                console.log(`DEBUG: Creado nodo Exportación de energéticos secundarios: ${totalExportacionSecundarios} PJ`);
-            }
+                let variacionPopupData = {};
 
-            // Crear enlaces individuales desde Oferta Total ES hacia Exportación ES (uno por energético)
-            if (exportacionSecundariosIndex !== null && nodeData.exportacion && nodeData.exportacion['Nodos Hijo']) {
-                nodeData.exportacion['Nodos Hijo'].forEach(child => {
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        if (flowValue !== 0) {
-                            const energeticName = child['Nodo Hijo'];
-                            const energeticColor = styleManager ?
-                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') :
-                                '#f39c12';
-
-                            // Busca el índice del nodo energético secundario
-                            const energeticIndex = nodeMap.get(energeticName);
-                            if (energeticIndex !== undefined) {
-                                source.push(energeticIndex);
-                                target.push(exportacionSecundariosIndex);
-                                value.push(Math.log10(Math.abs(flowValue) + 1));
-                                linkColors.push(energeticColor);
-                                linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                            }
-                        }
-                    }
-                });
-            }
-
-            // 11.0.3: Crear nodo de Energía No Aprovechada de energéticos secundarios
-            let totalEnergiaNASecundarios = 0;
-
-            // Calcular total de energía no aprovechada para energéticos secundarios
-            console.log('DEBUG: Verificando datos de energía no aprovechada...');
-            if (nodeData.energiaNoAprovechada && nodeData.energiaNoAprovechada['Nodos Hijo']) {
-                nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        totalEnergiaNASecundarios += flowValue;
-                        console.log(`DEBUG: Agregando energía no aprovechada ${child['Nodo Hijo']}: ${flowValue} PJ`);
-                    }
-                });
-            }
-            console.log(`DEBUG: Total energía no aprovechada secundarios: ${totalEnergiaNASecundarios} PJ`);
-
-            // Crear nodo de energía no aprovechada si hay datos
-            let energiaNASecundariosIndex = null;
-            if (totalEnergiaNASecundarios !== 0) {
-                energiaNASecundariosIndex = addNode('Energía No Aprovechada de energéticos secundarios', '#A9A9A9');
-                console.log(`DEBUG: Creado nodo Energía No Aprovechada de energéticos secundarios: ${totalEnergiaNASecundarios} PJ`);
-            }
-
-            // Crear enlaces individuales desde Oferta Total ES hacia Energía No Aprovechada ES (uno por energético)
-            if (energiaNASecundariosIndex !== null && nodeData.energiaNoAprovechada && nodeData.energiaNoAprovechada['Nodos Hijo']) {
-                nodeData.energiaNoAprovechada['Nodos Hijo'].forEach(child => {
-                    if (child.tipo === 'Energía Secundaria') {
-                        const flowValue = child[year] || 0;
-                        if (flowValue !== 0) {
-                            const energeticName = child['Nodo Hijo'];
-                            const energeticColor = styleManager ?
-                                styleManager.getEnergyColor(energeticName, 'Energía Secundaria') :
-                                '#A9A9A9';
-
-                            console.log(`DEBUG: Procesando energía no aprovechada ${energeticName} - Color del StyleManager: ${energeticColor}`);
-
-                            const energeticIndex = nodeMap.get(energeticName);
-                            if (energeticIndex !== undefined) {
-                                source.push(energeticIndex);
-                                target.push(energiaNASecundariosIndex);
-                                value.push(Math.log10(Math.abs(flowValue) + 1));
-                                linkColors.push(energeticColor);
-                                linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                            }
-                            target.push(energiaNASecundariosIndex);
-                            value.push(Math.log10(Math.abs(flowValue) + 1));
-                            linkColors.push(energeticColor);
-                            linkCustomdata.push(`${energeticName}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-
-                            console.log(`DEBUG: Enlace Oferta Total ES → Energía No Aprovechada ES (${energeticName}): ${Math.abs(flowValue)} PJ - Color: ${energeticColor}`);
-                        }
-                    }
-                });
-            }
-
-            // Crear enlaces desde Oferta Total hacia Oferta Interna Bruta (energéticos secundarios)
-            // Usar los datos de ofertaInternaBruta pero filtrar solo energéticos secundarios
-            const transformationCenters = [
-                { name: 'Refinerías y Despuntadoras', index: refineriasDespuntadorasIndex, data: nodeData.refineriasDespuntadoras },
-                { name: 'Plantas de Gas y Fraccionadoras', index: plantasGasFraccionadorasIndex, data: nodeData.plantasGasFraccionadoras },
-                { name: 'Coquizadoras y Hornos', index: coquizadorasHornosIndex, data: nodeData.coquizadorasHornos }
-            ];
-
-            // 11.1: Flujos de Centros de Transformación -> Nodos de Energéticos Secundarios
-            transformationCenters.forEach(center => {
-                center.data['Nodos Hijo'].forEach(child => {
-                    const flowValue = child[year];
-                    if (child.tipo === 'Energía Secundaria' && child['Nodo Hijo'] !== 'Energía eléctrica' && flowValue !== undefined && flowValue > 0) {
-                        const childName = child['Nodo Hijo'];
-                        const childColor = child.color;
-                        const energyIndex = addNode(childName, childColor);
-
-                        // Guardar datos del energético secundario para popups
-                        if (!secondaryEnergyData.has(childName)) {
-                            secondaryEnergyData.set(childName, {
-                                name: childName,
-                                tipo: child.tipo,
-                                descripcion: child.descripcion || `Energético secundario del sistema energético`,
-                                color: childColor,
-                                sources: new Map(), // Centros de transformación que lo producen
-                                totalProduction: 0,
-                                totalConsumption: 0
-                            });
-                        }
-
-                        // Actualizar datos de producción
-                        const energyData = secondaryEnergyData.get(childName);
-                        energyData.sources.set(center.name, flowValue);
-                        energyData.totalProduction += flowValue;
-
-                        source.push(center.index);
-                        target.push(energyIndex);
-                        value.push(Math.log10(flowValue + 1));
-                        linkColors.push(childColor);
-                        linkCustomdata.push(`${center.name} -> ${childName}: ${flowValue.toLocaleString()} PJ`);
-
-                        // Acumular el total para este energético secundario
-                        secondaryEnergyTotals.set(childName, (secondaryEnergyTotals.get(childName) || 0) + flowValue);
-                    }
-                });
-            });
-
-            // Calcular consumo total de energéticos secundarios en tecnologías de generación
-            const generationNodes = [
-                { data: nodeData.carboelectrica, name: 'Carboeléctrica' },
-                { data: nodeData.termicaConvencional, name: 'Térmica Convencional' },
-                { data: nodeData.combustionInterna, name: 'Combustión Interna' },
-                { data: nodeData.turbogas, name: 'Turbogás' },
-                { data: nodeData.cicloCombinado, name: 'Ciclo Combinado' },
-                { data: nodeData.nucleoelectrica, name: 'Nucleoeléctrica' },
-                { data: nodeData.cogeneracion, name: 'Cogeneración' }
-            ];
-
-            generationNodes.forEach(genNode => {
-                if (genNode.data && genNode.data['Nodos Hijo']) {
-                    genNode.data['Nodos Hijo'].forEach(child => {
-                        const flowValue = child[year];
-                        if (child.tipo === 'Energía Secundaria' && flowValue !== undefined && flowValue < 0) {
-                            const energyName = child['Nodo Hijo'];
-                            if (secondaryEnergyData.has(energyName)) {
-                                const energyData = secondaryEnergyData.get(energyName);
-                                energyData.totalConsumption += Math.abs(flowValue);
-                            }
-                        }
-                    });
+                // Preparar los campos de incremento/decremento para el popup
+                // Usar input_total para la variación positiva y output_total para la negativa
+                if (variacionBreakdownForPopup.input_total > 0) {
+                    variacionPopupData.variacion_positiva = variacionBreakdownForPopup.input_total;
                 }
-            });
-
-            // Calcular eficiencia para cada energético secundario
-            for (const [energyName, energyData] of secondaryEnergyData.entries()) {
-                if (energyData.totalProduction > 0) {
-                    energyData.efficiency = (energyData.totalConsumption / energyData.totalProduction * 100).toFixed(1);
-                } else {
-                    energyData.efficiency = 0;
+                if (variacionBreakdownForPopup.output_total > 0) {
+                    variacionPopupData.variacion_negativa = variacionBreakdownForPopup.output_total;
                 }
+                // No pasar el valor total neto, ya que se mostrarán los componentes separados
+                // variacionPopupData.total = variacionBreakdownForPopup.total;
+                console.log(`[DEBUG - Variación de Inventarios] Datos para popup:`, variacionPopupData);
+
+                // Generar customdata específico para Variación de Inventarios
+                nodeCustomdata[variacionIndex] = popupManager.generateNodePopup(
+                    variacionNodeData['Nodo Padre'],
+                    variacionNodeData,
+                    year,
+                    variacionPopupData, // Pasar los datos de variación específicos
+                    'text',
+                    'Energía Primaria'
+                );
+            } else {
+                console.error("Error: Datos para 'Variación de Inventarios' no encontrados en DataManager.");
             }
 
-            // 11.2: Flujos de Nodos de Energéticos Secundarios -> Oferta Total (Energéticos Secundarios)
-            // Lógica eliminada para evitar triplicación de enlaces de energías primarias
+            // --- Nodos de Energéticos Primarios de Oferta Interna Bruta ---
+            const ofertaInternaBrutaFullData = dataManager.getNodeData('Oferta Interna Bruta');
+            const energeticNodesMap = new Map(); // Para almacenar los índices de los nuevos nodos de energéticos
 
-            // 11.3: Flujos de Hub Secundario -> Tecnologías de Generación
-            // (Esta lógica se manejará dentro de la sección 9, la cual debe ser ajustada para tomar del hub secundario)
-            // Usar LinkManager para generar enlaces de generación a centrales
-            if (linkManager) {
-                try {
-                    const generationToCentralesLinks = linkManager.generateDataLinks(
-                        nodeMap,
-                        nodeColors,
-                        nodeData,
+            if (ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergetics = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
+
+                // Calcular posiciones Y para distribuir los nodos de energéticos
+                const startY = 0.1; // Posición inicial
+                const endY = 0.9;   // Posición final
+                const stepY = (endY - startY) / (primaryEnergetics.length - 1 || 1); // Paso entre nodos
+
+                primaryEnergetics.forEach((energetic, index) => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticColor = styleManager.getEnergyColor(energeticName) || energetic.color; // Obtener color del StyleManager o del dato
+
+                    const energeticIndex = addNode(energeticName, energeticColor);
+                    energeticNodesMap.set(energeticName, energeticIndex); // Guardar el índice
+
+                    nodeX[energeticIndex] = 0.3; // Columna de Oferta Interna Bruta
+                    nodeY[energeticIndex] = startY + (index * stepY); // Distribuir verticalmente
+
+                    // Generar customdata sencillo para cada energético
+                    const energeticValue = dataManager.getEnergeticValue('Oferta Interna Bruta', energeticName, year);
+                    let energeticPopupData = {};
+                    if (energeticValue !== null) {
+                        energeticPopupData.total = energeticValue; // Usar 'total' para el simple_source template
+                    }
+
+                    nodeCustomdata[energeticIndex] = popupManager.generateNodePopup(
+                        energeticName,
+                        {},
                         year,
-                        {
-                            mapTypes: ['generation-to-centrales']
-                        }
+                        energeticPopupData,
+                        'text',
+                        'Energía Primaria',
+                        'simple_source'
                     );
-
-                    // Agregar enlaces generados a los arrays principales
-                    source.push(...generationToCentralesLinks.source);
-                    target.push(...generationToCentralesLinks.target);
-                    value.push(...generationToCentralesLinks.value);
-                    linkColors.push(...generationToCentralesLinks.linkColors);
-                    linkCustomdata.push(...generationToCentralesLinks.linkCustomdata);
-
-                    console.log(`LinkManager generó ${generationToCentralesLinks.source.length} enlaces generation-to-centrales`);
-                    console.log('Enlaces generation-to-centrales:', generationToCentralesLinks);
-                } catch (error) {
-                    console.error('Error usando LinkManager para enlaces generation-to-centrales:', error);
-                    console.error('Stack trace:', error.stack);
-
-                    // Fallback al método manual
-                    const generationNodes = [
-                    ];
-
-                    generationNodes.forEach(genNode => {
-                        if (genNode.data && genNode.data['Nodos Hijo']) {
-                            genNode.data['Nodos Hijo'].forEach(child => {
-                                if (child['Nodo Hijo'] === 'Energía eléctrica') {
-                                    const flowValue = child[year];
-                                    if (flowValue !== undefined && flowValue !== 0) {
-                                        source.push(genNode.index);
-                                        target.push(centralesElectricasIndex);
-                                        value.push(Math.log10(Math.abs(flowValue) + 1));
-                                        const validatedColor = typeof child.color === 'string' ? child.color : '#888';
-                                        linkColors.push(validatedColor);
-
-                                        // Usar PopupManager para generar popup de enlace mejorado
-                                        if (popupManager) {
-                                            const linkPopup = popupManager.generateLinkPopup(
-                                                'Energía eléctrica',
-                                                flowValue,
-                                                genNode.name,
-                                                'Centrales Eléctricas',
-                                                validatedColor,
-                                                year,
-                                                { flowType: 'generation_to_grid' }
-                                            );
-                                            linkCustomdata.push(linkPopup);
-                                        } else {
-                                            // Fallback al formato anterior
-                                            linkCustomdata.push(`Producción de ${genNode.name}: ${Math.abs(flowValue).toLocaleString()} PJ`);
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    });
-                }
+                });
             } else {
-                console.warn('LinkManager no está disponible para enlaces generation-to-centrales');
+                console.error("Error: Datos de 'Oferta Interna Bruta' o sus hijos no encontrados para crear energéticos primarios.");
             }
 
-            // --- 13. Procesar Flujos de Salida (Oferta Total -> Consumo Propio del Sector) ---
-            // --- 6. Calcular Posiciones Inteligentes con LayoutEngine ---
-            const nodeX = new Array(labels.length);
-            const nodeY = new Array(labels.length);
+            // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
+            // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
+            if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
 
-            // Calcular sumas para el nodo de variación de inventarios (para popups)
-            let variacionPositiva = 0;
-            let variacionNegativa = 0;
-            nodeData.variacion['Nodos Hijo'].forEach(child => {
-                const flowValue = child[year];
-                if (child.tipo === 'Energía Primaria' && flowValue !== undefined && flowValue !== 0) {
-                    if (flowValue > 0) variacionPositiva += flowValue;
-                    if (flowValue < 0) variacionNegativa += flowValue;
-                }
-            });
-            const variacionTotalAbs = Math.abs(variacionPositiva) + Math.abs(variacionNegativa);
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueFromImportacion = dataManager.getEnergeticValue('Importación', energeticName, year);
 
-            // Usar LayoutEngine para calcular posiciones inteligentes
-            if (layoutEngine) {
-                const calculatedPositions = layoutEngine.calculatePositions(labels);
-                const optimizedPositions = layoutEngine.optimizePositions(calculatedPositions);
-
-                // Aplicar posiciones calculadas
-                labels.forEach((label, i) => {
-                    const position = optimizedPositions.get(label);
-                    if (position) {
-                        nodeX[i] = position.x;
-                        nodeY[i] = position.y;
-                    } else {
-                        // Posición por defecto si no se encuentra
-                        nodeX[i] = 0.5;
-                        nodeY[i] = 0.5;
-                        console.warn(`Posición no encontrada para nodo: ${label}`);
+                    if (energeticValueFromImportacion !== null && energeticValueFromImportacion > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Importación] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(nodeMap.get('Importación'));
+                        target.push(energeticNodesMap.get(energeticName));
+                        value.push(Math.log10(energeticValueFromImportacion + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueFromImportacion, 'Importación', energeticName, linkColor, year,
+                            { flowType: 'primary_supply', energyType: 'Energía Primaria' }
+                        ));
                     }
-                });
-
-                console.log('Posiciones calculadas por LayoutEngine para', labels.length, 'nodos');
-            } else {
-                // Fallback a posiciones por defecto si LayoutEngine no está disponible
-                console.warn('LayoutEngine no disponible, usando posiciones por defecto');
-                labels.forEach((label, i) => {
-                    nodeX[i] = 0.5;
-                    nodeY[i] = i / Math.max(labels.length - 1, 1);
                 });
             }
 
-            // Custom hovertemplate for links with sign
-            const customLinkHover = value.map((v, i) => {
-                return `${labels[source[i]]} → ${labels[target[i]]}<br>Signo: ${linkSigns[i] || '+'} ${v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} PJ<extra></extra>`;
-            });
+            // Enlaces de Producción a energéticos primarios de Oferta Interna Bruta
+            if (produccionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
 
-            // Usar un solo string para hovertemplate de nodos
-            // El PopupManager ya incluye el título, así que solo usamos customdata.
-            const customNodeHover = '%{customdata}<extra></extra>';
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueFromProduccion = dataManager.getEnergeticValue('Producción', energeticName, year);
 
-            // Preparar customdata para cada nodo usando PopupManager
-            let ofertaTotalHubValue = 0;
-            for (const totalValue of primaryEnergyTotals.values()) {
-                ofertaTotalHubValue += totalValue;
+                    if (energeticValueFromProduccion !== null && energeticValueFromProduccion > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Producción] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(nodeMap.get('Producción'));
+                        target.push(energeticNodesMap.get(energeticName));
+                        value.push(Math.log10(energeticValueFromProduccion + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueFromProduccion, 'Producción', energeticName, linkColor, year,
+                            { flowType: 'primary_supply', energyType: 'Energía Primaria' }
+                        ));
+                    }
+                });
             }
 
-            const customNodeData = labels.map(label => {
-                try {
-                    // Preparar datos adicionales para el popup
-                    let additionalData = {};
-                    let nodeDataForPopup = null;
+            // Enlaces de Variación de Inventarios a energéticos primarios de Oferta Interna Bruta
+            if (variacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
+                const primaryEnergeticsInOIB = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
 
-                    // Obtener datos del nodo específico
-                    if (primaryEnergyBreakdown.has(label)) {
-                        const breakdown = primaryEnergyBreakdown.get(label);
-                        additionalData = {
-                            importacion: breakdown.importacion,
-                            variacion: breakdown.variacion,
-                            produccion: breakdown.produccion,
-                            total: breakdown.importacion + breakdown.variacion + breakdown.produccion,
-                            description: `Energético primario con flujos de importación, producción y variación de inventarios`,
-                            unit: 'PJ'
-                        };
-                    } else if (secondaryNodeBreakdowns.has(label)) {
-                        const { breakdown, total } = secondaryNodeBreakdowns.get(label);
-                        additionalData = {
-                            breakdown: breakdown,
-                            total: total,
-                            description: `Nodo de consolidación de flujos energéticos`,
-                            unit: 'PJ'
-                        };
-                    } else if (label === 'Importación de energéticos primarios') {
-                        let totalImportacion = 0;
-                        for (const breakdown of primaryEnergyBreakdown.values()) {
-                            totalImportacion += breakdown.importacion;
-                        }
-                        additionalData = {
-                            total_input: totalImportacion,
-                            description: `Importaciones totales de energéticos primarios`,
-                            unit: 'PJ'
-                        };
-                        nodeDataForPopup = nodeData.importacion;
-                    } else if (label === 'Importación de energéticos secundarios') {
-                        additionalData = {
-                            total_input: totalImportacionSecundarios,
-                            description: `Importaciones totales de energéticos secundarios`,
-                            unit: 'PJ'
-                        };
-                        nodeDataForPopup = nodeData.importacion;
-                    } else if (label === 'Variación de inventarios de energéticos secundarios') {
-                        additionalData = {
-                            variacion_positiva: variacionPositivaSecundarios,
-                            variacion_negativa: variacionNegativaSecundarios,
-                            total: Math.abs(totalVariacionSecundarios),
-                            description: `Cambios en los inventarios de energéticos secundarios (+ aumento, - disminución)`,
-                            unit: 'PJ'
-                        };
-                        nodeDataForPopup = nodeData.variacion;
-                    } else if (label === 'Producción') {
-                        let totalProduccion = 0;
-                        for (const breakdown of primaryEnergyBreakdown.values()) {
-                            totalProduccion += breakdown.produccion;
-                        }
-                        additionalData = {
-                            total_input: totalProduccion,
-                            description: `Producción nacional total de energéticos primarios`,
-                            unit: 'PJ'
-                        };
-                        nodeDataForPopup = nodeData.produccion;
-                    } else if (label === 'Oferta Total') {
-                        additionalData = {
-                            total_input: ofertaTotalHubValue,
-                            total_output: ofertaTotalHubValue,
-                            balance: 0,
-                            description: `Hub centralizador de todos los flujos de energéticos primarios`,
-                            unit: 'PJ'
-                        };
-                        nodeDataForPopup = nodeData.ofertaTotal;
-                    } else if (label === 'Variación de inventarios de Energéticos primarios') {
-                        additionalData = {
-                            variacion_positiva: variacionPositiva,
-                            variacion_negativa: variacionNegativa,
-                            total: variacionTotalAbs,
-                            description: `Cambios en los inventarios de energéticos primarios (+ aumento, - disminución)`,
-                            unit: 'PJ'
-                        };
-                        nodeDataForPopup = nodeData.variacion;
-                    } else if (secondaryEnergyData.has(label)) {
-                        // Nodo de energético secundario
-                        const energyData = secondaryEnergyData.get(label);
-                        nodeDataForPopup = {
-                            nombre: energyData.name,
-                            descripcion: energyData.descripcion,
-                            tipo: energyData.tipo,
-                            color: energyData.color
-                        };
+                primaryEnergeticsInOIB.forEach(energetic => {
+                    const energeticName = energetic['Nodo Hijo'];
+                    const energeticValueFromVariacion = dataManager.getEnergeticValue('Variación de Inventarios', energeticName, year);
 
-                        additionalData = {
-                            total_production: energyData.totalProduction,
-                            total_consumption: energyData.totalConsumption,
-                            efficiency: energyData.efficiency,
-                            unit: 'PJ'
-                        };
-                    } else {
-                        // Para otros nodos, buscar en nodeData
-                        const nodeKeys = Object.keys(nodeData);
-                        for (const key of nodeKeys) {
-                            if (nodeData[key] && nodeData[key].nombre === label) {
-                                nodeDataForPopup = nodeData[key];
-                                break;
-                            }
-                        }
-
-                        // Datos por defecto si no se encuentra información específica
-                        additionalData = {
-                            description: `Nodo del sistema energético`,
-                            unit: 'PJ'
-                        };
+                    // Los valores de variación pueden ser negativos, pero Plotly espera valores positivos para `value`
+                    // El signo se manejará en el popup.
+                    if (energeticValueFromVariacion !== null && Math.abs(energeticValueFromVariacion) > 0) {
+                        const linkColor = styleManager.getEnergyColor(energeticName) || energetic.color;
+                        console.log(`[DEBUG - Enlace Variación] Energético: ${energeticName}, Color de enlace: ${linkColor}`);
+                        source.push(nodeMap.get('Variación de Inventarios'));
+                        target.push(energeticNodesMap.get(energeticName));
+                        value.push(Math.log10(Math.abs(energeticValueFromVariacion) + 1));
+                        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+                        linkCustomdata.push(popupManager.generateLinkPopup(
+                            energeticName, energeticValueFromVariacion, 'Variación de Inventarios', energeticName, linkColor, year,
+                            { flowType: 'primary_supply', energyType: 'Energía Primaria' }
+                        ));
                     }
+                });
+            }
 
-                    // Usar PopupManager para generar el popup si está disponible
-                    if (popupManager) {
-                        return popupManager.generateNodePopup(label, nodeDataForPopup, year, additionalData);
-                    } else {
-                        // Fallback al formato anterior si PopupManager no está disponible
-                        console.warn('PopupManager no disponible, usando formato básico');
-                        return `${label}<br>Año: ${year}`;
-                    }
-                } catch (error) {
-                    console.error(`Error generando popup para nodo "${label}":`, error);
-                    return `${label}<br>Error al cargar información`;
-                }
-            });
-
-            // Convertir los colores de los enlaces para que tengan transparencia
-            const transparentLinkColors = linkColors.map(hex =>
-                styleManager ? styleManager.hexToRgba(hex, 0.5) : hex // Ajusta este valor (0.0 a 1.0)
-            );
-
+            // Configuración del diagrama de Sankey
             const data = {
                 type: "sankey",
                 orientation: "h",
                 node: {
-                    pad: 100,      // Reducido para menor espaciado vertical
-                    thickness: 10,  // Reducido para nodos más delgados
+                    pad: 100,
+                    thickness: 10,
                     line: { color: "black", width: 0.5 },
                     label: labels,
                     color: nodeColors,
-                    hovertemplate: customNodeHover,
-                    customdata: customNodeData,
+                    hovertemplate: '%{customdata}<extra></extra>',
+                    customdata: nodeCustomdata, // Usar el nuevo array nodeCustomdata
                     x: nodeX,
-                    y: nodeY,
-                    font: { size: 6 } // Reducir el tamaño de la fuente aún más
+                    y: nodeY
                 },
                 link: {
                     source: source,
                     target: target,
                     value: value,
-                    color: transparentLinkColors,
+                    color: linkColors.map(hex => styleManager ? styleManager.hexToRgba(hex, 0.5) : hex),
                     customdata: linkCustomdata,
                     hovertemplate: '%{customdata}<extra></extra>'
                 }
