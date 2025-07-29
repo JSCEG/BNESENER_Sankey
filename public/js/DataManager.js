@@ -12,7 +12,7 @@
  * - Estadísticas detalladas del conjunto de datos
  * - Manejo de errores con recuperación elegante
  * 
- * @author Kiro AI Assistant
+ * @author Javier Sasso Celaya
  * @version 2.0.0
  */
 

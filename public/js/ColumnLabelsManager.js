@@ -12,7 +12,7 @@
  * - Integración con sistema de exportación
  * - Estilos consistentes con el tema del diagrama
  * 
- * @author Kiro AI Assistant
+ * @author Javier Sasso Celaya
  * @version 1.0.0
  */
 

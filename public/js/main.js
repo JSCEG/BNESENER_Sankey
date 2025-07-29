@@ -419,56 +419,6 @@ function initializeColumnLabelsControls() {
 
   console.log("Controles de etiquetas de columnas inicializados");
 }
-// Función de ejemplo para agregar etiquetas manualmente
-// function addExampleLabels() {
-//     if (!columnLabelsManager) {
-//         console.warn('ColumnLabelsManager no está inicializado');
-//         return;
-//     }
-
-//     // Ejemplo 1: Etiqueta en la parte superior izquierda
-//     columnLabelsManager.addLabel('energeticos_primarios', {
-//         title: 'Energéticos primarios',
-//         description: 'Fuentes de energía',
-//         x: 0.23,  // 10% desde la izquierda
-//         y: 0.1, // 5% desde arriba
-//         visible: true
-//     });
-
-//     // Ejemplo 2: Etiqueta en el centro superior
-//     columnLabelsManager.addLabel('energeticos_secundarios', {
-//         title: 'Energéticos secundarios',
-//         description: 'Procesos de conversión',
-//         x: 0.75,  // 50% desde la izquierda (centro)
-//         y: 0.1, // 5% desde arriba
-//         visible: true
-//     });
-
-//     // Ejemplo 3: Etiqueta en la parte superior derecha
-//     columnLabelsManager.addLabel('consumo', {
-//         title: 'Consumo',
-//         description: 'Destino final',
-//         x: 0.9,  // 90% desde la izquierda
-//         y: 0.1, // 5% desde arriba
-//         visible: true
-//     });
-
-//     // Ejemplo 4: Etiqueta con estilo personalizado
-//     // columnLabelsManager.addLabel('hub-central', {
-//     //     title: 'Hub Central',
-//     //     description: 'Concentración',
-//     //     x: 0.3,  // 30% desde la izquierda
-//     //     y: 0.1,  // 10% desde arriba
-//     //     visible: true,
-//     //     customStyle: {
-//     //         backgroundColor: 'rgba(52, 152, 219, 0.9)',
-//     //         color: 'white',
-//     //         fontSize: 16
-//     //     }
-//     // });
-
-//     console.log('Etiquetas de ejemplo agregadas');
-// }
 
 // Función para limpiar todas las etiquetas
 function clearAllLabels() {

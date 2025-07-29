@@ -1,55 +1,81 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Diagrama de Sankey de Energía</title>
+    <meta name="description" content="Visualización interactiva del Balance Nacional de Energía de México mediante diagramas de Sankey" />
+    <meta name="keywords" content="energía, México, Sankey, balance energético, visualización" />
+    <title>Balance Nacional de Energía - Diagrama de Sankey México</title>
+    
+    <!-- External Libraries -->
     <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    
+    <!-- Styles -->
     <link rel="stylesheet" href="css/styles.css" />
   </head>
 
   <body>
-    <h1>Diagrama de Sankey de Energía en México</h1>
-    <div class="controls-container">
-      <label for="year-selector">Selecciona un año:</label>
-      <select id="year-selector"></select>
-
-      <!-- Column Labels Controls -->
-      <!-- <div class="column-labels-controls">
-            <label>
-                <input type="checkbox" id="column-labels-toggle">
-                Mostrar etiquetas de columnas
-            </label>
-            <button id="add-example-labels-btn" class="export-btn config-btn"
-                style="font-size: 0.8rem; padding: 6px 12px;">
-                + Agregar Ejemplos
-            </button>
-            <button id="clear-labels-btn" class="export-btn"
-                style="background: #dc3545; color: white; font-size: 0.8rem; padding: 6px 12px;">
-                🗑️ Limpiar
-            </button>
-        </div> -->
-
-      <!-- Export Controls -->
-      <div class="export-controls">
-        <button id="export-config-btn" class="export-btn config-btn">
-          ⚙️ Configurar Exportación
-        </button>
-        <button id="export-png-btn" class="export-btn png-btn">
-          📷 Exportar PNG
-        </button>
-        <button id="export-svg-btn" class="export-btn svg-btn">
-          📄 Exportar SVG
+    <!-- Header Section -->
+    <header class="main-header">
+      <div class="header-content">
+        <h1>Balance Nacional de Energía de México</h1>
+        <p class="header-subtitle">Visualización interactiva del flujo energético nacional</p>
+        <button id="info-toggle-btn" class="info-toggle-btn" aria-label="Mostrar información">
+          ℹ️ ¿Qué es el Balance Nacional de Energía?
         </button>
       </div>
-    </div>
+    </header>
 
+    <!-- Information Panel -->
+    <aside id="info-panel" class="info-panel" aria-hidden="true">
+      <div class="info-content">
+        <button id="info-close-btn" class="info-close-btn" aria-label="Cerrar información">&times;</button>
+        <div class="info-sections">
+          <!-- Content will be loaded dynamically -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Controls Section -->
+      <section class="controls-section">
+        <div class="controls-container">
+          <div class="control-group">
+            <label for="year-selector" class="control-label">Año:</label>
+            <select id="year-selector" class="year-selector" aria-label="Seleccionar año"></select>
+          </div>
+
+          <!-- Export Controls -->
+          <div class="export-controls">
+            <button id="export-config-btn" class="export-btn config-btn" aria-label="Configurar exportación">
+              ⚙️ Configurar
+            </button>
+            <button id="export-png-btn" class="export-btn png-btn" aria-label="Exportar como PNG">
+              📷 PNG
+            </button>
+            <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
+              📄 SVG
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Diagram Section -->
+      <section class="diagram-section">
+        <div class="diagram-container">
+          <div id="sankey-diagram" role="img" aria-label="Diagrama de Sankey del Balance Nacional de Energía"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modals -->
     <!-- Export Configuration Modal -->
-    <div id="export-modal" class="modal">
+    <div id="export-modal" class="modal" role="dialog" aria-labelledby="export-modal-title" aria-hidden="true">
       <div class="modal-content">
         <div class="modal-header">
-          <h3>Configuración de Exportación</h3>
-          <span class="close">&times;</span>
+          <h3 id="export-modal-title">Configuración de Exportación</h3>
+          <button class="close" aria-label="Cerrar modal">&times;</button>
         </div>
         <div class="modal-body">
           <div class="config-section">
@@ -63,7 +89,9 @@
                 min="800"
                 max="4000"
                 step="100"
+                aria-describedby="png-width-help"
               />
+              <small id="png-width-help">Ancho de la imagen en píxeles</small>
             </div>
             <div class="config-group">
               <label for="png-height">Alto (px):</label>
@@ -74,15 +102,18 @@
                 min="600"
                 max="3000"
                 step="100"
+                aria-describedby="png-height-help"
               />
+              <small id="png-height-help">Alto de la imagen en píxeles</small>
             </div>
             <div class="config-group">
               <label for="png-scale">Escala:</label>
-              <select id="png-scale">
+              <select id="png-scale" aria-describedby="png-scale-help">
                 <option value="1">1x (Normal)</option>
                 <option value="2" selected>2x (Alta calidad)</option>
                 <option value="3">3x (Muy alta calidad)</option>
               </select>
+              <small id="png-scale-help">Factor de escala para la calidad</small>
             </div>
           </div>
 
@@ -97,7 +128,7 @@
             <div class="config-group">
               <label>
                 <input type="checkbox" id="include-column-labels" checked />
-                Incluir etiquetas de columnas en exportación
+                Incluir etiquetas de columnas
               </label>
             </div>
             <div class="config-group">
@@ -107,37 +138,35 @@
                 id="filename-prefix"
                 value="sankey_energia"
                 placeholder="sankey_energia"
+                aria-describedby="filename-help"
               />
+              <small id="filename-help">Nombre base para los archivos exportados</small>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button id="save-config-btn" class="btn-primary">
-            Guardar Configuración
-          </button>
+          <button id="save-config-btn" class="btn-primary">Guardar Configuración</button>
           <button id="cancel-config-btn" class="btn-secondary">Cancelar</button>
         </div>
       </div>
     </div>
 
     <!-- Export Progress Modal -->
-    <div id="export-progress-modal" class="modal">
+    <div id="export-progress-modal" class="modal" role="dialog" aria-labelledby="progress-title" aria-hidden="true">
       <div class="modal-content progress-modal">
         <div class="progress-content">
-          <div class="spinner"></div>
+          <div class="spinner" aria-hidden="true"></div>
           <h3 id="progress-title">Exportando...</h3>
           <p id="progress-message">Preparando imagen para descarga</p>
-          <div class="progress-bar">
+          <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
         </div>
       </div>
     </div>
-    <div class="diagram-container">
-      <div id="sankey-diagram"></div>
-    </div>
 
-    <!-- Incluir los módulos -->
+    <!-- Scripts -->
+    <script src="js/InfoManager.js"></script>
     <script src="js/DataManager.js"></script>
     <script src="js/StyleManager.js"></script>
     <script src="js/LayoutEngine.js"></script>
