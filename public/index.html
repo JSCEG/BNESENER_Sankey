@@ -1213,6 +1213,8 @@
             initializeExportControls();
         });
 
+
+
         // Función para actualizar el diagrama de Sankey (Etapa 1.7: Añadir Salidas Completas)
         function updateSankey(year) {
             console.log(`Actualizando gráfico para el año: ${year}`);
@@ -1976,90 +1978,6 @@
                 }
             }
 
-            // --- NODO DE CONSUMO PROPIO DE ENERGÉTICOS SECUNDARIOS ---
-            if (consumoPropioNodeData && consumoPropioNodeData['Nodos Hijo']) {
-                // Filtrar solo los energéticos secundarios (valores negativos)
-                const secundariosConsumoPropio = consumoPropioNodeData['Nodos Hijo']
-                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
-                        hijo[year] !== undefined &&
-                        hijo[year] !== null &&
-                        hijo[year] < 0);  // Cambiado a < 0 para capturar valores negativos
-
-                if (secundariosConsumoPropio.length > 0) {
-                    // Crear nodo de exportación secundaria
-                    // Calcular el valor total sumando los valores absolutos
-                    const totalValue = secundariosConsumoPropio.reduce((sum, item) => {
-                        return sum + Math.abs(parseFloat(item[year]) || 0);
-                    }, 0);
-
-                    // Formatear el valor con 2 decimales
-                    const formattedValue = totalValue.toLocaleString('es-MX', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-
-                    // Crear nodo de consumo propio secundario con el valor en el nombre
-                    const consumoPropioSecundariaIndex = addNode(
-                        `Consumo Propio (${formattedValue} PJ)`,
-                        consumoPropioNodeData.color
-                    );
-                    nodeX[consumoPropioSecundariaIndex] = 0.8;
-                    nodeY[consumoPropioSecundariaIndex] = 0.99;
-
-                    // Crear customdata para el nodo
-                    const consumoPropioSecundariaData = {
-                        ...consumoPropioNodeData,
-                        'Nodos Hijo': secundariosConsumoPropio
-                    };
-
-                    // Calcular el desglose para el popup
-                    const consumoPropioSecundariaBreakdown = popupManager.calculateNodeBreakdown(
-                        consumoPropioSecundariaData,
-                        year,
-                        'Energía Secundaria'
-                    );
-
-                    // Generar el popup
-                    nodeCustomdata[consumoPropioSecundariaIndex] = popupManager.generateNodePopup(
-                        'Consumo Propio (Secundaria)',
-                        consumoPropioSecundariaData,
-                        year,
-                        consumoPropioSecundariaBreakdown,
-                        'text',
-                        'Energía Secundaria',
-                        'simple_source'  // Usamos la plantilla simple
-                    );
-
-                    // Crear enlaces desde los energéticos secundarios a la exportación
-                    secundariosConsumoPropio.forEach(energetic => {
-                        const energeticName = energetic['Nodo Hijo'];
-                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
-                        const energeticValue = Math.abs(parseFloat(energetic[year]) || 0);  // Tomar valor absoluto
-
-                        if (sourceNodeIndex !== undefined && energeticValue > 0) {
-                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
-
-                            // La dirección es desde el energético hacia la exportación
-                            source.push(sourceNodeIndex);
-                            target.push(consumoPropioSecundariaIndex);
-                            value.push(Math.log10(energeticValue + 1));
-                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-
-                            linkCustomdata.push(popupManager.generateLinkPopup(
-                                energeticName,
-                                energeticValue,  // Usamos el valor absoluto
-                                energeticName,
-                                'Consumo Propio (Secundaria)',
-                                linkColor,
-                                year,
-                                { flowType: 'consumo_propio_secondary' }
-                            ));
-                        }
-                    });
-                }
-            }
-
-            // --- NODO DE PÉRDIDAS TÉCNICAS (SECUNDARIAS) ---
             const perdidasTecnicasSecNodeData = dataManager.getNodeData('Pérdidas técnicas por transporte, transmisión y distribución');
             if (perdidasTecnicasSecNodeData && perdidasTecnicasSecNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios
@@ -2147,6 +2065,91 @@
                     });
                 }
             }
+
+          
+            if (consumoPropioNodeData && consumoPropioNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios (valores negativos)
+                const secundariosConsumoPropio = consumoPropioNodeData['Nodos Hijo']
+                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
+                        hijo[year] !== undefined &&
+                        hijo[year] !== null &&
+                        hijo[year] < 0);  // Cambiado a < 0 para capturar valores negativos
+
+                if (secundariosConsumoPropio.length > 0) {
+                    // Crear nodo de exportación secundaria
+                    // Calcular el valor total sumando los valores absolutos
+                    const totalValue = secundariosConsumoPropio.reduce((sum, item) => {
+                        return sum + Math.abs(parseFloat(item[year]) || 0);
+                    }, 0);
+
+                    // Formatear el valor con 2 decimales
+                    const formattedValue = totalValue.toLocaleString('es-MX', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    // Crear nodo de consumo propio secundario con el valor en el nombre
+                    const consumoPropioSecundariaIndex = addNode(
+                        `Consumo Propio (${formattedValue} PJ)`,
+                        consumoPropioNodeData.color
+                    );
+                    nodeX[consumoPropioSecundariaIndex] = 0.8;
+                    nodeY[consumoPropioSecundariaIndex] = 0.99;
+
+                    // Crear customdata para el nodo
+                    const consumoPropioSecundariaData = {
+                        ...consumoPropioNodeData,
+                        'Nodos Hijo': secundariosConsumoPropio
+                    };
+
+                    // Calcular el desglose para el popup
+                    const consumoPropioSecundariaBreakdown = popupManager.calculateNodeBreakdown(
+                        consumoPropioSecundariaData,
+                        year,
+                        'Energía Secundaria'
+                    );
+
+                    // Generar el popup
+                    nodeCustomdata[consumoPropioSecundariaIndex] = popupManager.generateNodePopup(
+                        'Consumo Propio (Secundaria)',
+                        consumoPropioSecundariaData,
+                        year,
+                        consumoPropioSecundariaBreakdown,
+                        'text',
+                        'Energía Secundaria',
+                        'simple_source'  // Usamos la plantilla simple
+                    );
+
+                    // Crear enlaces desde los energéticos secundarios a la exportación
+                    secundariosConsumoPropio.forEach(energetic => {
+                        const energeticName = energetic['Nodo Hijo'];
+                        const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
+                        const energeticValue = Math.abs(parseFloat(energetic[year]) || 0);  // Tomar valor absoluto
+
+                        if (sourceNodeIndex !== undefined && energeticValue > 0) {
+                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
+
+                            // La dirección es desde el energético hacia la exportación
+                            source.push(sourceNodeIndex);
+                            target.push(consumoPropioSecundariaIndex);
+                            value.push(Math.log10(energeticValue + 1));
+                            linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+
+                            linkCustomdata.push(popupManager.generateLinkPopup(
+                                energeticName,
+                                energeticValue,  // Usamos el valor absoluto
+                                energeticName,
+                                'Consumo Propio (Secundaria)',
+                                linkColor,
+                                year,
+                                { flowType: 'consumo_propio_secondary' }
+                            ));
+                        }
+                    });
+                }
+            }
+
+
             // --- NODO DE ENERGÍA NO APROVECHADA DE ENERGÉTICOS SECUNDARIOS ---
             if (energiaNoAprovechadaNodeData && energiaNoAprovechadaNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios
@@ -2157,8 +2160,14 @@
                         hijo[year] > 0);
 
                 if (secundariosNoAprovechados.length > 0) {
-                    // Crear nodo de energía no aprovechada secundaria
-                    const noAprovechadaSecundariaIndex = addNode('Energía No Aprovechada (Secundaria)', energiaNoAprovechadaNodeData.color);
+                    // Calcular el valor total en PJ
+                    const totalValuePJ = secundariosNoAprovechados.reduce((sum, energetic) => {
+                        return sum + (parseFloat(energetic[year]) || 0);
+                    }, 0);
+
+                    // Crear nodo de energía no aprovechada secundaria con valor en PJ
+                    const nodeNameWithValue = `Energía No Aprovechada (Secundaria)<br>${totalValuePJ.toFixed(2)} PJ`;
+                    const noAprovechadaSecundariaIndex = addNode(nodeNameWithValue, energiaNoAprovechadaNodeData.color);
                     nodeX[noAprovechadaSecundariaIndex] = 0.6; // Posición X intermedia
                     nodeY[noAprovechadaSecundariaIndex] = 0.9; // Misma altura que el nodo primario
 
@@ -2166,7 +2175,8 @@
                     const noAprovechadaSecundariaData = {
                         ...energiaNoAprovechadaNodeData,
                         'Nodo Padre': 'Energía No Aprovechada (Secundaria)',
-                        'Nodos Hijo': secundariosNoAprovechados
+                        'Nodos Hijo': secundariosNoAprovechados,
+                        [year]: totalValuePJ  // Agregar el valor total al año correspondiente
                     };
 
                     // Calcular el desglose para el popup
@@ -2226,7 +2236,19 @@
             const industrialNodeData = dataManager.getNodeData('Industrial');
             if (industrialNodeData && industrialNodeData['Nodos Hijo']) {
                 // Crear nodo Industrial
-                const industrialIndex = addNode(industrialNodeData['Nodo Padre'], industrialNodeData.color);
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = industrialNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre (con salto de línea HTML)
+                const industrialIndex = addNode(`${industrialNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`, industrialNodeData.color);
                 nodeX[industrialIndex] = 0.9;
                 nodeY[industrialIndex] = 0.15;
 
@@ -2320,9 +2342,22 @@
             const transporteNodeData = dataManager.getNodeData('Transporte');
             if (transporteNodeData && transporteNodeData['Nodos Hijo']) {
                 // Crear nodo Transporte
-                const transporteIndex = addNode(transporteNodeData['Nodo Padre'], transporteNodeData.color);
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = transporteNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre (con salto de línea HTML)
+                const transporteIndex = addNode(`${transporteNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`, transporteNodeData.color);
                 nodeX[transporteIndex] = 0.9;
                 nodeY[transporteIndex] = 0.3;
+
 
                 // Calcular el total sumando los valores de los hijos
                 const totalTransporte = transporteNodeData['Nodos Hijo'].reduce((sum, hijo) => {
@@ -2414,9 +2449,23 @@
             const agropecuarioNodeData = dataManager.getNodeData('Agropecuario');
             if (agropecuarioNodeData && agropecuarioNodeData['Nodos Hijo']) {
                 // Crear nodo Agropecuario
-                const agropecuarioIndex = addNode(agropecuarioNodeData['Nodo Padre'], agropecuarioNodeData.color);
+                // Crear nodo Agropecuario
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = agropecuarioNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre (con salto de línea HTML)
+                const agropecuarioIndex = addNode(`${agropecuarioNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`, agropecuarioNodeData.color);
                 nodeX[agropecuarioIndex] = 0.9;
                 nodeY[agropecuarioIndex] = 0.4;
+
 
                 // Calcular el total sumando los valores de los hijos
                 const totalAgropecuario = agropecuarioNodeData['Nodos Hijo'].reduce((sum, hijo) => {
@@ -2494,10 +2543,23 @@
             // --- NODO COMERCIAL ---
             const comercialNodeData = dataManager.getNodeData('Comercial');
             if (comercialNodeData && comercialNodeData['Nodos Hijo']) {
-                // Crear nodo Transporte
-                const comercialIndex = addNode(comercialNodeData['Nodo Padre'], comercialNodeData.color);
+                // Crear nodo Comercial
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = comercialNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre (con salto de línea HTML)
+                const comercialIndex = addNode(`${comercialNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`, comercialNodeData.color);
                 nodeX[comercialIndex] = 0.9;
                 nodeY[comercialIndex] = 0.5;
+
 
                 // Calcular el total sumando los valores de los hijos
                 const totalComercial = comercialNodeData['Nodos Hijo'].reduce((sum, hijo) => {
@@ -2590,9 +2652,22 @@
             const publicoNodeData = dataManager.getNodeData('Público');
             if (publicoNodeData && publicoNodeData['Nodos Hijo']) {
                 // Crear nodo Transporte
-                const publicoIndex = addNode(publicoNodeData['Nodo Padre'], publicoNodeData.color);
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = publicoNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre (con salto de línea HTML)
+                const publicoIndex = addNode(`${publicoNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`, publicoNodeData.color);
                 nodeX[publicoIndex] = 0.9;
                 nodeY[publicoIndex] = 0.6;
+
 
                 // Calcular el total sumando los valores de los hijos
                 const totalPublico = publicoNodeData['Nodos Hijo'].reduce((sum, hijo) => {
@@ -2684,8 +2759,20 @@
             // --- NODO RESIDENCIAL ---
             const residencialNodeData = dataManager.getNodeData('Residencial');
             if (residencialNodeData && residencialNodeData['Nodos Hijo']) {
-                // Crear nodo Transporte
-                const residencialIndex = addNode(residencialNodeData['Nodo Padre'], residencialNodeData.color);
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = residencialNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre (con salto de línea HTML)
+                const residencialIndex = addNode(`${residencialNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`,
+                    residencialNodeData.color);
                 nodeX[residencialIndex] = 0.9;
                 nodeY[residencialIndex] = 0.7;
 
@@ -2696,17 +2783,17 @@
 
                 // Crear un objeto con el formato esperado por la plantilla simple_source
                 const popupData = {
-                    label: 'Sector Residencial',  // Cambiamos esto
+                    label: 'Sector Residencial',
                     total: totalResidencial,
-                    unit: 'PJ' // Ajusta la unidad según corresponda
+                    unit: 'PJ'
                 };
 
                 // Generar el popup
                 nodeCustomdata[residencialIndex] = popupManager.generateNodePopup(
-                    'Sector Residencial',  // Y aquí también
-                    popupData,  // Pasamos los datos formateados
+                    'Sector Residencial',
+                    popupData,
                     year,
-                    popupData,  // Mismos datos para el desglose
+                    popupData,
                     'text',
                     'Todos',
                     'simple_source'
@@ -2778,8 +2865,20 @@
             // --- NODO Petroquímica Pemex ---
             const petroquimicaNodeData = dataManager.getNodeData('Petroquímica Pemex');
             if (petroquimicaNodeData && petroquimicaNodeData['Nodos Hijo']) {
-                // Crear nodo Transporte
-                const petroquimicaIndex = addNode(petroquimicaNodeData['Nodo Padre'], petroquimicaNodeData.color);
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = petroquimicaNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre
+                const petroquimicaIndex = addNode(`${petroquimicaNodeData['Nodo Padre']} <br>(${formattedValue} PJ)`,
+                    petroquimicaNodeData.color);
                 nodeX[petroquimicaIndex] = 0.9;
                 nodeY[petroquimicaIndex] = 0.8;
 
@@ -2790,37 +2889,34 @@
 
                 // Crear un objeto con el formato esperado por la plantilla simple_source
                 const popupData = {
-                    label: 'Sector Petroquímica Pemex',  // Cambiamos esto
+                    label: 'Sector Petroquímica Pemex',
                     total: totalPetroquimica,
-                    unit: 'PJ' // Ajusta la unidad según corresponda
+                    unit: 'PJ'
                 };
 
                 // Generar el popup
                 nodeCustomdata[petroquimicaIndex] = popupManager.generateNodePopup(
-                    'Sector Petroquímica Pemex',  // Y aquí también
-                    popupData,  // Pasamos los datos formateados
+                    'Sector Petroquímica Pemex',
+                    popupData,
                     year,
-                    popupData,  // Mismos datos para el desglose
+                    popupData,
                     'text',
                     'Todos',
                     'simple_source'
                 );
-                // Crear enlaces desde energéticos primarios
-                // Después de crear los nodos de energía primaria y tener el mapa energeticNodesMap
 
-                // --- Crear enlaces desde los nodos de energía primaria al nodo Industrial ---
+                // --- Crear enlaces desde los nodos de energía primaria al nodo Petroquímica ---
                 if (petroquimicaNodeData && petroquimicaNodeData['Nodos Hijo']) {
                     petroquimicaNodeData['Nodos Hijo'].forEach(hijo => {
                         if (hijo.tipo === 'Energía Primaria' && hijo[year] > 0) {
                             const sourceNodeIndex = energeticNodesMap.get(hijo['Nodo Hijo']);
-                            const publicoNodeIndex = nodeMap.get(petroquimicaNodeData['Nodo Padre']);
 
-                            if (sourceNodeIndex !== undefined && publicoNodeIndex !== undefined) {
+                            if (sourceNodeIndex !== undefined) {
                                 const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || hijo.color || '#999999';
                                 const linkValue = Math.log10(parseFloat(hijo[year]) + 1);
 
                                 source.push(sourceNodeIndex);
-                                target.push(publicoNodeIndex);
+                                target.push(petroquimicaIndex);
                                 value.push(linkValue);
                                 linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
@@ -2833,7 +2929,7 @@
                                     linkColor,
                                     year,
                                     {
-                                        flowType: 'sector_industrial',
+                                        flowType: 'to_petroquimica_primary',
                                         template: 'simple'
                                     }
                                 ));
@@ -2841,7 +2937,6 @@
                         }
                     });
                 }
-
 
                 // Crear enlaces desde energéticos secundarios
                 petroquimicaNodeData['Nodos Hijo'].forEach(hijo => {
@@ -2886,7 +2981,7 @@
 
                 // Crear nodo con el valor en el nombre
                 const otrasRamasEconomicasIndex = addNode(
-                    `${otrasRamasEconomicasNodeData['Nodo Padre']} (${formattedValue} PJ)`,
+                    `${otrasRamasEconomicasNodeData['Nodo Padre']}<br>(${formattedValue} PJ)`,
                     otrasRamasEconomicasNodeData.color
                 );
                 nodeX[otrasRamasEconomicasIndex] = 0.9;
@@ -2916,19 +3011,18 @@
                 // Crear enlaces desde energéticos primarios
                 // Después de crear los nodos de energía primaria y tener el mapa energeticNodesMap
 
-                // --- Crear enlaces desde los nodos de energía primaria al nodo Industrial ---
+                // --- Crear enlaces desde los nodos de energía primaria al nodo Otras ramas económicas ---
                 if (otrasRamasEconomicasNodeData && otrasRamasEconomicasNodeData['Nodos Hijo']) {
                     otrasRamasEconomicasNodeData['Nodos Hijo'].forEach(hijo => {
                         if (hijo.tipo === 'Energía Primaria' && hijo[year] > 0) {
                             const sourceNodeIndex = energeticNodesMap.get(hijo['Nodo Hijo']);
-                            const publicoNodeIndex = nodeMap.get(otrasRamasEconomicasNodeData['Nodo Padre']);
 
-                            if (sourceNodeIndex !== undefined && publicoNodeIndex !== undefined) {
+                            if (sourceNodeIndex !== undefined) {
                                 const linkColor = styleManager.getEnergyColor(hijo['Nodo Hijo']) || hijo.color || '#999999';
                                 const linkValue = Math.log10(parseFloat(hijo[year]) + 1);
 
                                 source.push(sourceNodeIndex);
-                                target.push(publicoNodeIndex);
+                                target.push(otrasRamasEconomicasIndex);
                                 value.push(linkValue);
                                 linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
@@ -2941,7 +3035,7 @@
                                     linkColor,
                                     year,
                                     {
-                                        flowType: 'sector_industrial',
+                                        flowType: 'to_otras_ramas_economicas_primary',
                                         template: 'simple'
                                     }
                                 ));
