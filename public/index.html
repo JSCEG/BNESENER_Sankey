@@ -1227,6 +1227,7 @@
             const nodeX = []; // Inicializar arrays de posiciones
             const nodeY = []; // Inicializar arrays de posiciones
             const nodeCustomdata = []; // Nuevo array para el customdata de cada nodo
+            const nodeValues = [];    // ← aquí
 
             // --- ARRAYS PARA LOS ENLACES DEL DIAGRAMA SANKEY ---
             const source = [];
@@ -1234,7 +1235,6 @@
             const value = [];
             const linkColors = [];
             const linkCustomdata = [];
-
             function addNode(name, color, nodeType = 'default', value = null) {
                 if (nodeMap.has(name)) {
                     return nodeMap.get(name);
@@ -1259,7 +1259,11 @@
 
                 labels.push(nodeLabel);
                 nodeColors.push(finalColor);
-                nodeCustomdata.push(''); // Inicializar con placeholder, se llenará después
+                nodeCustomdata.push('');
+
+                +       // Inicializa nodeValues con el valor real (o 0)
+                    +       nodeValues.push(value != null ? value : 0);
+
                 return nodeIndex;
             }
 
@@ -1614,29 +1618,78 @@
 
             // --- Nodo de Refinerías y Despuntadoras ---
             const refinerasydespuntadorasNodeData = dataManager.getNodeData('Refinerías y Despuntadoras');
-            console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
-            if (refinerasydespuntadorasNodeData) {
-                const refinerasydespuntadorasIndex = addNode(refinerasydespuntadorasNodeData['Nodo Padre'], refinerasydespuntadorasNodeData.color);
-                nodeX[refinerasydespuntadorasIndex] = 0.35; // Posición horizontal
-                nodeY[refinerasydespuntadorasIndex] = 0.7; // Posición vertical;
+console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
 
-                // Calcular el desglose para el popup de Refinerías y Despuntadoras (solo energéticos primarios)
-                const refinerasydespuntadorasBreakdownForPopup = popupManager.calculateNodeBreakdown(refinerasydespuntadorasNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Refinerías y Despuntadoras] Breakdown (Primaria) para ${year}:`, refinerasydespuntadorasBreakdownForPopup);
+if (refinerasydespuntadorasNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+  // 1) Calcular el desglose de Energía Primaria
+  const breakdownRaw = popupManager.calculateNodeBreakdown(
+    refinerasydespuntadorasNodeData,
+    year,
+    'Energía Primaria'
+  );
+  console.log(`[DEBUG] Breakdown Raw para Refinerías:`, breakdownRaw);
 
-                nodeCustomdata[refinerasydespuntadorasIndex] = popupManager.generateNodePopup(
-                    refinerasydespuntadorasNodeData['Nodo Padre'],
-                    refinerasydespuntadorasNodeData,
-                    year,
-                    refinerasydespuntadorasBreakdownForPopup,
-                    'text',
-                    'Energía Primaria',
-                    'simple_source'
-                );
-            } else {
-                console.error("Error: Datos para 'Refinerías y Despuntadoras' no encontrados en DataManager.");
-            }
+  // 2) Extraer hijos y sumar valores absolutos ⇒ totalPJ
+  const children = breakdownRaw.children || breakdownRaw;
+  const totalPJ = Array.isArray(children)
+    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+    : 0;
+  console.log(`[DEBUG] totalPJ Refinerías y Despuntadoras: ${totalPJ.toFixed(2)} PJ`);
 
+  // 3) Crear nodo con su valor real
+  const idx = addNode(
+    refinerasydespuntadorasNodeData['Nodo Padre'],
+    refinerasydespuntadorasNodeData.color,
+    'default',
+    totalPJ      // ← aquí pasamos totalPJ
+  );
+  nodeX[idx]      = 0.35;
+  nodeY[idx]      = 0.70;
+  // nodeValues ya se inicializa dentro de addNode
+
+  // 4) Generar popup con { total, unit }
+  nodeCustomdata[idx] = popupManager.generateNodePopup(
+    refinerasydespuntadorasNodeData['Nodo Padre'],
+    refinerasydespuntadorasNodeData,
+    year,
+    { total: totalPJ, unit: 'PJ' },
+    'text',
+    null,
+    'simple_source'
+  );
+
+  // 5) Enlaces de Energía Primaria → Refinerías y Despuntadoras
+  ofertaInternaBrutaFullData['Nodos Hijo']
+    .filter(child => child.tipo === 'Energía Primaria')
+    .forEach(child => {
+      const val = dataManager.getEnergeticValue(
+        'Refinerías y Despuntadoras',
+        child['Nodo Hijo'],
+        year
+      );
+      if (val != null && Math.abs(val) > 0) {
+        source.push( energeticNodesMap.get(child['Nodo Hijo']) );
+        target.push( idx );
+        value.push( Math.log10(Math.abs(val) + 1) );
+        const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+        linkColors.push( styleManager.hexToRgba(col, 0.5) );
+        linkCustomdata.push(
+          popupManager.generateLinkPopup(
+            child['Nodo Hijo'],
+            val,
+            child['Nodo Hijo'],
+            'Refinerías y Despuntadoras',
+            col,
+            year,
+            { flowType: 'primary_demand' }
+          )
+        );
+      }
+    });
+
+} else {
+  console.error("Error: Datos para 'Refinerías y Despuntadoras' no encontrados o estructura de 'Nodos Hijo' faltante.");
+}
             // --- Nodo de Centrales Eléctricas ---
             const centraleselectricasNodeData = dataManager.getNodeData('Centrales Eléctricas');
             console.log(`[DEBUG] Datos de Centrales Eléctricas:`, centraleselectricasNodeData);
@@ -3556,6 +3609,7 @@
                     thickness: 10,
                     line: { color: "black", width: 0.5 },
                     label: labels,
+                    value: nodeValues,      // ← aquí añadimos los valores
                     color: nodeColors,
                     hovertemplate: '%{customdata}<extra></extra>',
                     customdata: nodeCustomdata, // Usar el nuevo array nodeCustomdata
