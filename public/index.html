@@ -1134,20 +1134,20 @@
             }
 
             // Ejemplo 1: Etiqueta en la parte superior izquierda
-            columnLabelsManager.addLabel('oferta', {
-                title: 'Oferta',
+            columnLabelsManager.addLabel('energeticos_primarios', {
+                title: 'Energéticos primarios',
                 description: 'Fuentes de energía',
-                x: 0.1,  // 10% desde la izquierda
-                y: 0.05, // 5% desde arriba
+                x: 0.23,  // 10% desde la izquierda
+                y: 0.1, // 5% desde arriba
                 visible: true
             });
 
             // Ejemplo 2: Etiqueta en el centro superior
-            columnLabelsManager.addLabel('transformacion', {
-                title: 'Transformación',
+            columnLabelsManager.addLabel('energeticos_secundarios', {
+                title: 'Energéticos secundarios',
                 description: 'Procesos de conversión',
-                x: 0.5,  // 50% desde la izquierda (centro)
-                y: 0.05, // 5% desde arriba
+                x: 0.75,  // 50% desde la izquierda (centro)
+                y: 0.1, // 5% desde arriba
                 visible: true
             });
 
@@ -1156,23 +1156,23 @@
                 title: 'Consumo',
                 description: 'Destino final',
                 x: 0.9,  // 90% desde la izquierda
-                y: 0.05, // 5% desde arriba
+                y: 0.1, // 5% desde arriba
                 visible: true
             });
 
             // Ejemplo 4: Etiqueta con estilo personalizado
-            columnLabelsManager.addLabel('hub-central', {
-                title: 'Hub Central',
-                description: 'Concentración',
-                x: 0.3,  // 30% desde la izquierda
-                y: 0.1,  // 10% desde arriba
-                visible: true,
-                customStyle: {
-                    backgroundColor: 'rgba(52, 152, 219, 0.9)',
-                    color: 'white',
-                    fontSize: 16
-                }
-            });
+            // columnLabelsManager.addLabel('hub-central', {
+            //     title: 'Hub Central',
+            //     description: 'Concentración',
+            //     x: 0.3,  // 30% desde la izquierda
+            //     y: 0.1,  // 10% desde arriba
+            //     visible: true,
+            //     customStyle: {
+            //         backgroundColor: 'rgba(52, 152, 219, 0.9)',
+            //         color: 'white',
+            //         fontSize: 16
+            //     }
+            // });
 
             console.log('Etiquetas de ejemplo agregadas');
         }
