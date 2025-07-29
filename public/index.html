@@ -28,7 +28,7 @@
 
         /* Header styles */
         h1 {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 300;
             color: #34495e;
             margin-bottom: 30px;
@@ -2147,9 +2147,6 @@
                     });
                 }
             }
-
-
-
             // --- NODO DE ENERGÍA NO APROVECHADA DE ENERGÉTICOS SECUNDARIOS ---
             if (energiaNoAprovechadaNodeData && energiaNoAprovechadaNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios
@@ -2876,11 +2873,24 @@
             // --- NODO Otras ramas económicas ---
             const otrasRamasEconomicasNodeData = dataManager.getNodeData('Otras ramas económicas');
             if (otrasRamasEconomicasNodeData && otrasRamasEconomicasNodeData['Nodos Hijo']) {
-                // Crear nodo Transporte
-                const otrasRamasEconomicasIndex = addNode(otrasRamasEconomicasNodeData['Nodo Padre'], otrasRamasEconomicasNodeData.color);
+                // Calcular el valor total sumando los valores absolutos
+                const totalValue = otrasRamasEconomicasNodeData['Nodos Hijo'].reduce((sum, item) => {
+                    return sum + Math.abs(parseFloat(item[year]) || 0);
+                }, 0);
+
+                // Formatear el valor con 2 decimales
+                const formattedValue = totalValue.toLocaleString('es-MX', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                // Crear nodo con el valor en el nombre
+                const otrasRamasEconomicasIndex = addNode(
+                    `${otrasRamasEconomicasNodeData['Nodo Padre']} (${formattedValue} PJ)`,
+                    otrasRamasEconomicasNodeData.color
+                );
                 nodeX[otrasRamasEconomicasIndex] = 0.9;
                 nodeY[otrasRamasEconomicasIndex] = 0.85;
-
                 // Calcular el total sumando los valores de los hijos
                 const totalOtrasRamasEconomicas = otrasRamasEconomicasNodeData['Nodos Hijo'].reduce((sum, hijo) => {
                     return sum + (parseFloat(hijo[year]) || 0);
@@ -3419,6 +3429,7 @@
                     customdata: nodeCustomdata, // Usar el nuevo array nodeCustomdata
                     x: nodeX,
                     y: nodeY
+
                 },
                 link: {
                     source: source,
@@ -3432,9 +3443,11 @@
 
             const layout = {
                 title: `Balance Nacional de Energía - ${year} (Valores en PJ)`,
-                font: { size: 12 },
+                font: { size: 9 },
                 margin: { l: 10, r: 10, t: 50, b: 10 },
                 autosize: true
+
+
             };
             const config = {
                 displaylogo: false,
