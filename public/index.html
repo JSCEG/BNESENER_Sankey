@@ -1641,11 +1641,7 @@
             const centraleselectricasNodeData = dataManager.getNodeData('Centrales Eléctricas');
             console.log(`[DEBUG] Datos de Centrales Eléctricas:`, centraleselectricasNodeData);
             if (centraleselectricasNodeData) {
-                const centraleselectricasIndex = addNode(centraleselectricasNodeData['Nodo Padre'], centraleselectricasNodeData.color);
-                nodeX[centraleselectricasIndex] = 0.45; // Posición horizontal
-                nodeY[centraleselectricasIndex] = 0.45; // Posición vertical;
-
-                // Calcular el desglose para el popup de Centrales Eléctricas
+                // Calcular el desglose para obtener el valor de energía eléctrica generada
                 const centraleselectricasBreakdownForPopup = popupManager.calculateNodeBreakdown(centraleselectricasNodeData, year, 'Energía Secundaria');
                 console.log(`[DEBUG - Centrales Eléctricas] Breakdown (Energía Eléctrica) para ${year}:`, centraleselectricasBreakdownForPopup);
 
@@ -1660,11 +1656,16 @@
                 }
 
                 // Usamos el valor de la entrada o 0 si no se encuentra
-                const energiaElectricaGenerada = electricidadEntry?.value || 0;
+                const energiaElectricaGenerada = Math.abs(electricidadEntry?.value || 0);
+
+                // Crear el nodo con el valor calculado
+                const centraleselectricasIndex = addNode(centraleselectricasNodeData['Nodo Padre'], centraleselectricasNodeData.color, 'default', energiaElectricaGenerada);
+                nodeX[centraleselectricasIndex] = 0.45; // Posición horizontal
+                nodeY[centraleselectricasIndex] = 0.45; // Posición vertical
 
                 // Crear un objeto con el total de energía eléctrica generada
                 const electricidadData = {
-                    total: Math.abs(energiaElectricaGenerada), // Tomamos el valor absoluto ya que es generación
+                    total: energiaElectricaGenerada,
                     unit: 'PJ'
                 };
 
