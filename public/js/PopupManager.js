@@ -599,6 +599,9 @@ class PopupManager {
                     text += `\n${data.description}\n`; // La descripción va sin prefijo/label en una línea separada
                 } else {
                     // Para todos los demás campos, aplicar el formato estándar
+                    if (field.key === 'total' && formattedValue) {
+                        text += '\n'; // Añadir salto de línea antes del total
+                    }
                     text += `${prefix}${label}${formattedValue}\n`;
                 }
             }

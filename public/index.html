@@ -1362,7 +1362,7 @@
 
                     nodeCustomdata[energeticIndex] = popupManager.generateNodePopup(
                         energeticName,
-                        {},
+                        energetic,
                         year,
                         energeticPopupData,
                         'text',
@@ -1599,7 +1599,7 @@
                 console.error("Error: Datos para 'Plantas de Gas y Fraccionadoras' no encontrados en DataManager.");
             }
 
-            // --- Nodo de Refinerás y Despuntadoras ---
+            // --- Nodo de Refinerías y Despuntadoras ---
             const refinerasydespuntadorasNodeData = dataManager.getNodeData('Refinerías y Despuntadoras');
             console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
             if (refinerasydespuntadorasNodeData) {
@@ -1740,23 +1740,37 @@
                         hijo[year] > 0);
 
                 if (secundariosImportados.length > 0) {
-                    // Crear nodo de importación secundaria
-                    const importacionSecundariaIndex = addNode('Importación (Secundaria)', importacionNodeData.color);
+                    // Calcular el valor total en PJ
+                    const totalValuePJ = secundariosImportados.reduce((sum, energetic) => {
+                        return sum + (parseFloat(energetic[year]) || 0);
+                    }, 0);
+                    const formattedValue = totalValuePJ.toLocaleString('es-MX', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+
+                    // Crear nodo de importación secundaria con valor en PJ
+                    const nodeNameWithValue = `Importación (Secundaria)<br>${formattedValue} PJ`;
+                    const importacionSecundariaIndex = addNode(nodeNameWithValue, importacionNodeData.color);
                     nodeX[importacionSecundariaIndex] = 0.5;
                     nodeY[importacionSecundariaIndex] = 0.05;
 
                     // Crear customdata para el nodo
                     const importacionSecundariaData = {
                         ...importacionNodeData,
-                        'Nodos Hijo': secundariosImportados
+                        'Nodos Hijo': secundariosImportados,
+                        [year]: totalValuePJ  // Agregar el valor total al año correspondiente
                     };
 
+                    // Calcular el desglose para el popup
                     const importacionSecundariaBreakdown = popupManager.calculateNodeBreakdown(
                         importacionSecundariaData,
                         year,
                         'Energía Secundaria'
                     );
 
+                    // Generar el popup
                     nodeCustomdata[importacionSecundariaIndex] = popupManager.generateNodePopup(
                         'Importación (Secundaria)',
                         importacionSecundariaData,
@@ -1767,7 +1781,7 @@
                         'simple_source'  // Usamos la plantilla simple
                     );
 
-                    // Crear enlaces a los energéticos secundarios
+                    // Crear enlaces desde los energéticos secundarios a la importación
                     secundariosImportados.forEach(energetic => {
                         const energeticName = energetic['Nodo Hijo'];
                         const targetNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
@@ -1778,6 +1792,7 @@
                             if (energeticValue > 0) {
                                 const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
 
+                                // La dirección es desde el energético hacia la importación
                                 source.push(importacionSecundariaIndex);
                                 target.push(targetNodeIndex);
                                 value.push(Math.log10(energeticValue + 1));
@@ -1834,6 +1849,15 @@
                     }
                     if (variacionSecundariaBreakdown.output_total > 0) {
                         variacionSecundariaPopupData.variacion_negativa = variacionSecundariaBreakdown.output_total;
+                    }
+
+                    // Agregar totales con <br>
+                    if (variacionSecundariaBreakdown.input_total > 0 && variacionSecundariaBreakdown.output_total > 0) {
+                        variacionSecundariaPopupData.total_info = `<br><strong>Total que sube:</strong> ${variacionSecundariaBreakdown.input_total.toFixed(2)}<br><strong>Total que baja:</strong> ${variacionSecundariaBreakdown.output_total.toFixed(2)}`;
+                    } else if (variacionSecundariaBreakdown.input_total > 0) {
+                        variacionSecundariaPopupData.total_info = `<br><strong>Total que sube:</strong> ${variacionSecundariaBreakdown.input_total.toFixed(2)}`;
+                    } else if (variacionSecundariaBreakdown.output_total > 0) {
+                        variacionSecundariaPopupData.total_info = `<br><strong>Total que baja:</strong> ${variacionSecundariaBreakdown.output_total.toFixed(2)}`;
                     }
 
                     console.log(`[DEBUG - Variación de Inventarios (Secundaria)] Datos para popup:`, variacionSecundariaPopupData);
@@ -1894,6 +1918,7 @@
                     });
                 }
             }
+
             // --- NODO DE EXPORTACIÓN DE ENERGÉTICOS SECUNDARIOS ---
             if (exportacionNodeData && exportacionNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios (valores negativos)
@@ -1919,11 +1944,11 @@
 
                     // Crear nodo de consumo propio secundario con el valor en el nombre
                     const exportacionSecundariaIndex = addNode(
-                        `Exportación (${formattedValueExportacion} PJ)`,
+                        `Exportación<br> (${formattedValueExportacion} PJ)`,
                         exportacionNodeData.color
                     );
                     nodeX[exportacionSecundariaIndex] = 0.8;
-                    nodeY[exportacionSecundariaIndex] = 0.92;
+                    nodeY[exportacionSecundariaIndex] = 0.9;
 
                     // Crear customdata para el nodo
                     const exportacionSecundariaData = {
@@ -2002,7 +2027,7 @@
 
                     // Crear nodo de pérdidas técnicas secundarias con el valor en el nombre
                     const perdidasTecnicasSecIndex = addNode(
-                        `Pérdidas Técnicas (${formattedValue} PJ)`,
+                        `Pérdidas Técnicas<br>(${formattedValue} PJ)`,
                         perdidasTecnicasSecNodeData.color
                     );
                     nodeX[perdidasTecnicasSecIndex] = 0.8;
@@ -2066,7 +2091,7 @@
                 }
             }
 
-          
+
             if (consumoPropioNodeData && consumoPropioNodeData['Nodos Hijo']) {
                 // Filtrar solo los energéticos secundarios (valores negativos)
                 const secundariosConsumoPropio = consumoPropioNodeData['Nodos Hijo']
@@ -2090,7 +2115,7 @@
 
                     // Crear nodo de consumo propio secundario con el valor en el nombre
                     const consumoPropioSecundariaIndex = addNode(
-                        `Consumo Propio (${formattedValue} PJ)`,
+                        `Consumo Propio<br>(${formattedValue} PJ)`,
                         consumoPropioNodeData.color
                     );
                     nodeX[consumoPropioSecundariaIndex] = 0.8;
@@ -3294,15 +3319,17 @@
                 // Obtenemos los hijos secundarios que realmente existen en Coquizadoras
                 const secundarios = (coquizadorasyhornosNodeData['Nodos Hijo'] || [])
                     .filter(energetic => {
-                        // Verificamos si este energético tiene un valor en Coquizadoras
-                        const valorEnCoquizadoras = dataManager.getEnergeticValue(
-                            'Coquizadoras y Hornos',
-                            energetic['Nodo Hijo'],
-                            year
-                        );
-                        return energetic.tipo === 'Energía Secundaria' &&
-                            valorEnCoquizadoras !== null &&
-                            Math.abs(valorEnCoquizadoras) > 0;
+                        // Verificar si es un energético secundario
+                        const isSecondary = energetic.tipo === 'Energía Secundaria';
+
+                        // Verificar si tiene valor para el año actual
+                        const hasValue = energetic[year] !== undefined && energetic[year] !== null && energetic[year] > 0;
+
+                        console.log(`[DEBUG] ${coquizadorasyhornosNodeData['Nodo Padre']} - ${energetic['Nodo Hijo']}: `,
+                            `tipo=${energetic.tipo}, valor=${energetic[year]}, ` +
+                            `esSecundario=${isSecondary}, tieneValor=${hasValue}`);
+
+                        return isSecondary && hasValue;
                     });
 
                 // Para cada energético secundario que existe en Coquizadoras, creamos el enlace
@@ -3319,7 +3346,7 @@
 
                     source.push(nodeMap.get('Coquizadoras y Hornos'));
                     target.push(nodeMap.get('Centrales Eléctricas'));
-                    value.push(Math.log10(Math.abs(energeticValue) + 1));
+                    value.push(Math.log10(energeticValue + 1));
                     linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
                     linkCustomdata.push(popupManager.generateLinkPopup(
@@ -3362,7 +3389,7 @@
 
                     source.push(nodeMap.get('Refinerías y Despuntadoras'));
                     target.push(nodeMap.get('Centrales Eléctricas'));
-                    value.push(Math.log10(Math.abs(energeticValue) + 1));
+                    value.push(Math.log10(energeticValue + 1));
                     linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
                     linkCustomdata.push(popupManager.generateLinkPopup(
@@ -3405,7 +3432,7 @@
 
                     source.push(nodeMap.get('Plantas de Gas y Fraccionadoras'));
                     target.push(nodeMap.get('Centrales Eléctricas'));
-                    value.push(Math.log10(Math.abs(energeticValue) + 1));
+                    value.push(Math.log10(energeticValue + 1));
                     linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
                     linkCustomdata.push(popupManager.generateLinkPopup(
