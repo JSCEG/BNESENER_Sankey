@@ -658,7 +658,7 @@
         <select id="year-selector"></select>
 
         <!-- Column Labels Controls -->
-        <div class="column-labels-controls">
+        <!-- <div class="column-labels-controls">
             <label>
                 <input type="checkbox" id="column-labels-toggle">
                 Mostrar etiquetas de columnas
@@ -671,7 +671,7 @@
                 style="background: #dc3545; color: white; font-size: 0.8rem; padding: 6px 12px;">
                 🗑️ Limpiar
             </button>
-        </div>
+        </div> -->
 
         <!-- Export Controls -->
         <div class="export-controls">
@@ -1083,99 +1083,122 @@
             });
         }
 
-        // Initialize column labels controls
+        // Reemplaza la función initializeColumnLabelsControls con esto:
         function initializeColumnLabelsControls() {
-            const columnLabelsToggle = document.getElementById('column-labels-toggle');
+            console.log('Inicializando controles de etiquetas de columnas...');
 
-            if (!columnLabelsToggle) {
-                console.warn('Column labels toggle not found');
-                return;
+            // Forzar la creación de las etiquetas
+            if (columnLabelsManager) {
+                console.log('Creando etiquetas de columnas...');
+
+                // Crear etiqueta para energéticos primarios
+                columnLabelsManager.addLabel('energeticos_primarios', {
+                    title: 'Energéticos Primarios',
+                    description: 'Fuentes de energía',
+                    x: 0.23,
+                    y: 0.13,
+                    visible: true
+                });
+                // Crear etiqueta para transformación   
+                columnLabelsManager.addLabel('transformacion', {
+                    title: 'Transformación',
+                    description: 'Procesos de conversión',
+                    x: 0.4,
+                    y: 0.13,
+                    visible: true
+                });
+
+                // Crear etiqueta para energeticos secundarios
+                columnLabelsManager.addLabel('energeticos_secundarios', {
+                    title: 'Energéticos Secundarios',
+                    description: 'Procesos de conversión',
+                    x: 0.68,
+                    y: 0.13,
+                    visible: true
+                });
+
+
+
+                // Crear etiqueta para consumo
+                columnLabelsManager.addLabel('usos_finales', {
+                    title: 'Usos Finales',
+                    description: 'Destino final',
+                    x: 0.9,
+                    y: 0.1,
+                    visible: true
+                });
+
+                // Forzar que estén habilitadas
+                columnLabelsManager.setEnabled(true);
+                console.log('Etiquetas de columnas creadas y habilitadas');
+
+                // Forzar redibujado
+                if (columnLabelsManager.handleResize) {
+                    columnLabelsManager.handleResize();
+                }
+            } else {
+                console.error('ColumnLabelsManager no está inicializado');
             }
 
-            // Add event listener for toggle
-            columnLabelsToggle.addEventListener('change', (event) => {
-                const enabled = event.target.checked;
-
-                if (columnLabelsManager) {
-                    columnLabelsManager.setEnabled(enabled);
-                    console.log(`Etiquetas de columnas ${enabled ? 'habilitadas' : 'deshabilitadas'}`);
-                } else {
-                    console.warn('ColumnLabelsManager no está inicializado');
-                }
-            });
-
-            // Handle window resize to update label positions
+            // Manejar redimensionamiento
             window.addEventListener('resize', () => {
                 if (columnLabelsManager && columnLabelsManager.isEnabled()) {
                     columnLabelsManager.handleResize();
                 }
             });
 
-            // Add event listeners for example and clear buttons
-            const addExampleBtn = document.getElementById('add-example-labels-btn');
-            const clearLabelsBtn = document.getElementById('clear-labels-btn');
-
-            if (addExampleBtn) {
-                addExampleBtn.addEventListener('click', addExampleLabels);
-            }
-
-            if (clearLabelsBtn) {
-                clearLabelsBtn.addEventListener('click', clearAllLabels);
-            }
-
             console.log('Controles de etiquetas de columnas inicializados');
         }
-
         // Función de ejemplo para agregar etiquetas manualmente
-        function addExampleLabels() {
-            if (!columnLabelsManager) {
-                console.warn('ColumnLabelsManager no está inicializado');
-                return;
-            }
+        // function addExampleLabels() {
+        //     if (!columnLabelsManager) {
+        //         console.warn('ColumnLabelsManager no está inicializado');
+        //         return;
+        //     }
 
-            // Ejemplo 1: Etiqueta en la parte superior izquierda
-            columnLabelsManager.addLabel('energeticos_primarios', {
-                title: 'Energéticos primarios',
-                description: 'Fuentes de energía',
-                x: 0.23,  // 10% desde la izquierda
-                y: 0.1, // 5% desde arriba
-                visible: true
-            });
+        //     // Ejemplo 1: Etiqueta en la parte superior izquierda
+        //     columnLabelsManager.addLabel('energeticos_primarios', {
+        //         title: 'Energéticos primarios',
+        //         description: 'Fuentes de energía',
+        //         x: 0.23,  // 10% desde la izquierda
+        //         y: 0.1, // 5% desde arriba
+        //         visible: true
+        //     });
 
-            // Ejemplo 2: Etiqueta en el centro superior
-            columnLabelsManager.addLabel('energeticos_secundarios', {
-                title: 'Energéticos secundarios',
-                description: 'Procesos de conversión',
-                x: 0.75,  // 50% desde la izquierda (centro)
-                y: 0.1, // 5% desde arriba
-                visible: true
-            });
+        //     // Ejemplo 2: Etiqueta en el centro superior
+        //     columnLabelsManager.addLabel('energeticos_secundarios', {
+        //         title: 'Energéticos secundarios',
+        //         description: 'Procesos de conversión',
+        //         x: 0.75,  // 50% desde la izquierda (centro)
+        //         y: 0.1, // 5% desde arriba
+        //         visible: true
+        //     });
 
-            // Ejemplo 3: Etiqueta en la parte superior derecha
-            columnLabelsManager.addLabel('consumo', {
-                title: 'Consumo',
-                description: 'Destino final',
-                x: 0.9,  // 90% desde la izquierda
-                y: 0.1, // 5% desde arriba
-                visible: true
-            });
+        //     // Ejemplo 3: Etiqueta en la parte superior derecha
+        //     columnLabelsManager.addLabel('consumo', {
+        //         title: 'Consumo',
+        //         description: 'Destino final',
+        //         x: 0.9,  // 90% desde la izquierda
+        //         y: 0.1, // 5% desde arriba
+        //         visible: true
+        //     });
 
-            // Ejemplo 4: Etiqueta con estilo personalizado
-            // columnLabelsManager.addLabel('hub-central', {
-            //     title: 'Hub Central',
-            //     description: 'Concentración',
-            //     x: 0.3,  // 30% desde la izquierda
-            //     y: 0.1,  // 10% desde arriba
-            //     visible: true,
-            //     customStyle: {
-            //         backgroundColor: 'rgba(52, 152, 219, 0.9)',
-            //         color: 'white',
-            //         fontSize: 16
-            //     }
-            // });
+        //     // Ejemplo 4: Etiqueta con estilo personalizado
+        //     // columnLabelsManager.addLabel('hub-central', {
+        //     //     title: 'Hub Central',
+        //     //     description: 'Concentración',
+        //     //     x: 0.3,  // 30% desde la izquierda
+        //     //     y: 0.1,  // 10% desde arriba
+        //     //     visible: true,
+        //     //     customStyle: {
+        //     //         backgroundColor: 'rgba(52, 152, 219, 0.9)',
+        //     //         color: 'white',
+        //     //         fontSize: 16
+        //     //     }
+        //     // });
 
-            console.log('Etiquetas de ejemplo agregadas');
-        }
+        //     console.log('Etiquetas de ejemplo agregadas');
+        // }
 
         // Función para limpiar todas las etiquetas
         function clearAllLabels() {
@@ -1880,7 +1903,23 @@
 
                 if (secundariosExportacion.length > 0) {
                     // Crear nodo de exportación secundaria
-                    const exportacionSecundariaIndex = addNode('Exportación (Secundaria)', exportacionNodeData.color);
+
+                    // Calcular el valor total sumando los valores absolutos
+                    const totalValue = secundariosExportacion.reduce((sum, item) => {
+                        return sum + Math.abs(parseFloat(item[year]) || 0);
+                    }, 0);
+
+                    // Formatear el valor con 2 decimales
+                    const formattedValueExportacion = totalValue.toLocaleString('es-MX', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    // Crear nodo de consumo propio secundario con el valor en el nombre
+                    const exportacionSecundariaIndex = addNode(
+                        `Exportación (${formattedValueExportacion} PJ)`,
+                        exportacionNodeData.color
+                    );
                     nodeX[exportacionSecundariaIndex] = 0.8;
                     nodeY[exportacionSecundariaIndex] = 0.92;
 
@@ -1948,7 +1987,22 @@
 
                 if (secundariosConsumoPropio.length > 0) {
                     // Crear nodo de exportación secundaria
-                    const consumoPropioSecundariaIndex = addNode('Consumo Propio (Secundaria)', consumoPropioNodeData.color);
+                    // Calcular el valor total sumando los valores absolutos
+                    const totalValue = secundariosConsumoPropio.reduce((sum, item) => {
+                        return sum + Math.abs(parseFloat(item[year]) || 0);
+                    }, 0);
+
+                    // Formatear el valor con 2 decimales
+                    const formattedValue = totalValue.toLocaleString('es-MX', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    // Crear nodo de consumo propio secundario con el valor en el nombre
+                    const consumoPropioSecundariaIndex = addNode(
+                        `Consumo Propio (${formattedValue} PJ)`,
+                        consumoPropioNodeData.color
+                    );
                     nodeX[consumoPropioSecundariaIndex] = 0.8;
                     nodeY[consumoPropioSecundariaIndex] = 0.99;
 
@@ -2005,68 +2059,89 @@
                 }
             }
 
-            // --- NODO DE Pérdidas técnicas por transporte, transmisión y distribución ---
-            if (perdidasTecnicasNodeData && perdidasTecnicasNodeData['Nodos Hijo']) {
-                // Filtrar solo los energéticos secundarios (valores negativos)
-                const secundariosExportacion = perdidasTecnicasNodeData['Nodos Hijo']
+            // --- NODO DE PÉRDIDAS TÉCNICAS (SECUNDARIAS) ---
+            const perdidasTecnicasSecNodeData = dataManager.getNodeData('Pérdidas técnicas por transporte, transmisión y distribución');
+            if (perdidasTecnicasSecNodeData && perdidasTecnicasSecNodeData['Nodos Hijo']) {
+                // Filtrar solo los energéticos secundarios
+                const secundariosPerdidasTecnicas = perdidasTecnicasSecNodeData['Nodos Hijo']
                     .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
                         hijo[year] !== undefined &&
                         hijo[year] !== null &&
-                        hijo[year] < 0);  // Cambiado a < 0 para capturar valores negativos
+                        Math.abs(hijo[year]) > 0);
 
-                if (secundariosExportacion.length > 0) {
-                    // Crear nodo de exportación secundaria
-                    const perdidasTecnicasIndex = addNode('Pérdidas técnicas por transporte, transmisión y distribución', perdidasTecnicasNodeData.color);
-                    nodeX[perdidasTecnicasIndex] = 0.8;
-                    nodeY[perdidasTecnicasIndex] = 0.95;
+                if (secundariosPerdidasTecnicas.length > 0) {
+                    // Crear nodo de pérdidas técnicas secundarias
+                    // Calcular el valor total sumando los valores absolutos
+                    const totalValue = secundariosPerdidasTecnicas.reduce((sum, item) => {
+                        return sum + Math.abs(parseFloat(item[year]) || 0);
+                    }, 0);
 
-                    // Crear customdata para el nodo
-                    const perdidasTecnicasData = {
-                        ...perdidasTecnicasNodeData,
-                        'Nodos Hijo': secundariosExportacion
+                    // Formatear el valor con 2 decimales
+                    const formattedValue = totalValue.toLocaleString('es-MX', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+                    // Crear nodo de pérdidas técnicas secundarias con el valor en el nombre
+                    const perdidasTecnicasSecIndex = addNode(
+                        `Pérdidas Técnicas (${formattedValue} PJ)`,
+                        perdidasTecnicasSecNodeData.color
+                    );
+                    nodeX[perdidasTecnicasSecIndex] = 0.8;
+                    nodeY[perdidasTecnicasSecIndex] = 0.95;
+
+                    // Crear datos para el popup
+                    const perdidasTecnicasSecData = {
+                        ...perdidasTecnicasSecNodeData,
+                        'Nodo Padre': 'Pérdidas Técnicas (Sec)',
+                        'Nodos Hijo': secundariosPerdidasTecnicas
                     };
 
                     // Calcular el desglose para el popup
-                    const perdidasTecnicasBreakdown = popupManager.calculateNodeBreakdown(
-                        perdidasTecnicasData,
+                    const perdidasTecnicasSecBreakdown = popupManager.calculateNodeBreakdown(
+                        perdidasTecnicasSecData,
                         year,
                         'Energía Secundaria'
                     );
 
                     // Generar el popup
-                    nodeCustomdata[perdidasTecnicasIndex] = popupManager.generateNodePopup(
-                        'Pérdidas técnicas por transporte, transmisión y distribución',
-                        perdidasTecnicasData,
+                    nodeCustomdata[perdidasTecnicasSecIndex] = popupManager.generateNodePopup(
+                        'Pérdidas Técnicas (Sec)',
+                        perdidasTecnicasSecData,
                         year,
-                        perdidasTecnicasBreakdown,
+                        perdidasTecnicasSecBreakdown,
                         'text',
                         'Energía Secundaria',
-                        'simple_source'  // Usamos la plantilla simple
+                        'simple_source'
                     );
 
-                    // Crear enlaces desde los energéticos secundarios a la exportación
-                    secundariosExportacion.forEach(energetic => {
+                    // Crear enlaces desde los energéticos secundarios
+                    secundariosPerdidasTecnicas.forEach(energetic => {
                         const energeticName = energetic['Nodo Hijo'];
                         const sourceNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
-                        const energeticValue = Math.abs(parseFloat(energetic[year]) || 0);  // Tomar valor absoluto
+                        const energeticValue = Math.abs(parseFloat(energetic[year]) || 0);
 
                         if (sourceNodeIndex !== undefined && energeticValue > 0) {
                             const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
 
-                            // La dirección es desde el energético hacia la exportación
+                            // Añadir el enlace
                             source.push(sourceNodeIndex);
-                            target.push(perdidasTecnicasIndex);
+                            target.push(perdidasTecnicasSecIndex);
                             value.push(Math.log10(energeticValue + 1));
                             linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
 
+                            // Añadir popup del enlace
                             linkCustomdata.push(popupManager.generateLinkPopup(
                                 energeticName,
-                                energeticValue,  // Usamos el valor absoluto
+                                energeticValue,
                                 energeticName,
-                                'Pérdidas técnicas por transporte, transmisión y distribución',
+                                'Pérdidas Técnicas (Sec)',
                                 linkColor,
                                 year,
-                                { flowType: 'perdidas_tecnicas' }
+                                {
+                                    flowType: 'perdidas_tecnicas_secundarias',
+                                    template: 'simple'
+                                }
                             ));
                         }
                     });
