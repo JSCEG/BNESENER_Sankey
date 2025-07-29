@@ -1235,6 +1235,10 @@
             const value = [];
             const linkColors = [];
             const linkCustomdata = [];
+
+            const ofertaInternaBrutaFullData = dataManager.getNodeData('Oferta Interna Bruta');
+            const energeticNodesMap = new Map();    // ← DECLARACIÓN ÚNICA
+
             function addNode(name, color, nodeType = 'default', value = null) {
                 if (nodeMap.has(name)) {
                     return nodeMap.get(name);
@@ -1268,87 +1272,221 @@
             }
 
             // --- AQUÍ SE CREAN Y POSICIONAN LOS NODOS ---
+            // ——— Nodo y enlaces de Importación ———
             const importacionNodeData = dataManager.getNodeData('Importación');
-            if (importacionNodeData) {
-                const importacionIndex = addNode(importacionNodeData['Nodo Padre'], importacionNodeData.color);
-                nodeX[importacionIndex] = 0.05;
-                nodeY[importacionIndex] = 0.05; // Ahora el más arriba
-                // Generar customdata específico para Importación
-                const importacionBreakdownForPopup = popupManager.calculateNodeBreakdown(importacionNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Importación] Breakdown (Primaria) para ${year}:`, importacionBreakdownForPopup);
-                nodeCustomdata[importacionIndex] = popupManager.generateNodePopup(
-                    importacionNodeData['Nodo Padre'],
-                    importacionNodeData, // Pasar todos los datos del nodo padre para la descripción
+            console.log(`[DEBUG] Datos de Importación:`, importacionNodeData);
+
+            if (importacionNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    importacionNodeData,
                     year,
-                    importacionBreakdownForPopup, // Pasar el breakdown calculado como additionalData
-                    'text',
                     'Energía Primaria'
                 );
+                console.log(`[DEBUG - Importación] Breakdown Raw para ${year}:`, raw);
+
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Importación: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) Crear nodo con valor real en PJ
+                const idx = addNode(
+                    importacionNodeData['Nodo Padre'],
+                    importacionNodeData.color,
+                    'default',
+                    totalPJ    // ← este valor dimensiona el nodo
+                );
+                nodeX[idx] = 0.05;
+                nodeY[idx] = 0.05;
+
+                // 3) Generar popup simplificado con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
+                    importacionNodeData['Nodo Padre'],
+                    importacionNodeData,
+                    year,
+                    { total: totalPJ, unit: 'PJ' },
+                    'text',
+                    null,
+                    'simple_source'
+                );
+
+                // 4) Enlaces de Energía Primaria → Importación
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Importación',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    importacionNodeData['Nodo Padre'],
+                                    col,
+                                    year,
+                                    { flowType: 'primary_supply' }
+                                )
+                            );
+                        }
+                    });
+
             } else {
-                console.error("Error: Datos para 'Importación' no encontrados en DataManager.");
+                console.error("Error: datos de 'Importación' o sus 'Nodos Hijo' no disponibles.");
             }
 
+
+            // ——— Nodo y enlaces de Producción ———
             const produccionNodeData = dataManager.getNodeData('Producción');
-            if (produccionNodeData) {
-                const produccionIndex = addNode(produccionNodeData['Nodo Padre'], produccionNodeData.color);
-                nodeX[produccionIndex] = 0.05;
-                nodeY[produccionIndex] = 0.4; // Ahora el más abajo
-                // Generar customdata específico para Producción
-                const produccionBreakdownForPopup = popupManager.calculateNodeBreakdown(produccionNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Producción] Breakdown (Primaria) para ${year}:`, produccionBreakdownForPopup);
-                nodeCustomdata[produccionIndex] = popupManager.generateNodePopup(
+            console.log(`[DEBUG] Datos de Producción:`, produccionNodeData);
+
+            if (produccionNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    produccionNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG - Producción] Breakdown Raw (Primaria) para ${year}:`, raw);
+
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Producción: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) Crear nodo con valor real en PJ
+                const idx = addNode(
+                    produccionNodeData['Nodo Padre'],
+                    produccionNodeData.color,
+                    'default',
+                    totalPJ    // ← este valor dimensiona el nodo
+                );
+                nodeX[idx] = 0.05;
+                nodeY[idx] = 0.40;
+
+                // 3) Generar popup simplificado con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     produccionNodeData['Nodo Padre'],
                     produccionNodeData,
                     year,
-                    produccionBreakdownForPopup,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria'
+                    null,
+                    'simple_source'
                 );
+
+                // 4) (Opcional) Enlaces de Energía Primaria → Producción
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Producción',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    produccionNodeData['Nodo Padre'],
+                                    col,
+                                    year,
+                                    { flowType: 'primary_supply' }
+                                )
+                            );
+                        }
+                    });
+
             } else {
-                console.error("Error: Datos para 'Producción' no encontrados en DataManager.");
+                console.error("Error: datos de 'Producción' o sus 'Nodos Hijo' no disponibles.");
             }
 
             // Agregar Variación de Inventarios
+            // ——— Nodo y enlaces de Variación de Inventarios ———
             const variacionNodeData = dataManager.getNodeData('Variación de Inventarios');
-            if (variacionNodeData) {
-                const variacionIndex = addNode(variacionNodeData['Nodo Padre'], variacionNodeData.color);
-                nodeX[variacionIndex] = 0.05;
-                nodeY[variacionIndex] = 0.2; // Ahora en el medio
+            if (variacionNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Breakdown y sumas
+                const raw = popupManager.calculateNodeBreakdown(variacionNodeData, year, 'Energía Primaria');
+                const inputTotal = raw.input_total || 0;
+                const outputTotal = raw.output_total || 0;
+                const totalPJ = inputTotal + outputTotal;
 
-                // Calcular el desglose completo para la variación de inventarios para el popup
-                const variacionBreakdownForPopup = popupManager.calculateNodeBreakdown(variacionNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Variación de Inventarios] Breakdown Total (Primaria) para ${year}:`, variacionBreakdownForPopup.total);
+                // 2) Creamos el nodo con el nombre original y totalPJ
+                const idx = addNode(
+                    variacionNodeData['Nodo Padre'],   // clave original
+                    variacionNodeData.color,
+                    'default',
+                    totalPJ                             // tamaño
+                );
+                nodeX[idx] = 0.05;
+                nodeY[idx] = 0.20;
 
-                let variacionPopupData = {};
+                // 3) Sobrescribimos SOLO la etiqueta para mostrar flechas
+                labels[idx] = `${variacionNodeData['Nodo Padre']}<br>` +
+                    `↑ ${inputTotal.toFixed(2)} PJ  ↓ ${outputTotal.toFixed(2)} PJ`;
 
-                // Preparar los campos de incremento/decremento para el popup
-                // Usar input_total para la variación positiva y output_total para la negativa
-                if (variacionBreakdownForPopup.input_total > 0) {
-                    variacionPopupData.variacion_positiva = variacionBreakdownForPopup.input_total;
-                }
-                if (variacionBreakdownForPopup.output_total > 0) {
-                    variacionPopupData.variacion_negativa = variacionBreakdownForPopup.output_total;
-                }
-                // No pasar el valor total neto, ya que se mostrarán los componentes separados
-                // variacionPopupData.total = variacionBreakdownForPopup.total;
-                console.log(`[DEBUG - Variación de Inventarios] Datos para popup:`, variacionPopupData);
-
-                // Generar customdata específico para Variación de Inventarios
-                nodeCustomdata[variacionIndex] = popupManager.generateNodePopup(
+                // 4) Popup con tu template
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     variacionNodeData['Nodo Padre'],
                     variacionNodeData,
                     year,
-                    variacionPopupData, // Pasar los datos de variación específicos
+                    { variacion_positiva: inputTotal, variacion_negativa: outputTotal, unit: 'PJ' },
                     'text',
-                    'Energía Primaria'
+                    null,
+                    'simple_source'
                 );
-            } else {
-                console.error("Error: Datos para 'Variación de Inventarios' no encontrados en DataManager.");
+
+                // 5) Enlaces (positivo sale, negativo entra)
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(c => c.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue('Variación de Inventarios', child['Nodo Hijo'], year);
+                        if (val != null && val !== 0) {
+                            const src = val > 0 ? idx : energeticNodesMap.get(child['Nodo Hijo']);
+                            const tgt = val > 0 ? energeticNodesMap.get(child['Nodo Hijo']) : idx;
+                            source.push(src);
+                            target.push(tgt);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    variacionNodeData['Nodo Padre'],
+                                    child['Nodo Hijo'],
+                                    col,
+                                    year,
+                                    { flowType: 'inventory_change_primaria' }
+                                )
+                            );
+                        }
+                    });
             }
 
+
+
             // --- Nodos de Energéticos Primarios de Oferta Interna Bruta ---
-            const ofertaInternaBrutaFullData = dataManager.getNodeData('Oferta Interna Bruta');
-            const energeticNodesMap = new Map(); // Para almacenar los índices de los nuevos nodos de energéticos
+
+            // const energeticNodesMap = new Map(); // Para almacenar los índices de los nuevos nodos de energéticos
 
             if (ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
                 const primaryEnergetics = ofertaInternaBrutaFullData['Nodos Hijo'].filter(child => child.tipo === 'Energía Primaria');
@@ -2120,110 +2258,94 @@
             }
 
             // --- NODO DE VARIACIÓN DE INVENTARIOS DE ENERGÉTICOS SECUNDARIOS ---
-            if (variacionNodeData && variacionNodeData['Nodos Hijo']) {
-                // Filtrar solo los energéticos secundarios
-                const secundariosVariacion = variacionNodeData['Nodos Hijo']
-                    .filter(hijo => hijo.tipo === 'Energía Secundaria' &&
-                        hijo[year] !== undefined &&
-                        hijo[year] !== null &&
-                        Math.abs(hijo[year]) > 0);
+// ——— Nodo y enlaces de Variación de Inventarios ES (energéticos secundarios) ———
+//const variacionNodeData = dataManager.getNodeData('Variación de Inventarios');
+console.log(`[DEBUG] Datos de Variación de Inventarios (Secundaria):`, variacionNodeData);
 
-                if (secundariosVariacion.length > 0) {
-                    // Crear nodo de variación de inventarios secundarios
-                    const variacionSecundariaIndex = addNode('Variación de Inventarios ES', variacionNodeData.color);
-                    nodeX[variacionSecundariaIndex] = 0.45;
-                    nodeY[variacionSecundariaIndex] = 0.15;
+if (variacionNodeData && variacionNodeData['Nodos Hijo']) {
+  // 1) Filtrar solo secundarios con valor
+  const secundarios = variacionNodeData['Nodos Hijo']
+    .filter(c => c.tipo === 'Energía Secundaria' &&
+                 c[year] != null &&
+                 Math.abs(c[year]) > 0);
 
-                    // Crear customdata para el nodo
-                    const variacionSecundariaData = {
-                        ...variacionNodeData,
-                        'Nodo Padre': 'Variación de Inventarios ES', // Asegurar que use el nombre correcto
-                        'Nodos Hijo': secundariosVariacion
-                    };
+  if (secundarios.length > 0) {
+    // 2) Preparamos un objeto con solo esos hijos para el breakdown
+    const secData = {
+      ...variacionNodeData,
+      'Nodo Padre': 'Variación de Inventarios ES',
+      'Nodos Hijo': secundarios
+    };
 
-                    // Calcular el desglose para el popup
-                    const variacionSecundariaBreakdown = popupManager.calculateNodeBreakdown(
-                        variacionSecundariaData,
-                        year,
-                        'Energía Secundaria'
-                    );
+    // 3) Breakdown para secundarios
+    const raw = popupManager.calculateNodeBreakdown(
+      secData,
+      year,
+      'Energía Secundaria'
+    );
+    const inputTotal  = raw.input_total  || 0;
+    const outputTotal = raw.output_total || 0;
+    const totalPJ     = inputTotal + outputTotal;
+    console.log(`[DEBUG] Variación ES → input=${inputTotal}, output=${outputTotal}, totalPJ=${totalPJ.toFixed(2)}`);
 
-                    // Preparar datos para el popup - igual que en el caso primario
-                    let variacionSecundariaPopupData = {};
-                    if (variacionSecundariaBreakdown.input_total > 0) {
-                        variacionSecundariaPopupData.variacion_positiva = variacionSecundariaBreakdown.input_total;
-                    }
-                    if (variacionSecundariaBreakdown.output_total > 0) {
-                        variacionSecundariaPopupData.variacion_negativa = variacionSecundariaBreakdown.output_total;
-                    }
+    // 4) Crear nodo dimensionado por totalPJ
+    const idx = addNode(
+      'Variación de Inventarios ES',
+      variacionNodeData.color,
+      'default',
+      totalPJ
+    );
+    nodeX[idx] = 0.45;
+    nodeY[idx] = 0.15;
 
-                    // Agregar totales con <br>
-                    if (variacionSecundariaBreakdown.input_total > 0 && variacionSecundariaBreakdown.output_total > 0) {
-                        variacionSecundariaPopupData.total_info = `<br><strong>Total que sube:</strong> ${variacionSecundariaBreakdown.input_total.toFixed(2)}<br><strong>Total que baja:</strong> ${variacionSecundariaBreakdown.output_total.toFixed(2)}`;
-                    } else if (variacionSecundariaBreakdown.input_total > 0) {
-                        variacionSecundariaPopupData.total_info = `<br><strong>Total que sube:</strong> ${variacionSecundariaBreakdown.input_total.toFixed(2)}`;
-                    } else if (variacionSecundariaBreakdown.output_total > 0) {
-                        variacionSecundariaPopupData.total_info = `<br><strong>Total que baja:</strong> ${variacionSecundariaBreakdown.output_total.toFixed(2)}`;
-                    }
+    // 5) Sobrescribir label con flechas ↑↓
+    labels[idx] = `Variación de Inventarios ES<br>↑ ${inputTotal.toFixed(2)} PJ  ↓ ${outputTotal.toFixed(2)} PJ`;
 
-                    console.log(`[DEBUG - Variación de Inventarios (Secundaria)] Datos para popup:`, variacionSecundariaPopupData);
+    // 6) Generar popup con ambos valores
+    nodeCustomdata[idx] = popupManager.generateNodePopup(
+      'Variación de Inventarios ES',
+      secData,
+      year,
+      { variacion_positiva: inputTotal, variacion_negativa: outputTotal, unit: 'PJ' },
+      'text',
+      null,
+      'simple_source'
+    );
 
-                    // Generar el popup con los datos específicos
-                    nodeCustomdata[variacionSecundariaIndex] = popupManager.generateNodePopup(
-                        'Variación de Inventarios ES',
-                        variacionSecundariaData,
-                        year,
-                        variacionSecundariaPopupData, // Pasamos los datos específicos de variación
-                        'text',
-                        'Energía Secundaria'
-                    );
+    // 7) Enlaces: flujos positivos salen del nodo, negativos entran al nodo
+    secundarios.forEach(child => {
+      const val = parseFloat(child[year]) || 0;
+      if (val === 0) return;
 
-                    // Resto del código de creación de enlaces se mantiene igual...
-                    secundariosVariacion.forEach(energetic => {
-                        const energeticName = energetic['Nodo Hijo'];
-                        const targetNodeIndex = secondaryEnergeticNodesMap.get(energeticName);
-                        const energeticValue = parseFloat(energetic[year]) || 0;
+      const targetIdx = secondaryEnergeticNodesMap.get(child['Nodo Hijo']);
+      if (targetIdx == null) return;
 
-                        if (targetNodeIndex !== undefined && energeticValue !== 0) {
-                            const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
-                            const absValue = Math.abs(energeticValue);
+      const src = val > 0 ? idx        : targetIdx;
+      const tgt = val > 0 ? targetIdx : idx;
 
-                            if (energeticValue > 0) {
-                                source.push(variacionSecundariaIndex);
-                                target.push(targetNodeIndex);
-                                value.push(Math.log10(absValue + 1));
-                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+      source.push(src);
+      target.push(tgt);
+      value.push(Math.log10(Math.abs(val) + 1));
 
-                                linkCustomdata.push(popupManager.generateLinkPopup(
-                                    energeticName,
-                                    absValue,
-                                    'Variación de Inventarios ES',
-                                    energeticName,
-                                    linkColor,
-                                    year,
-                                    { flowType: 'inventory_change_secondary' }
-                                ));
-                            }
-                            else if (energeticValue < 0) {
-                                source.push(targetNodeIndex);
-                                target.push(variacionSecundariaIndex);
-                                value.push(Math.log10(absValue + 1));
-                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
+      const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+      linkColors.push(styleManager.hexToRgba(col, 0.5));
 
-                                linkCustomdata.push(popupManager.generateLinkPopup(
-                                    energeticName,
-                                    absValue,
-                                    energeticName,
-                                    'Variación de Inventarios ES',
-                                    linkColor,
-                                    year,
-                                    { flowType: 'inventory_change_secondary' }
-                                ));
-                            }
-                        }
-                    });
-                }
-            }
+      linkCustomdata.push(
+        popupManager.generateLinkPopup(
+          child['Nodo Hijo'],
+          Math.abs(val),
+          val > 0 ? 'Variación de Inventarios ES' : child['Nodo Hijo'],
+          val > 0 ? child['Nodo Hijo'] : 'Variación de Inventarios ES',
+          col,
+          year,
+          { flowType: 'inventory_change_secondary' }
+        )
+      );
+    });
+  }
+} else {
+  console.error("Error: datos de Variación de Inventarios ES no disponibles.");
+}
 
             // --- NODO DE EXPORTACIÓN DE ENERGÉTICOS SECUNDARIOS ---
             if (exportacionNodeData && exportacionNodeData['Nodos Hijo']) {
