@@ -1235,7 +1235,7 @@
             const linkColors = [];
             const linkCustomdata = [];
 
-            function addNode(name, color, nodeType = 'default') {
+            function addNode(name, color, nodeType = 'default', value = null) {
                 if (nodeMap.has(name)) {
                     return nodeMap.get(name);
                 }
@@ -1246,7 +1246,18 @@
 
                 const nodeIndex = labels.length;
                 nodeMap.set(name, nodeIndex);
-                labels.push(name);
+
+                // Si se proporciona un valor, agregarlo al nombre con salto de línea
+                let nodeLabel = name;
+                if (value !== null && value !== undefined) {
+                    const formattedValue = Math.abs(value).toLocaleString('en-US', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                    });
+                    nodeLabel = `${name}<br>${formattedValue} PJ`;
+                }
+
+                labels.push(nodeLabel);
                 nodeColors.push(finalColor);
                 nodeCustomdata.push(''); // Inicializar con placeholder, se llenará después
                 return nodeIndex;
@@ -1347,14 +1358,16 @@
                     const energeticName = energetic['Nodo Hijo'];
                     const energeticColor = styleManager.getEnergyColor(energeticName) || energetic.color; // Obtener color del StyleManager o del dato
 
-                    const energeticIndex = addNode(energeticName, energeticColor);
+                    // Obtener el valor del energético antes de crear el nodo
+                    const energeticValue = dataManager.getEnergeticValue('Oferta Interna Bruta', energeticName, year);
+
+                    const energeticIndex = addNode(energeticName, energeticColor, 'default', energeticValue);
                     energeticNodesMap.set(energeticName, energeticIndex); // Guardar el índice
 
                     nodeX[energeticIndex] = 0.2; // Columna de Oferta Interna Bruta
                     nodeY[energeticIndex] = startY + (index * stepY); // Distribuir verticalmente
 
                     // Generar customdata sencillo para cada energético
-                    const energeticValue = dataManager.getEnergeticValue('Oferta Interna Bruta', energeticName, year);
                     let energeticPopupData = {};
                     if (energeticValue !== null) {
                         energeticPopupData.total = energeticValue; // Usar 'total' para el simple_source template
@@ -1697,14 +1710,16 @@
 
                     console.log(`Creando nodo para ${energeticName} con color:`, energeticColor);
 
-                    const energeticIndex = addNode(energeticName, energeticColor);
+                    // Obtener el valor del energético antes de crear el nodo
+                    const energeticValue = dataManager.getEnergeticValue('Oferta Interna Bruta', energeticName, year);
+
+                    const energeticIndex = addNode(energeticName, energeticColor, 'default', energeticValue);
                     secondaryEnergeticNodesMap.set(energeticName, energeticIndex);
 
                     nodeX[energeticIndex] = 0.65; // Posición X a la derecha
                     nodeY[energeticIndex] = startY + (index * stepY);
 
-                    // Obtener el valor del energético
-                    const energeticValue = dataManager.getEnergeticValue('Oferta Interna Bruta', energeticName, year);
+                    // Preparar datos para el popup
                     let energeticPopupData = {};
                     if (energeticValue !== null) {
                         energeticPopupData.total = Math.abs(energeticValue);
@@ -2672,7 +2687,7 @@
                 });
             }
 
-            //-----------------------------------------
+
             // --- NODO PÚBLICO ---
             const publicoNodeData = dataManager.getNodeData('Público');
             if (publicoNodeData && publicoNodeData['Nodos Hijo']) {
@@ -3096,11 +3111,6 @@
                 });
             }
 
-
-
-
-
-            //---------
             // --- Y AQUÍ GENERAREMOS LOS ENLACES ---
             // Enlaces de Importación a energéticos primarios de Oferta Interna Bruta
             if (importacionNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
