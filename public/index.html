@@ -1391,305 +1391,542 @@
                 console.error("Error: Datos de 'Oferta Interna Bruta' o sus hijos no encontrados para crear energéticos primarios.");
             }
 
-            // --- Nodo de Exportación ---
+            // ——— Nodo y enlaces de Exportación ———
             const exportacionNodeData = dataManager.getNodeData('Exportación');
             console.log(`[DEBUG] Datos de Exportación:`, exportacionNodeData);
-            if (exportacionNodeData) {
-                const exportacionIndex = addNode(exportacionNodeData['Nodo Padre'], exportacionNodeData.color);
-                nodeX[exportacionIndex] = 0.3; // Posición horizontal
-                nodeY[exportacionIndex] = 0.99; // Posición vertical;
 
-                // Calcular el desglose para el popup de Exportación (solo energéticos primarios)
-                const exportacionBreakdownForPopup = popupManager.calculateNodeBreakdown(exportacionNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Exportación] Breakdown (Primaria) para ${year}:`, exportacionBreakdownForPopup);
+            if (exportacionNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    exportacionNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG - Exportación] Breakdown Raw para ${year}:`, raw);
 
-                nodeCustomdata[exportacionIndex] = popupManager.generateNodePopup(
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Exportación: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) Crear nodo con valor real en PJ
+                const idx = addNode(
+                    exportacionNodeData['Nodo Padre'],
+                    exportacionNodeData.color,
+                    'default',
+                    totalPJ   // ← este valor dimensiona el nodo
+                );
+                nodeX[idx] = 0.3;
+                nodeY[idx] = 0.99;
+                // nodeValues[idx] ya queda inicializado dentro de addNode
+
+                // 3) Generar popup simplificado con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     exportacionNodeData['Nodo Padre'],
                     exportacionNodeData,
                     year,
-                    exportacionBreakdownForPopup,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria'
+                    null,
+                    'simple_source'
                 );
+
+                // 4) Enlaces de Energía Primaria → Exportación
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Exportación',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    exportacionNodeData['Nodo Padre'],
+                                    col,
+                                    year,
+                                    { flowType: 'primary_demand' }
+                                )
+                            );
+                        }
+                    });
+
             } else {
-                console.error("Error: Datos para 'Exportación' no encontrados en DataManager.");
+                console.error("Error: datos de 'Exportación' o sus 'Nodos Hijo' no disponibles.");
             }
 
 
-            // --- Nodo de Consumo Propio del Sector de Energéticos Primarios ---
+            // ——— Nodo y enlaces de Consumo Propio del Sector de Energéticos Primarios ———
             const consumoPropioNodeData = dataManager.getNodeData('Consumo Propio del Sector');
-            if (consumoPropioNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
-                // 1. Crear nodo
-                const consumoPropioIndex = addNode(consumoPropioNodeData['Nodo Padre'], consumoPropioNodeData.color);
-                nodeX[consumoPropioIndex] = 0.3;
-                nodeY[consumoPropioIndex] = 0.95;
+            console.log(`[DEBUG] Datos de Consumo Propio del Sector:`, consumoPropioNodeData);
 
-                // 2. Configurar popup
-                const breakdown = popupManager.calculateNodeBreakdown(consumoPropioNodeData, year, 'Energía Primaria');
-                nodeCustomdata[consumoPropioIndex] = popupManager.generateNodePopup(
+            if (consumoPropioNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    consumoPropioNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG - Consumo Propio] Breakdown Raw para ${year}:`, raw);
+
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Consumo Propio: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) Crear nodo con valor real en PJ
+                const idx = addNode(
+                    consumoPropioNodeData['Nodo Padre'],
+                    consumoPropioNodeData.color,
+                    'default',
+                    totalPJ    // ← valor que dimensiona el nodo
+                );
+                nodeX[idx] = 0.3;
+                nodeY[idx] = 0.94;
+
+                // 3) Generar popup con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     consumoPropioNodeData['Nodo Padre'],
                     consumoPropioNodeData,
                     year,
-                    breakdown,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria',
+                    null,
                     'simple_source'
                 );
 
-                // 3. Crear enlaces desde energéticos primarios
+                // 4) Enlaces de Energía Primaria → este nodo
                 ofertaInternaBrutaFullData['Nodos Hijo']
                     .filter(child => child.tipo === 'Energía Primaria')
-                    .forEach(energetic => {
-                        const energeticName = energetic['Nodo Hijo'];
-                        const energeticValue = dataManager.getEnergeticValue(
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
                             'Consumo Propio del Sector',
-                            energeticName,
+                            child['Nodo Hijo'],
                             year
                         );
-
-                        if (energeticValue !== null && Math.abs(energeticValue) > 0) {
-                            const sourceNodeIndex = energeticNodesMap.get(energeticName);
-                            if (sourceNodeIndex !== undefined) {
-                                const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
-
-                                // Añadir el enlace
-                                source.push(sourceNodeIndex);
-                                target.push(consumoPropioIndex);
-                                value.push(Math.log10(Math.abs(energeticValue) + 1));
-                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-
-                                // Añadir popup del enlace
-                                linkCustomdata.push(popupManager.generateLinkPopup(
-                                    energeticName,
-                                    energeticValue,
-                                    energeticName,
-                                    'Consumo Propio del Sector',
-                                    linkColor,
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || '#999999';
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    consumoPropioNodeData['Nodo Padre'],
+                                    col,
                                     year,
-                                    {
-                                        flowType: 'consumo_propio_primaria',
-                                        template: 'simple'
-                                    }
-                                ));
-                            }
+                                    { flowType: 'consumo_propio_primaria' }
+                                )
+                            );
                         }
                     });
+
             } else {
-                console.error("Error: Datos para 'Consumo Propio del Sector' no encontrados o incompletos");
+                console.error("Error: datos de 'Consumo Propio del Sector' o sus 'Nodos Hijo' no disponibles.");
             }
 
-            // --- Nodo de Pérdidas técnicas por transporte, transmisión y distribución ---
-            const perdidasTecnicasNodeData = dataManager.getNodeData('Pérdidas técnicas por transporte, transmisión y distribución');
-            if (perdidasTecnicasNodeData && ofertaInternaBrutaFullData && ofertaInternaBrutaFullData['Nodos Hijo']) {
-                // 1. Crear nodo
-                const perdidasTecnicasIndex = addNode(perdidasTecnicasNodeData['Nodo Padre'], perdidasTecnicasNodeData.color);
-                nodeX[perdidasTecnicasIndex] = 0.3;
-                nodeY[perdidasTecnicasIndex] = 0.93;
 
-                // 2. Configurar popup
-                const breakdown = popupManager.calculateNodeBreakdown(perdidasTecnicasNodeData, year, 'Energía Primaria');
-                nodeCustomdata[perdidasTecnicasIndex] = popupManager.generateNodePopup(
+            // ——— Nodo y enlaces de Pérdidas Técnicas por Transporte, Transmisión y Distribución ———
+            const perdidasTecnicasNodeData = dataManager.getNodeData(
+                'Pérdidas técnicas por transporte, transmisión y distribución'
+            );
+            console.log(
+                `[DEBUG] Datos de Pérdidas Técnicas por Transporte, Transmisión y Distribución:`,
+                perdidasTecnicasNodeData
+            );
+
+            if (
+                perdidasTecnicasNodeData &&
+                ofertaInternaBrutaFullData?.['Nodos Hijo']
+            ) {
+                // 1) Breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    perdidasTecnicasNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(
+                    `[DEBUG - Pérdidas Técnicas] Breakdown Raw para ${year}:`,
+                    raw
+                );
+
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(
+                    `[DEBUG] totalPJ Pérdidas Técnicas: ${totalPJ.toFixed(2)} PJ`
+                );
+
+                // 2) Crear nodo con valor real en PJ
+                const idx = addNode(
+                    perdidasTecnicasNodeData['Nodo Padre'],
+                    perdidasTecnicasNodeData.color,
+                    'default',
+                    totalPJ    // ← este valor dimensiona el nodo
+                );
+                nodeX[idx] = 0.3;
+                nodeY[idx] = 0.9;
+
+                // 3) Popup simplificado con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     perdidasTecnicasNodeData['Nodo Padre'],
                     perdidasTecnicasNodeData,
                     year,
-                    breakdown,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria',
+                    null,
                     'simple_source'
                 );
 
-                // 3. Crear enlaces desde energéticos primarios
+                // 4) Enlaces de Energía Primaria → este nodo
                 ofertaInternaBrutaFullData['Nodos Hijo']
                     .filter(child => child.tipo === 'Energía Primaria')
-                    .forEach(energetic => {
-                        const energeticName = energetic['Nodo Hijo'];
-                        const energeticValue = dataManager.getEnergeticValue(
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
                             'Pérdidas técnicas por transporte, transmisión y distribución',
-                            energeticName,
+                            child['Nodo Hijo'],
                             year
                         );
-
-                        if (energeticValue !== null && Math.abs(energeticValue) > 0) {
-                            const sourceNodeIndex = energeticNodesMap.get(energeticName);
-                            if (sourceNodeIndex !== undefined) {
-                                const linkColor = styleManager.getEnergyColor(energeticName) || '#999999';
-
-                                // Añadir el enlace
-                                source.push(sourceNodeIndex);
-                                target.push(perdidasTecnicasIndex);
-                                value.push(Math.log10(Math.abs(energeticValue) + 1));
-                                linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-
-                                // Añadir popup del enlace
-                                linkCustomdata.push(popupManager.generateLinkPopup(
-                                    energeticName,
-                                    energeticValue,
-                                    energeticName,
-                                    'Pérdidas técnicas por transporte, transmisión y distribución',
-                                    linkColor,
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col =
+                                styleManager.getEnergyColor(child['Nodo Hijo']) || '#999999';
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    perdidasTecnicasNodeData['Nodo Padre'],
+                                    col,
                                     year,
-                                    {
-                                        flowType: 'perdidas_tecnicas',
-                                        template: 'simple'
-                                    }
-                                ));
-                            }
+                                    { flowType: 'perdidas_tecnicas' }
+                                )
+                            );
                         }
                     });
             } else {
-                console.error("Error: Datos para 'Pérdidas técnicas por transporte, transmisión y distribución' no encontrados o incompletos");
+                console.error(
+                    "Error: datos de 'Pérdidas técnicas por transporte, transmisión y distribución' o sus 'Nodos Hijo' no disponibles."
+                );
             }
 
 
-
-            // --- Nodo de Energía No Aprovechada ---
+            // ——— Nodo y enlaces de Energía No Aprovechada ———
             const energiaNoAprovechadaNodeData = dataManager.getNodeData('Energía No Aprovechada');
             console.log(`[DEBUG] Datos de Energía No Aprovechada:`, energiaNoAprovechadaNodeData);
-            if (energiaNoAprovechadaNodeData) {
-                const energiaNoAprovechadaIndex = addNode(energiaNoAprovechadaNodeData['Nodo Padre'], energiaNoAprovechadaNodeData.color);
-                nodeX[energiaNoAprovechadaIndex] = 0.3; // Posición horizontal
-                nodeY[energiaNoAprovechadaIndex] = 0.9; // Posición vertical;
 
-                // Calcular el desglose para el popup de Energía No Aprovechada (solo energéticos primarios)
-                const energiaNoAprovechadaBreakdownForPopup = popupManager.calculateNodeBreakdown(energiaNoAprovechadaNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Energía No Aprovechada] Breakdown (Primaria) para ${year}:`, energiaNoAprovechadaBreakdownForPopup);
+            if (energiaNoAprovechadaNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    energiaNoAprovechadaNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG - Energía No Aprovechada] Breakdown Raw para ${year}:`, raw);
 
-                nodeCustomdata[energiaNoAprovechadaIndex] = popupManager.generateNodePopup(
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Energía No Aprovechada: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) Crear el nodo con su valor real en PJ
+                const idx = addNode(
+                    energiaNoAprovechadaNodeData['Nodo Padre'],
+                    energiaNoAprovechadaNodeData.color,
+                    'default',
+                    totalPJ    // ← este valor dimensiona el nodo
+                );
+                nodeX[idx] = 0.3;
+                nodeY[idx] = 0.85;
+                // nodeValues[idx] ya se inicializa dentro de addNode
+
+                // 3) Generar popup con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     energiaNoAprovechadaNodeData['Nodo Padre'],
                     energiaNoAprovechadaNodeData,
                     year,
-                    energiaNoAprovechadaBreakdownForPopup,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria'
+                    null,
+                    'simple_source'
                 );
+
+                // 4) Enlaces de Energía Primaria hacia este nodo
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Energía No Aprovechada',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    energiaNoAprovechadaNodeData['Nodo Padre'],
+                                    col,
+                                    year,
+                                    { flowType: 'primary_demand' }
+                                )
+                            );
+                        }
+                    });
             } else {
-                console.error("Error: Datos para 'Energía No Aprovechada' no encontrados en DataManager.");
+                console.error("Error: datos de 'Energía No Aprovechada' o sus 'Nodos Hijo' no disponibles.");
             }
 
-            // --- Nodo de Coquizadoras y Hornos ---
+            // ——— Nodo y enlaces de Coquizadoras y Hornos ———
             const coquizadorasyhornosNodeData = dataManager.getNodeData('Coquizadoras y Hornos');
             console.log(`[DEBUG] Datos de Coquizadoras y Hornos:`, coquizadorasyhornosNodeData);
-            if (coquizadorasyhornosNodeData) {
-                const coquizadorasyhornosIndex = addNode(coquizadorasyhornosNodeData['Nodo Padre'], coquizadorasyhornosNodeData.color);
-                nodeX[coquizadorasyhornosIndex] = 0.35; // Posición horizontal
-                nodeY[coquizadorasyhornosIndex] = 0.1; // Posición vertical;
 
-                // Calcular el desglose para el popup de Coquizadoras y Hornos (solo energéticos primarios)
-                const coquizadorasyhornosBreakdownForPopup = popupManager.calculateNodeBreakdown(coquizadorasyhornosNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Coquizadoras y Hornos] Breakdown (Primaria) para ${year}:`, coquizadorasyhornosBreakdownForPopup);
+            if (coquizadorasyhornosNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    coquizadorasyhornosNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG - Coquizadoras y Hornos] Breakdown Raw para ${year}:`, raw);
 
-                nodeCustomdata[coquizadorasyhornosIndex] = popupManager.generateNodePopup(
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Coquizadoras y Hornos: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) Crear nodo con valor real en PJ
+                const idx = addNode(
+                    coquizadorasyhornosNodeData['Nodo Padre'],
+                    coquizadorasyhornosNodeData.color,
+                    'default',
+                    totalPJ    // ← este valor dimensiona el nodo
+                );
+                nodeX[idx] = 0.35;
+                nodeY[idx] = 0.10;
+                // nodeValues[idx] ya queda inicializado a totalPJ dentro de addNode
+
+                // 3) Generar popup simplificado con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     coquizadorasyhornosNodeData['Nodo Padre'],
                     coquizadorasyhornosNodeData,
                     year,
-                    coquizadorasyhornosBreakdownForPopup,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria',
+                    null,
                     'simple_source'
                 );
+
+                // 4) Enlaces de Energía Primaria → Coquizadoras y Hornos
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Coquizadoras y Hornos',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    coquizadorasyhornosNodeData['Nodo Padre'],
+                                    col,
+                                    year,
+                                    { flowType: 'primary_demand' }
+                                )
+                            );
+                        }
+                    });
+
             } else {
-                console.error("Error: Datos para 'Coquizadoras y Hornos' no encontrados en DataManager.");
+                console.error("Error: datos para 'Coquizadoras y Hornos' o sus 'Nodos Hijo' no disponibles.");
             }
 
-            // --- Nodo de Plantas de Gas y Fraccionadoras ---
+
+
+            // ——— Nodo y enlaces de Plantas de Gas y Fraccionadoras ———
             const plantasdegasyfraccionadorasNodeData = dataManager.getNodeData('Plantas de Gas y Fraccionadoras');
             console.log(`[DEBUG] Datos de Plantas de Gas y Fraccionadoras:`, plantasdegasyfraccionadorasNodeData);
-            if (plantasdegasyfraccionadorasNodeData) {
-                const plantasdegasyfraccionadorasIndex = addNode(plantasdegasyfraccionadorasNodeData['Nodo Padre'], plantasdegasyfraccionadorasNodeData.color);
-                nodeX[plantasdegasyfraccionadorasIndex] = 0.35; // Posición horizontal
-                nodeY[plantasdegasyfraccionadorasIndex] = 0.25; // Posición vertical;
 
-                // Calcular el desglose para el popup de Plantas de Gas y Fraccionadoras (solo energéticos primarios)
-                const plantasdegasyfraccionadorasBreakdownForPopup = popupManager.calculateNodeBreakdown(plantasdegasyfraccionadorasNodeData, year, 'Energía Primaria');
-                console.log(`[DEBUG - Plantas de Gas y Fraccionadoras] Breakdown (Primaria) para ${year}:`, plantasdegasyfraccionadorasBreakdownForPopup);
+            if (plantasdegasyfraccionadorasNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) calcular breakdown y totalPJ
+                const raw = popupManager.calculateNodeBreakdown(
+                    plantasdegasyfraccionadorasNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG] Breakdown Raw Plantas de Gas y Fracc. para ${year}:`, raw);
 
-                nodeCustomdata[plantasdegasyfraccionadorasIndex] = popupManager.generateNodePopup(
+                const children = raw.children || raw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Plantas de Gas y Fracc.: ${totalPJ.toFixed(2)} PJ`);
+
+                // 2) crear nodo con su valor real en PJ
+                const idx = addNode(
+                    plantasdegasyfraccionadorasNodeData['Nodo Padre'],
+                    plantasdegasyfraccionadorasNodeData.color,
+                    'default',
+                    totalPJ      // ← valor que dimensiona el nodo
+                );
+                nodeX[idx] = 0.35;
+                nodeY[idx] = 0.25;
+                // nodeValues[idx] ya inicializa totalPJ dentro de addNode
+
+                // 3) generar popup solo con total y unidad
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
                     plantasdegasyfraccionadorasNodeData['Nodo Padre'],
                     plantasdegasyfraccionadorasNodeData,
                     year,
-                    plantasdegasyfraccionadorasBreakdownForPopup,
+                    { total: totalPJ, unit: 'PJ' },
                     'text',
-                    'Energía Primaria',
+                    null,
                     'simple_source'
                 );
+
+                // 4) crear enlaces de Energía Primaria → este nodo
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Plantas de Gas y Fraccionadoras',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    plantasdegasyfraccionadorasNodeData['Nodo Padre'],
+                                    col,
+                                    year,
+                                    { flowType: 'primary_demand' }
+                                )
+                            );
+                        }
+                    });
+
             } else {
-                console.error("Error: Datos para 'Plantas de Gas y Fraccionadoras' no encontrados en DataManager.");
+                console.error("Error: datos de 'Plantas de Gas y Fraccionadoras' o sus 'Nodos Hijo' no disponibles.");
             }
+
 
             // --- Nodo de Refinerías y Despuntadoras ---
             const refinerasydespuntadorasNodeData = dataManager.getNodeData('Refinerías y Despuntadoras');
-console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
+            console.log(`[DEBUG] Datos de Refinerías y Despuntadoras:`, refinerasydespuntadorasNodeData);
 
-if (refinerasydespuntadorasNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
-  // 1) Calcular el desglose de Energía Primaria
-  const breakdownRaw = popupManager.calculateNodeBreakdown(
-    refinerasydespuntadorasNodeData,
-    year,
-    'Energía Primaria'
-  );
-  console.log(`[DEBUG] Breakdown Raw para Refinerías:`, breakdownRaw);
+            if (refinerasydespuntadorasNodeData && ofertaInternaBrutaFullData?.['Nodos Hijo']) {
+                // 1) Calcular el desglose de Energía Primaria
+                const breakdownRaw = popupManager.calculateNodeBreakdown(
+                    refinerasydespuntadorasNodeData,
+                    year,
+                    'Energía Primaria'
+                );
+                console.log(`[DEBUG] Breakdown Raw para Refinerías:`, breakdownRaw);
 
-  // 2) Extraer hijos y sumar valores absolutos ⇒ totalPJ
-  const children = breakdownRaw.children || breakdownRaw;
-  const totalPJ = Array.isArray(children)
-    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
-    : 0;
-  console.log(`[DEBUG] totalPJ Refinerías y Despuntadoras: ${totalPJ.toFixed(2)} PJ`);
+                // 2) Extraer hijos y sumar valores absolutos ⇒ totalPJ
+                const children = breakdownRaw.children || breakdownRaw;
+                const totalPJ = Array.isArray(children)
+                    ? children.reduce((sum, c) => sum + Math.abs(c.value), 0)
+                    : 0;
+                console.log(`[DEBUG] totalPJ Refinerías y Despuntadoras: ${totalPJ.toFixed(2)} PJ`);
 
-  // 3) Crear nodo con su valor real
-  const idx = addNode(
-    refinerasydespuntadorasNodeData['Nodo Padre'],
-    refinerasydespuntadorasNodeData.color,
-    'default',
-    totalPJ      // ← aquí pasamos totalPJ
-  );
-  nodeX[idx]      = 0.35;
-  nodeY[idx]      = 0.70;
-  // nodeValues ya se inicializa dentro de addNode
+                // 3) Crear nodo con su valor real
+                const idx = addNode(
+                    refinerasydespuntadorasNodeData['Nodo Padre'],
+                    refinerasydespuntadorasNodeData.color,
+                    'default',
+                    totalPJ      // ← aquí pasamos totalPJ
+                );
+                nodeX[idx] = 0.35;
+                nodeY[idx] = 0.70;
+                // nodeValues ya se inicializa dentro de addNode
 
-  // 4) Generar popup con { total, unit }
-  nodeCustomdata[idx] = popupManager.generateNodePopup(
-    refinerasydespuntadorasNodeData['Nodo Padre'],
-    refinerasydespuntadorasNodeData,
-    year,
-    { total: totalPJ, unit: 'PJ' },
-    'text',
-    null,
-    'simple_source'
-  );
+                // 4) Generar popup con { total, unit }
+                nodeCustomdata[idx] = popupManager.generateNodePopup(
+                    refinerasydespuntadorasNodeData['Nodo Padre'],
+                    refinerasydespuntadorasNodeData,
+                    year,
+                    { total: totalPJ, unit: 'PJ' },
+                    'text',
+                    null,
+                    'simple_source'
+                );
 
-  // 5) Enlaces de Energía Primaria → Refinerías y Despuntadoras
-  ofertaInternaBrutaFullData['Nodos Hijo']
-    .filter(child => child.tipo === 'Energía Primaria')
-    .forEach(child => {
-      const val = dataManager.getEnergeticValue(
-        'Refinerías y Despuntadoras',
-        child['Nodo Hijo'],
-        year
-      );
-      if (val != null && Math.abs(val) > 0) {
-        source.push( energeticNodesMap.get(child['Nodo Hijo']) );
-        target.push( idx );
-        value.push( Math.log10(Math.abs(val) + 1) );
-        const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
-        linkColors.push( styleManager.hexToRgba(col, 0.5) );
-        linkCustomdata.push(
-          popupManager.generateLinkPopup(
-            child['Nodo Hijo'],
-            val,
-            child['Nodo Hijo'],
-            'Refinerías y Despuntadoras',
-            col,
-            year,
-            { flowType: 'primary_demand' }
-          )
-        );
-      }
-    });
+                // 5) Enlaces de Energía Primaria → Refinerías y Despuntadoras
+                ofertaInternaBrutaFullData['Nodos Hijo']
+                    .filter(child => child.tipo === 'Energía Primaria')
+                    .forEach(child => {
+                        const val = dataManager.getEnergeticValue(
+                            'Refinerías y Despuntadoras',
+                            child['Nodo Hijo'],
+                            year
+                        );
+                        if (val != null && Math.abs(val) > 0) {
+                            source.push(energeticNodesMap.get(child['Nodo Hijo']));
+                            target.push(idx);
+                            value.push(Math.log10(Math.abs(val) + 1));
+                            const col = styleManager.getEnergyColor(child['Nodo Hijo']) || child.color;
+                            linkColors.push(styleManager.hexToRgba(col, 0.5));
+                            linkCustomdata.push(
+                                popupManager.generateLinkPopup(
+                                    child['Nodo Hijo'],
+                                    val,
+                                    child['Nodo Hijo'],
+                                    'Refinerías y Despuntadoras',
+                                    col,
+                                    year,
+                                    { flowType: 'primary_demand' }
+                                )
+                            );
+                        }
+                    });
 
-} else {
-  console.error("Error: Datos para 'Refinerías y Despuntadoras' no encontrados o estructura de 'Nodos Hijo' faltante.");
-}
+            } else {
+                console.error("Error: Datos para 'Refinerías y Despuntadoras' no encontrados o estructura de 'Nodos Hijo' faltante.");
+            }
             // --- Nodo de Centrales Eléctricas ---
             const centraleselectricasNodeData = dataManager.getNodeData('Centrales Eléctricas');
             console.log(`[DEBUG] Datos de Centrales Eléctricas:`, centraleselectricasNodeData);
