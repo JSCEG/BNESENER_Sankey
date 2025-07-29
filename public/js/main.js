@@ -363,55 +363,55 @@ function initializeColumnLabelsControls() {
   console.log("Inicializando controles de etiquetas de columnas...");
 
   // Forzar la creación de las etiquetas
-  if (columnLabelsManager) {
-    console.log("Creando etiquetas de columnas...");
+  // if (columnLabelsManager) {
+  //   console.log("Creando etiquetas de columnas...");
 
-    // Crear etiqueta para energéticos primarios
-    columnLabelsManager.addLabel("energeticos_primarios", {
-      title: "Energéticos Primarios",
-      description: "Fuentes de energía",
-      x: 0.23,
-      y: 0.13,
-      visible: true,
-    });
-    // Crear etiqueta para transformación
-    columnLabelsManager.addLabel("transformacion", {
-      title: "Transformación",
-      description: "Procesos de conversión",
-      x: 0.4,
-      y: 0.13,
-      visible: true,
-    });
+  //   // Crear etiqueta para energéticos primarios
+  //   columnLabelsManager.addLabel("energeticos_primarios", {
+  //     title: "Energéticos Primarios",
+  //     description: "Fuentes de energía",
+  //     x: 0.23,
+  //     y: 0.13,
+  //     visible: true,
+  //   });
+  //   // Crear etiqueta para transformación
+  //   columnLabelsManager.addLabel("transformacion", {
+  //     title: "Transformación",
+  //     description: "Procesos de conversión",
+  //     x: 0.4,
+  //     y: 0.13,
+  //     visible: true,
+  //   });
 
-    // Crear etiqueta para energeticos secundarios
-    columnLabelsManager.addLabel("energeticos_secundarios", {
-      title: "Energéticos Secundarios",
-      description: "Procesos de conversión",
-      x: 0.68,
-      y: 0.13,
-      visible: true,
-    });
+  //   // Crear etiqueta para energeticos secundarios
+  //   columnLabelsManager.addLabel("energeticos_secundarios", {
+  //     title: "Energéticos Secundarios",
+  //     description: "Procesos de conversión",
+  //     x: 0.68,
+  //     y: 0.13,
+  //     visible: true,
+  //   });
 
-    // Crear etiqueta para consumo
-    columnLabelsManager.addLabel("usos_finales", {
-      title: "Usos Finales",
-      description: "Destino final",
-      x: 0.9,
-      y: 0.1,
-      visible: true,
-    });
+  //   // Crear etiqueta para consumo
+  //   columnLabelsManager.addLabel("usos_finales", {
+  //     title: "Usos Finales",
+  //     description: "Destino final",
+  //     x: 0.9,
+  //     y: 0.1,
+  //     visible: true,
+  //   });
 
-    // Forzar que estén habilitadas
-    columnLabelsManager.setEnabled(true);
-    console.log("Etiquetas de columnas creadas y habilitadas");
+  //   // Forzar que estén habilitadas
+  //   columnLabelsManager.setEnabled(true);
+  //   console.log("Etiquetas de columnas creadas y habilitadas");
 
-    // Forzar redibujado
-    if (columnLabelsManager.handleResize) {
-      columnLabelsManager.handleResize();
-    }
-  } else {
-    console.error("ColumnLabelsManager no está inicializado");
-  }
+  //   // Forzar redibujado
+  //   if (columnLabelsManager.handleResize) {
+  //     columnLabelsManager.handleResize();
+  //   }
+  // } else {
+  //   console.error("ColumnLabelsManager no está inicializado");
+  // }
 
   // Manejar redimensionamiento
   window.addEventListener("resize", () => {
