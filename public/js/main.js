@@ -9,6 +9,9 @@ let popupManager = null;
 let exportManager = null;
 let columnLabelsManager = null;
 
+// Minimum link thickness added to each value after logarithmic scaling
+const MIN_LINK_SIZE = 0.25;
+
 // Export Configuration Management
 let exportConfig = {
   png: {
@@ -546,7 +549,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -624,7 +628,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -705,7 +710,8 @@ function updateSankey(year) {
           const tgt = val > 0 ? energeticNodesMap.get(child["Nodo Hijo"]) : idx;
           source.push(src);
           target.push(tgt);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -836,7 +842,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -916,7 +923,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || "#999999";
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -996,7 +1004,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || "#999999";
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -1085,7 +1094,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -1174,7 +1184,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -1263,7 +1274,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -1350,7 +1362,8 @@ function updateSankey(year) {
         if (val != null && Math.abs(val) > 0) {
           source.push(energeticNodesMap.get(child["Nodo Hijo"]));
           target.push(idx);
-          value.push(Math.log10(Math.abs(val) + 1));
+          const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+          value.push(scaled);
           const col =
             styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
           linkColors.push(styleManager.hexToRgba(col, 0.5));
@@ -1703,7 +1716,8 @@ function updateSankey(year) {
 
         source.push(src);
         target.push(tgt);
-        value.push(Math.log10(Math.abs(val) + 1));
+        const scaled = Math.log10(Math.abs(val) + 1) + MIN_LINK_SIZE;
+        value.push(scaled);
 
         const col =
           styleManager.getEnergyColor(child["Nodo Hijo"]) || child.color;
