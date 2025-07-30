@@ -3593,6 +3593,7 @@ function updateSankey(year) {
       color: linkColors,
       customdata: linkCustomdata,
       hovertemplate: "%{customdata}<extra></extra>",
+      curvature: 0,
     },
   };
 
