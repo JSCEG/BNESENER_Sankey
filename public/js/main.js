@@ -11,6 +11,14 @@ let exportManager = null;
 let columnLabelsManager = null;
 let zoomManager = null;
 
+// --- Focus highlighting state ---
+let baseNodeColors = [];
+let baseLinkColors = [];
+let linkSources = [];
+let linkTargets = [];
+let focusActive = false;
+let blankClickHandler = null;
+
 // Minimum link thickness added to each value after logarithmic scaling
 const MIN_LINK_SIZE = 0.25;
 
@@ -3573,6 +3581,7 @@ function updateSankey(year) {
   const data = {
     type: "sankey",
     orientation: "h",
+    arrangement: "perpendicular",
     node: {
       pad: 100,
       thickness: 10,
@@ -3592,6 +3601,7 @@ function updateSankey(year) {
       color: linkColors,
       customdata: linkCustomdata,
       hovertemplate: "%{customdata}<extra></extra>",
+      curvature: 0,
     },
   };
 
@@ -3616,6 +3626,39 @@ function updateSankey(year) {
 
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
+
+      // Save base colors and link mappings for focus mode
+      baseNodeColors = [...nodeColors];
+      baseLinkColors = [...linkColors];
+      linkSources = [...source];
+      linkTargets = [...target];
+
+      // Clean previous handlers
+      if (blankClickHandler) {
+        document.removeEventListener("click", blankClickHandler);
+        blankClickHandler = null;
+      }
+      if (sankeyDiv.removeAllListeners) {
+        sankeyDiv.removeAllListeners("plotly_click");
+      }
+
+      // Click on node to focus its forward connections
+      sankeyDiv.on("plotly_click", (ev) => {
+        const pt = ev.points && ev.points[0];
+        if (pt && pt.pointNumber != null && pt.source === undefined) {
+          highlightForward(pt.pointNumber);
+        }
+      });
+
+      // Click on blank area to reset
+      blankClickHandler = (e) => {
+        if (!sankeyDiv.contains(e.target) && focusActive) {
+          resetHighlight();
+        }
+      };
+      document.addEventListener("click", blankClickHandler);
+
+
       if (!zoomManager) {
         zoomManager = new ZoomManager(zoomWrapperDiv, {
           target: sankeyDiv,
@@ -3637,4 +3680,44 @@ function updateSankey(year) {
     .catch((error) => {
       console.error("Error al renderizar el diagrama de Sankey:", error);
     });
+}
+
+function highlightForward(startIndex) {
+  focusActive = true;
+  const visitedNodes = new Set([startIndex]);
+  const visitedLinks = new Set();
+  const queue = [startIndex];
+  while (queue.length) {
+    const node = queue.shift();
+    linkSources.forEach((src, i) => {
+      if (src === node) {
+        visitedLinks.add(i);
+        const tgt = linkTargets[i];
+        if (!visitedNodes.has(tgt)) {
+          visitedNodes.add(tgt);
+          queue.push(tgt);
+        }
+      }
+    });
+  }
+  const dimNode = "rgba(200,200,200,0.3)";
+  const dimLink = "rgba(200,200,200,0.2)";
+  const newNodeColors = baseNodeColors.map((c, idx) =>
+    visitedNodes.has(idx) ? c : dimNode,
+  );
+  const newLinkColors = baseLinkColors.map((c, idx) =>
+    visitedLinks.has(idx) ? c : dimLink,
+  );
+  Plotly.restyle(sankeyDiv, {
+    "node.color": [newNodeColors],
+    "link.color": [newLinkColors],
+  });
+}
+
+function resetHighlight() {
+  focusActive = false;
+  Plotly.restyle(sankeyDiv, {
+    "node.color": [baseNodeColors],
+    "link.color": [baseLinkColors],
+  });
 }

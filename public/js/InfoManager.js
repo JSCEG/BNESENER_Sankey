@@ -58,8 +58,9 @@ class InfoManager {
         if (this.infoPanel) {
             this.infoPanel.classList.add('visible');
             this.infoPanel.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('info-open');
             this.isVisible = true;
-            
+
             // Focus en el botón de cerrar para accesibilidad
             if (this.infoCloseBtn) {
                 this.infoCloseBtn.focus();
@@ -71,8 +72,9 @@ class InfoManager {
         if (this.infoPanel) {
             this.infoPanel.classList.remove('visible');
             this.infoPanel.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('info-open');
             this.isVisible = false;
-            
+
             // Devolver focus al botón que abrió el panel
             if (this.infoToggleBtn) {
                 this.infoToggleBtn.focus();

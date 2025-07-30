@@ -120,7 +120,6 @@ class ZoomManager {
     // Otherwise allow free panning. Additional bounds could be applied here
     // if desired, but unrestricted movement feels more natural when zoomed in.
 
-  }
 
   applyTransform() {
     this.constrain();
