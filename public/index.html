@@ -15,16 +15,7 @@
   </head>
 
   <body>
-    <!-- Header Section -->
-    <header class="main-header">
-      <div class="header-content">
-        <h1>Balance Nacional de Energía de México</h1>
-        <p class="header-subtitle">Visualización interactiva del flujo energético nacional</p>
-        <button id="info-toggle-btn" class="info-toggle-btn" aria-label="Mostrar información">
-          ℹ️ ¿Qué es el Balance Nacional de Energía?
-        </button>
-      </div>
-    </header>
+
 
     <!-- Information Panel -->
     <aside id="info-panel" class="info-panel" aria-hidden="true">
@@ -41,6 +32,13 @@
       <!-- Controls Section -->
       <section class="controls-section">
         <div class="controls-container">
+          <div class="title-info">
+            <h1 class="main-title">Balance Nacional de Energía de México</h1>
+            <button id="info-toggle-btn" class="info-toggle-btn" aria-label="Mostrar información">
+              ℹ️ ¿Qué es el Balance Nacional de Energía?
+            </button>
+          </div>
+          <p class="header-subtitle">Visualización interactiva del flujo energético nacional</p>
           <div class="control-group">
             <label for="year-selector" class="control-label">Año:</label>
             <select id="year-selector" class="year-selector" aria-label="Seleccionar año"></select>
@@ -54,17 +52,28 @@
             <button id="export-png-btn" class="export-btn png-btn" aria-label="Exportar como PNG">
               📷 PNG
             </button>
-            <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
+          <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
               📄 SVG
-            </button>
-          </div>
+          </button>
+          <button id="zoom-in-btn" class="export-btn zoom-btn" aria-label="Acercar">
+            🔍➕
+          </button>
+          <button id="zoom-out-btn" class="export-btn zoom-btn" aria-label="Alejar">
+            🔍➖
+          </button>
+          <button id="reset-view-btn" class="export-btn reset-btn" aria-label="Restablecer vista">
+            🔄 Restablecer
+          </button>
+        </div>
         </div>
       </section>
 
       <!-- Diagram Section -->
       <section class="diagram-section">
         <div class="diagram-container">
-          <div id="sankey-diagram" role="img" aria-label="Diagrama de Sankey del Balance Nacional de Energía"></div>
+          <div id="zoom-wrapper" class="zoom-wrapper">
+            <div id="sankey-diagram" role="img" aria-label="Diagrama de Sankey del Balance Nacional de Energía"></div>
+          </div>
         </div>
       </section>
     </main>
@@ -175,6 +184,8 @@
     <script src="js/PopupManager.js"></script>
     <script src="js/ExportManager.js"></script>
     <script src="js/ColumnLabelsManager.js"></script>
+    <script src="js/LinkRouter.js"></script>
+    <script src="js/ZoomManager.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
