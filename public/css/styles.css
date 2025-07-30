@@ -23,6 +23,7 @@ body.info-open {
 }
 
 
+
 /* Title and info styles */
 .main-title {
   font-size: 2rem;
@@ -440,6 +441,17 @@ select:focus {
   background: #138496;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.zoom-btn {
+  background: #ffc107;
+  color: #212529;
+}
+
+.zoom-btn:hover {
+  background: #e0a800;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
 }
 
 .export-btn:disabled {

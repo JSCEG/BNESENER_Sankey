@@ -445,12 +445,39 @@ function clearAllLabels() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeExportControls();
   const resetBtn = document.getElementById("reset-view-btn");
+
+  const zoomInBtn = document.getElementById("zoom-in-btn");
+  const zoomOutBtn = document.getElementById("zoom-out-btn");
+
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.reset();
       if (yearSelector) updateSankey(yearSelector.value);
     });
   }
+
+  if (zoomInBtn) {
+    zoomInBtn.addEventListener("click", () => {
+      if (zoomManager) zoomManager.zoomIn();
+    });
+  }
+  if (zoomOutBtn) {
+    zoomOutBtn.addEventListener("click", () => {
+      if (zoomManager) zoomManager.zoomOut();
+    });
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (!zoomManager) return;
+    if (e.ctrlKey && (e.key === "+" || e.key === "=")) {
+      e.preventDefault();
+      zoomManager.zoomIn();
+    } else if (e.ctrlKey && e.key === "-") {
+      e.preventDefault();
+      zoomManager.zoomOut();
+    }
+  });
+
 });
 
 // Función para actualizar el diagrama de Sankey (Etapa 1.7: Añadir Salidas Completas)
