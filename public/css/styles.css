@@ -525,6 +525,8 @@ select:focus {
 
 .modal-body {
   padding: 25px;
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
 
 .config-section {
@@ -579,6 +581,7 @@ select:focus {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .btn-primary {
@@ -898,6 +901,66 @@ select:focus {
   margin-bottom: 5px;
 }
 
+/* Config Panel Styles */
+.config-panel {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+}
+
+.config-panel.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.config-content {
+  background: #ffffff;
+  width: 450px;
+  max-width: 90%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.config-panel.visible .config-content {
+  transform: translateX(0);
+}
+
+.config-close-btn {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #7f8c8d;
+  cursor: pointer;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.config-close-btn:hover {
+  background: #f8f9fa;
+  color: #2c3e50;
+}
+
 /* Flujo Steps */
 .flujo-steps {
   margin: 20px 0;
@@ -1032,6 +1095,24 @@ select:focus {
   .export-controls {
     justify-content: center;
   }
+
+  .config-panel {
+    padding: 0;
+  }
+
+  .config-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: 95vh;
+  }
+
+  .modal-footer {
+    justify-content: center;
+  }
+
+  .modal-footer button {
+    flex: 1 1 45%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1068,6 +1149,20 @@ select:focus {
   
   .importancia-item {
     padding: 15px;
+  }
+
+  .config-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-footer button {
+    width: 100%;
   }
 }
 
@@ -1187,11 +1282,27 @@ select:focus {
     background: rgba(44, 62, 80, 0.95);
     border: 1px solid rgba(236, 240, 241, 0.1);
   }
+
+  .config-panel {
+    background: rgba(44, 62, 80, 0.4);
+  }
+  .config-content {
+    background: #2c3e50;
+    color: #ecf0f1;
+  }
+  .config-close-btn {
+    color: #bdc3c7;
+  }
+  .config-close-btn:hover {
+    background: #34495e;
+    color: #ecf0f1;
+  }
 }
 
 /* Accessibility improvements */
 .info-toggle-btn:focus,
-.info-close-btn:focus {
+.info-close-btn:focus,
+.config-close-btn:focus {
   outline: 2px solid #3498db;
   outline-offset: 2px;
 }
@@ -1199,6 +1310,7 @@ select:focus {
 /* Print styles */
 @media print {
   .info-panel,
+  .config-panel,
   .controls-section {
     display: none;
   }
