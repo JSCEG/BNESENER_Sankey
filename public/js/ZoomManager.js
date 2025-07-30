@@ -1,6 +1,7 @@
 class ZoomManager {
   constructor(container, options = {}) {
     this.container = container;
+    this.target = options.target || container;
     this.scale = 1;
     this.minScale = options.minScale || 0.5;
     this.maxScale = options.maxScale || 3;
@@ -16,6 +17,11 @@ class ZoomManager {
 
   setContainer(container) {
     this.container = container;
+    this.applyTransform();
+  }
+
+  setTarget(target) {
+    this.target = target;
     this.applyTransform();
   }
 
@@ -105,7 +111,7 @@ class ZoomManager {
 
   applyTransform() {
     const transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
-    this.container.style.transform = transform;
+    this.target.style.transform = transform;
   }
 
   reset() {

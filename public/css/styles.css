@@ -185,7 +185,7 @@ select:focus {
   width: 100%;
 }
 
-#sankey-diagram {
+#zoom-wrapper {
   width: 100%;
   height: 85vh;
   min-height: 600px;
@@ -196,8 +196,13 @@ select:focus {
   cursor: grab;
 }
 
-#sankey-diagram.dragging {
+#zoom-wrapper.dragging {
   cursor: grabbing;
+}
+
+#sankey-diagram {
+  width: 100%;
+  height: 100%;
 }
 
 /* Responsive design */
@@ -223,7 +228,7 @@ select:focus {
     padding: 15px;
   }
 
-  #sankey-diagram {
+  #zoom-wrapper {
     height: 75vh;
     min-height: 500px;
   }
@@ -243,7 +248,7 @@ select:focus {
     padding: 12px;
   }
 
-  #sankey-diagram {
+  #zoom-wrapper {
     height: 70vh;
     min-height: 450px;
   }
