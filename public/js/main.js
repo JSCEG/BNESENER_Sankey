@@ -1,5 +1,6 @@
 const yearSelector = document.getElementById("year-selector");
 const sankeyDiv = document.getElementById("sankey-diagram");
+const zoomWrapperDiv = document.getElementById("zoom-wrapper");
 let dataManager = null;
 let styleManager = null;
 let layoutEngine = null;
@@ -3855,7 +3856,7 @@ function updateSankey(year) {
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
       if (!zoomManager) {
-        zoomManager = new ZoomManager(sankeyDiv);
+        zoomManager = new ZoomManager(zoomWrapperDiv, { target: sankeyDiv });
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {
