@@ -445,14 +445,17 @@ function clearAllLabels() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeExportControls();
   const resetBtn = document.getElementById("reset-view-btn");
+
   const zoomInBtn = document.getElementById("zoom-in-btn");
   const zoomOutBtn = document.getElementById("zoom-out-btn");
+
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.reset();
       if (yearSelector) updateSankey(yearSelector.value);
     });
   }
+
   if (zoomInBtn) {
     zoomInBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.zoomIn();
@@ -474,6 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
       zoomManager.zoomOut();
     }
   });
+
 });
 
 // Función para actualizar el diagrama de Sankey (Etapa 1.7: Añadir Salidas Completas)
@@ -3649,6 +3653,7 @@ function updateSankey(year) {
 
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
+
       // Save base colors and link mappings for focus mode
       baseNodeColors = [...nodeColors];
       baseLinkColors = [...linkColors];
@@ -3680,13 +3685,16 @@ function updateSankey(year) {
       };
       document.addEventListener("click", blankClickHandler);
 
+
       if (!zoomManager) {
         zoomManager = new ZoomManager(zoomWrapperDiv, {
           target: sankeyDiv,
           minScale: 1,
         });
+
       } else {
         zoomManager.reset();
+
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {
