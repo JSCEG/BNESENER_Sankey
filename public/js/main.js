@@ -3856,7 +3856,6 @@ function updateSankey(year) {
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
       if (!zoomManager) {
-
         zoomManager = new ZoomManager(zoomWrapperDiv, {
           target: sankeyDiv,
           minScale: 1,

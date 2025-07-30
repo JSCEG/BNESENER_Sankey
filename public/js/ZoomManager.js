@@ -42,7 +42,6 @@ class ZoomManager {
     const offsetY = e.clientY - rect.top;
     // Slightly larger zoom steps for a snappier feel
     const factor = e.deltaY < 0 ? 1.2 : 0.8;
-
     this.zoomAt(offsetX, offsetY, factor);
   }
 
@@ -112,16 +111,15 @@ class ZoomManager {
     return Math.hypot(dx, dy);
   }
 
-
   constrain() {
-    const containerWidth = this.container.clientWidth;
-    const containerHeight = this.container.clientHeight;
-    const targetWidth = this.target.clientWidth * this.scale;
-    const targetHeight = this.target.clientHeight * this.scale;
-    const minX = Math.min(0, containerWidth - targetWidth);
-    const minY = Math.min(0, containerHeight - targetHeight);
-    this.translateX = Math.min(Math.max(this.translateX, minX), 0);
-    this.translateY = Math.min(Math.max(this.translateY, minY), 0);
+    if (this.scale <= 1) {
+      // When zoomed out, keep the diagram centered
+      this.translateX = 0;
+      this.translateY = 0;
+    }
+    // Otherwise allow free panning. Additional bounds could be applied here
+    // if desired, but unrestricted movement feels more natural when zoomed in.
+
   }
 
   applyTransform() {
