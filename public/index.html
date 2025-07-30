@@ -49,15 +49,9 @@
 
           <!-- Export Controls -->
           <div class="export-controls">
-            <button id="export-config-btn" class="export-btn config-btn" aria-label="Configurar exportación">
-              ⚙️ Configurar
+            <button id="export-config-btn" class="export-btn config-btn" aria-label="Descargar Balance">
+              ⬇️ Descargar Balance
             </button>
-            <button id="export-png-btn" class="export-btn png-btn" aria-label="Exportar como PNG">
-              📷 PNG
-            </button>
-          <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
-              📄 SVG
-          </button>
 
           <button id="zoom-in-btn" class="export-btn zoom-btn" aria-label="Acercar">
             🔍➕
@@ -89,7 +83,7 @@
       <div class="config-content">
         <button id="config-close-btn" class="config-close-btn" aria-label="Cerrar configuración">&times;</button>
         <div class="modal-header">
-          <h3 id="export-modal-title">Configuración de Exportación</h3>
+          <h3 id="export-modal-title">Descargar Balance</h3>
         </div>
         <div class="modal-body">
           <div class="config-section">
@@ -159,6 +153,8 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button id="export-png-btn" class="export-btn png-btn" aria-label="Exportar como PNG">📷 Descargar PNG</button>
+          <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">📄 Descargar SVG</button>
           <button id="save-config-btn" class="btn-primary">Guardar Configuración</button>
           <button id="cancel-config-btn" class="btn-secondary">Cancelar</button>
         </div>
