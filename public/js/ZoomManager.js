@@ -40,8 +40,10 @@ class ZoomManager {
     const rect = this.container.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
+
     // Slightly larger zoom steps for a snappier feel
     const factor = e.deltaY < 0 ? 1.2 : 0.8;
+
     this.zoomAt(offsetX, offsetY, factor);
   }
 
