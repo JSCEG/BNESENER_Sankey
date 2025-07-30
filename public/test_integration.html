@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Integración - RouteCalculator</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            margin: 20px;
+            line-height: 1.4;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #000;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        h1 {
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .console-output {
+            background-color: #000;
+            border: 1px solid #333;
+            padding: 15px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff4444; }
+        .info { color: #ffff00; }
+        .header { color: #00ffff; }
+        button {
+            background-color: #333;
+            color: #00ff00;
+            border: 1px solid #555;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Test de Integración - RouteCalculator</h1>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button onclick="runTest()">Ejecutar Test de Integración</button>
+            <button onclick="clearOutput()">Limpiar Consola</button>
+        </div>
+        
+        <div id="console" class="console-output">
+Haz clic en "Ejecutar Test de Integración" para comenzar...
+        </div>
+    </div>
+
+    <!-- Cargar las clases necesarias -->
+    <script src="js/LinkRoutingManager.js"></script>
+    <script src="js/tests/integration_test.js"></script>
+
+    <script>
+        function runTest() {
+            const consoleDiv = document.getElementById('console');
+            consoleDiv.textContent = '';
+            
+            // Redirigir console.log al div
+            const originalLog = console.log;
+            const originalError = console.error;
+            
+            console.log = function(...args) {
+                const message = args.join(' ');
+                consoleDiv.textContent += message + '\n';
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                originalLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                const message = '❌ ERROR: ' + args.join(' ');
+                consoleDiv.textContent += message + '\n';
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                originalError.apply(console, args);
+            };
+            
+            try {
+                runIntegrationTest();
+            } catch (error) {
+                console.error('Error ejecutando test:', error.message);
+            }
+            
+            // Restaurar funciones originales
+            console.log = originalLog;
+            console.error = originalError;
+        }
+        
+        function clearOutput() {
+            document.getElementById('console').textContent = 'Consola limpiada. Ejecuta el test para ver los resultados...';
+        }
+        
+        // Auto-ejecutar al cargar
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runTest, 1000);
+        });
+    </script>
+</body>
+</html>

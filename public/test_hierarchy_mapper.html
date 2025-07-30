@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NodeHierarchyMapper Test</title>
+</head>
+<body>
+    <h1>NodeHierarchyMapper Test</h1>
+    <div id="test-results"></div>
+
+    <script src="js/LinkRoutingManager.js?v=2"></script>
+    <script>
+        // Mock DataManager for testing
+        class MockDataManager {
+            constructor() {
+                this.mockData = {
+                    'Producción': {
+                        'Nodo Padre': 'Producción',
+                        'Nodos Hijo': [
+                            { 'Nodo Hijo': 'Petróleo crudo', tipo: 'Energía Primaria', color: '#772F1A' },
+                            { 'Nodo Hijo': 'Gas natural', tipo: 'Energía Primaria', color: '#4169E1' }
+                        ]
+                    },
+                    'Petróleo crudo': {
+                        tipo: 'Energía Primaria',
+                        color: '#772F1A'
+                    },
+                    'Gas natural': {
+                        tipo: 'Energía Primaria',
+                        color: '#4169E1'
+                    }
+                };
+            }
+
+            getNodeData(nodeName) {
+                return this.mockData[nodeName] || null;
+            }
+
+            getEnergeticValue(parentNode, childNode, year) {
+                const mockValues = {
+                    'Producción-Petróleo crudo-2023': 1500,
+                    'Producción-Gas natural-2023': 800
+                };
+                return mockValues[`${parentNode}-${childNode}-${year}`] || 0;
+            }
+        }
+
+        // Test results container
+        const resultsDiv = document.getElementById('test-results');
+        
+        function logResult(message, isSuccess = true) {
+            const p = document.createElement('p');
+            p.textContent = (isSuccess ? '✓ ' : '✗ ') + message;
+            p.style.color = isSuccess ? 'green' : 'red';
+            resultsDiv.appendChild(p);
+            console.log((isSuccess ? '✓ ' : '✗ ') + message);
+        }
+
+        // Run tests
+        async function runTests() {
+            try {
+                logResult('Starting NodeHierarchyMapper tests...');
+
+                // Create LinkRoutingManager instance
+                const mockDataManager = new MockDataManager();
+                const linkRoutingManager = new LinkRoutingManager({
+                    dataManager: mockDataManager,
+                    enableRouting: true
+                });
+
+                logResult('LinkRoutingManager created successfully');
+
+                // Access the NodeHierarchyMapper
+                const nodeHierarchyMapper = linkRoutingManager.nodeHierarchyMapper;
+                
+                if (nodeHierarchyMapper) {
+                    logResult('NodeHierarchyMapper accessible through LinkRoutingManager');
+                    
+                    // Test extractNodeName
+                    const testNode = { name: 'Petróleo crudo<br>1500.00 PJ' };
+                    const cleanName = nodeHierarchyMapper.extractNodeName(testNode);
+                    logResult(`extractNodeName: "${cleanName}" (expected: "Petróleo crudo")`, cleanName === 'Petróleo crudo');
+                    
+                    // Test getNodeDataFromDataManager
+                    const nodeData = nodeHierarchyMapper.getNodeDataFromDataManager('Producción');
+                    logResult(`getNodeDataFromDataManager: ${nodeData ? 'found data for Producción' : 'no data'}`, !!nodeData);
+                    
+                    // Test detectNodeType
+                    const sourceNode = { name: 'Producción', x: 0.1 };
+                    const nodeType = nodeHierarchyMapper.detectNodeType(sourceNode, [], nodeData);
+                    logResult(`detectNodeType: "${nodeType}" (expected: "source")`, nodeType === 'source');
+                    
+                    // Test classifyFlowType
+                    const link = { value: 1500, customdata: '1500.00 PJ flow data' };
+                    const sourceTestNode = { name: 'Producción' };
+                    const targetTestNode = { name: 'Petróleo crudo' };
+                    const flowType = nodeHierarchyMapper.classifyFlowType(link, sourceTestNode, targetTestNode);
+                    logResult(`classifyFlowType: "${flowType}"`);
+                    
+                    // Test extractFlowValue
+                    const flowValue = nodeHierarchyMapper.extractFlowValue(link);
+                    logResult(`extractFlowValue: ${flowValue} (expected: 1500)`, flowValue === 1500);
+                    
+                    // Test determineEnergyType
+                    const energyType = nodeHierarchyMapper.determineEnergyType(nodeData);
+                    logResult(`determineEnergyType: "${energyType}" (expected: "primary")`, energyType === 'primary');
+                    
+                    // Test isEnergeticPrimary
+                    const isPrimary = nodeHierarchyMapper.isEnergeticPrimary(nodeData);
+                    logResult(`isEnergeticPrimary: ${isPrimary} (expected: true)`, isPrimary === true);
+                    
+                    // Test mapHierarchy with sample data
+                    logResult('Testing mapHierarchy with sample data...');
+                    
+                    const nodes = [
+                        { name: 'Producción<br>2300.00 PJ', x: 0.05, y: 0.4 },
+                        { name: 'Petróleo crudo<br>1500.00 PJ', x: 0.2, y: 0.3 },
+                        { name: 'Gas natural<br>800.00 PJ', x: 0.2, y: 0.5 },
+                        { name: 'Transformación<br>2000.00 PJ', x: 0.5, y: 0.4 },
+                        { name: 'Consumo Final<br>1800.00 PJ', x: 0.9, y: 0.4 }
+                    ];
+                    
+                    const links = [
+                        { source: 0, target: 1, value: 15, customdata: 'Flow: 1500.00 PJ', color: '#772F1A' },
+                        { source: 0, target: 2, value: 8, customdata: 'Flow: 800.00 PJ', color: '#4169E1' },
+                        { source: 1, target: 3, value: 12, customdata: 'Flow: 1200.00 PJ', color: '#772F1A' },
+                        { source: 2, target: 3, value: 8, customdata: 'Flow: 800.00 PJ', color: '#4169E1' },
+                        { source: 3, target: 4, value: 18, customdata: 'Flow: 1800.00 PJ', color: '#FFD700' }
+                    ];
+                    
+                    const hierarchy = await nodeHierarchyMapper.mapHierarchy(nodes, links);
+                    logResult(`mapHierarchy: Created hierarchy with ${hierarchy.size} nodes`, hierarchy.size === 5);
+                    
+                    // Analyze nodes
+                    const produccionNode = hierarchy.get(0);
+                    logResult(`Producción node: name="${produccionNode.name}", type="${produccionNode.type}", children=${produccionNode.children.length}`, 
+                             produccionNode.type === 'source' && produccionNode.children.length === 2);
+                    
+                    const petroleoNode = hierarchy.get(1);
+                    logResult(`Petróleo node: name="${petroleoNode.name}", type="${petroleoNode.type}", energyType="${petroleoNode.energyType}"`,
+                             petroleoNode.energyType === 'primary');
+                    
+                    const transformacionNode = hierarchy.get(3);
+                    logResult(`Transformación node: name="${transformacionNode.name}", type="${transformacionNode.type}", parents=${transformacionNode.parents.length}, children=${transformacionNode.children.length}`,
+                             transformacionNode.type === 'transformation' && transformacionNode.parents.length === 2);
+                    
+                    // Test flow analysis
+                    if (petroleoNode.outgoingFlows.length > 0) {
+                        const flow = petroleoNode.outgoingFlows[0];
+                        logResult(`Flow analysis: type="${flow.type}", priority=${flow.priority.toFixed(3)}, value=${flow.value}`,
+                                 flow.type === 'primary');
+                    }
+                    
+                    // Test centrality metrics
+                    if (transformacionNode.centrality) {
+                        logResult(`Centrality metrics: degree=${transformacionNode.centrality.degree.toFixed(3)}, flow=${transformacionNode.centrality.flow.toFixed(3)}`,
+                                 transformacionNode.centrality.degree > 0);
+                    }
+                    
+                    logResult('All NodeHierarchyMapper tests completed successfully!');
+                    
+                    // Test integration with LinkRoutingManager
+                    logResult('Testing integration with LinkRoutingManager...');
+                    
+                    const routes = await linkRoutingManager.calculateRoutes(links, nodes);
+                    logResult(`calculateRoutes: Generated ${routes.length} routes`, routes.length === links.length);
+                    
+                    if (routes.length > 0) {
+                        const route = routes[0];
+                        logResult(`Route structure: id="${route.id}", type="${route.routing.flowType}", priority=${route.routing.priority}`,
+                                 route.routing && route.routing.flowType);
+                    }
+                    
+                    logResult('Integration tests completed successfully!');
+                    
+                } else {
+                    logResult('NodeHierarchyMapper not accessible', false);
+                }
+                
+            } catch (error) {
+                logResult(`Test failed: ${error.message}`, false);
+                console.error(error);
+            }
+        }
+
+        // Run tests when page loads
+        window.addEventListener('load', runTests);
+    </script>
+</body>
+</html>

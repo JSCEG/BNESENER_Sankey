@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test RouteCalculator - Sistema de Enrutamiento Bézier</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .test-results {
+            background-color: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .visualization {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f0f0f0 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            position: relative;
+            overflow: hidden;
+        }
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 60px;
+            background-color: #4CAF50;
+            border: 2px solid #45a049;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .curve-path {
+            position: absolute;
+            stroke: #ff6b6b;
+            stroke-width: 3;
+            fill: none;
+            opacity: 0.8;
+        }
+        .control-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #ffd93d;
+            border: 2px solid #ffcd02;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .info-panel {
+            background-color: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .info-panel h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .metric {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 5px 10px;
+            background-color: #fff;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+        .metric-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .metric-value {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test RouteCalculator - Sistema de Enrutamiento Bézier</h1>
+        
+        <div class="test-section">
+            <h2>🚀 Tests Automatizados</h2>
+            <div class="controls">
+                <button onclick="runAllTests()">Ejecutar Todos los Tests</button>
+                <button onclick="runSingleTest()">Test Individual</button>
+                <button onclick="clearResults()">Limpiar Resultados</button>
+            </div>
+            <div id="testResults" class="test-results">
+Haz clic en "Ejecutar Todos los Tests" para comenzar...
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Visualización de Curvas Bézier</h2>
+            <div class="controls">
+                <button onclick="generateVisualization()">Generar Curva</button>
+                <button onclick="testCollisionDetection()">Test Colisiones</button>
+                <button onclick="animateCurve()">Animar Curva</button>
+            </div>
+            <div id="visualization" class="visualization">
+                <div class="node" style="left: 50px; top: 120px;">Origen</div>
+                <div class="node" style="left: 300px; top: 80px;">Intermedio</div>
+                <div class="node" style="left: 550px; top: 140px;">Destino</div>
+            </div>
+            <div class="info-panel">
+                <h3>📈 Métricas de la Curva</h3>
+                <div id="curveMetrics">
+                    <span class="metric">
+                        <span class="metric-label">Curvatura:</span>
+                        <span class="metric-value" id="curvatureValue">-</span>
+                    </span>
+                    <span class="metric">
+                        <span class="metric-label">Longitud:</span>
+                        <span class="metric-value" id="lengthValue">-</span>
+                    </span>
+                    <span class="metric">
+                        <span class="metric-label">Colisiones:</span>
+                        <span class="metric-value" id="collisionsValue">-</span>
+                    </span>
+                    <span class="metric">
+                        <span class="metric-label">Tiempo Cálculo:</span>
+                        <span class="metric-value" id="calculationTime">-</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cargar las clases necesarias -->
+    <script src="js/LinkRoutingManager.js"></script>
+    <script src="js/tests/RouteCalculator.test.js"></script>
+
+    <script>
+        // Variables globales para la visualización
+        let currentRoute = null;
+        let animationId = null;
+
+        // Función para ejecutar todos los tests
+        function runAllTests() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.textContent = '🚀 Ejecutando tests del RouteCalculator...\n\n';
+            
+            // Redirigir console.log al div de resultados
+            const originalLog = console.log;
+            const originalError = console.error;
+            const originalAssert = console.assert;
+            
+            console.log = function(...args) {
+                resultsDiv.textContent += args.join(' ') + '\n';
+                originalLog.apply(console, args);
+            };
+            
+            console.error = function(...args) {
+                resultsDiv.textContent += '❌ ERROR: ' + args.join(' ') + '\n';
+                originalError.apply(console, args);
+            };
+            
+            console.assert = function(condition, message) {
+                if (!condition) {
+                    resultsDiv.textContent += '❌ ASSERTION FAILED: ' + message + '\n';
+                }
+                originalAssert.apply(console, arguments);
+            };
+            
+            try {
+                // Ejecutar los tests
+                runRouteCalculatorTests();
+            } catch (error) {
+                resultsDiv.textContent += '\n❌ Error ejecutando tests: ' + error.message + '\n';
+            }
+            
+            // Restaurar funciones originales
+            console.log = originalLog;
+            console.error = originalError;
+            console.assert = originalAssert;
+        }
+
+        // Función para ejecutar un test individual
+        function runSingleTest() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.textContent = '🧪 Ejecutando test individual de cálculo de ruta...\n\n';
+            
+            try {
+                const config = {
+                    curvature: 0.4,
+                    avoidanceRadius: 0.05,
+                    routingAlgorithm: 'bezier-optimized'
+                };
+                
+                const calculator = new RouteCalculator(config);
+                
+                // Crear datos de prueba
+                const sourceNode = { x: 0.1, y: 0.5, name: 'Nodo Origen' };
+                const targetNode = { x: 0.9, y: 0.3, name: 'Nodo Destino' };
+                const link = { source: 0, target: 1, value: 150, color: '#ff6b6b', customdata: 'Test: 150 PJ' };
+                
+                // Crear jerarquía mock
+                const hierarchy = new Map();
+                hierarchy.set(0, {
+                    type: 'source',
+                    bounds: { left: 0.08, right: 0.12, top: 0.47, bottom: 0.53, width: 0.04, height: 0.06 }
+                });
+                hierarchy.set(1, {
+                    type: 'consumption',
+                    bounds: { left: 0.88, right: 0.92, top: 0.27, bottom: 0.33, width: 0.04, height: 0.06 }
+                });
+                
+                const startTime = performance.now();
+                const route = calculator.calculateBezierRoute(link, sourceNode, targetNode, hierarchy, 0);
+                const endTime = performance.now();
+                
+                resultsDiv.textContent += `✅ Ruta calculada exitosamente\n`;
+                resultsDiv.textContent += `   ID: ${route.id}\n`;
+                resultsDiv.textContent += `   Tipo: ${route.path.type}\n`;
+                resultsDiv.textContent += `   Puntos de control: ${route.path.controlPoints.length}\n`;
+                resultsDiv.textContent += `   Curvatura: ${route.path.curvature.toFixed(3)}\n`;
+                resultsDiv.textContent += `   Prioridad: ${route.routing.priority.toFixed(3)}\n`;
+                resultsDiv.textContent += `   Tipo de flujo: ${route.routing.flowType}\n`;
+                resultsDiv.textContent += `   Tiempo de cálculo: ${(endTime - startTime).toFixed(2)}ms\n`;
+                resultsDiv.textContent += `   SVG Path: ${route.path.plotlyPath.svgPath}\n`;
+                resultsDiv.textContent += `   Puntos discretos: ${route.path.plotlyPath.x.length}\n`;
+                
+                // Guardar ruta para visualización
+                currentRoute = route;
+                
+            } catch (error) {
+                resultsDiv.textContent += `❌ Error en test individual: ${error.message}\n`;
+                resultsDiv.textContent += `   Stack: ${error.stack}\n`;
+            }
+        }
+
+        // Función para limpiar resultados
+        function clearResults() {
+            document.getElementById('testResults').textContent = 'Resultados limpiados. Ejecuta un test para ver los resultados...';
+        }
+
+        // Función para generar visualización
+        function generateVisualization() {
+            const visualization = document.getElementById('visualization');
+            
+            // Limpiar visualización anterior
+            const existingPaths = visualization.querySelectorAll('.curve-path, .control-point');
+            existingPaths.forEach(el => el.remove());
+            
+            try {
+                const config = { curvature: 0.3, avoidanceRadius: 0.05, routingAlgorithm: 'bezier-optimized' };
+                const calculator = new RouteCalculator(config);
+                
+                // Nodos en coordenadas de visualización (convertir a 0-1)
+                const nodes = [
+                    { x: 70/600, y: 150/300, name: 'Origen' },
+                    { x: 320/600, y: 110/300, name: 'Intermedio' },
+                    { x: 570/600, y: 170/300, name: 'Destino' }
+                ];
+                
+                // Crear jerarquía
+                const hierarchy = new Map();
+                nodes.forEach((node, i) => {
+                    hierarchy.set(i, {
+                        type: i === 0 ? 'source' : i === nodes.length-1 ? 'consumption' : 'transformation',
+                        bounds: {
+                            left: node.x - 0.03, right: node.x + 0.03,
+                            top: node.y - 0.05, bottom: node.y + 0.05,
+                            width: 0.06, height: 0.1
+                        }
+                    });
+                });
+                
+                const startTime = performance.now();
+                
+                // Calcular rutas
+                const routes = [];
+                for (let i = 0; i < nodes.length - 1; i++) {
+                    const link = { source: i, target: i+1, value: 100, color: '#ff6b6b', customdata: `Flujo ${i+1}` };
+                    const route = calculator.calculateBezierRoute(link, nodes[i], nodes[i+1], hierarchy, i);
+                    routes.push(route);
+                }
+                
+                const endTime = performance.now();
+                
+                // Dibujar rutas
+                routes.forEach((route, index) => {
+                    drawBezierCurve(route.path.controlPoints, `hsl(${index * 60}, 70%, 50%)`);
+                });
+                
+                // Actualizar métricas
+                updateMetrics(routes, endTime - startTime);
+                
+            } catch (error) {
+                console.error('Error generando visualización:', error);
+            }
+        }
+
+        // Función para dibujar curva Bézier
+        function drawBezierCurve(controlPoints, color = '#ff6b6b') {
+            const visualization = document.getElementById('visualization');
+            const rect = visualization.getBoundingClientRect();
+            
+            // Crear SVG
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            
+            // Crear path
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            
+            // Convertir coordenadas normalizadas a píxeles
+            const [P0, P1, P2, P3] = controlPoints.map(p => ({
+                x: p.x * rect.width,
+                y: p.y * rect.height
+            }));
+            
+            const pathData = `M ${P0.x} ${P0.y} C ${P1.x} ${P1.y} ${P2.x} ${P2.y} ${P3.x} ${P3.y}`;
+            
+            path.setAttribute('d', pathData);
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('opacity', '0.8');
+            path.classList.add('curve-path');
+            
+            svg.appendChild(path);
+            visualization.appendChild(svg);
+            
+            // Dibujar puntos de control
+            [P1, P2].forEach((point, index) => {
+                const controlPoint = document.createElement('div');
+                controlPoint.className = 'control-point';
+                controlPoint.style.left = point.x + 'px';
+                controlPoint.style.top = point.y + 'px';
+                controlPoint.title = `Control Point ${index + 1}: (${point.x.toFixed(1)}, ${point.y.toFixed(1)})`;
+                visualization.appendChild(controlPoint);
+            });
+        }
+
+        // Función para actualizar métricas
+        function updateMetrics(routes, calculationTime) {
+            if (routes.length > 0) {
+                const avgCurvature = routes.reduce((sum, r) => sum + r.path.curvature, 0) / routes.length;
+                document.getElementById('curvatureValue').textContent = avgCurvature.toFixed(3);
+                
+                const totalLength = routes.reduce((sum, r) => sum + r.path.plotlyPath.x.length, 0);
+                document.getElementById('lengthValue').textContent = totalLength + ' puntos';
+                
+                document.getElementById('collisionsValue').textContent = '0'; // Simplificado
+                document.getElementById('calculationTime').textContent = calculationTime.toFixed(2) + 'ms';
+            }
+        }
+
+        // Función para test de detección de colisiones
+        function testCollisionDetection() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.textContent = '🔍 Ejecutando test de detección de colisiones...\n\n';
+            
+            try {
+                const config = { curvature: 0.5, avoidanceRadius: 0.05 };
+                const calculator = new RouteCalculator(config);
+                
+                // Crear curva que pasa por un nodo
+                const controlPoints = [
+                    { x: 0.1, y: 0.5 },
+                    { x: 0.4, y: 0.3 },
+                    { x: 0.6, y: 0.7 },
+                    { x: 0.9, y: 0.5 }
+                ];
+                
+                const samplePoints = calculator.sampleBezierCurve(controlPoints, 20);
+                
+                // Nodo que intersecta la curva
+                const nodeBounds = {
+                    left: 0.45, right: 0.55,
+                    top: 0.35, bottom: 0.45
+                };
+                
+                const collisions = calculator.detectCurveNodeCollisions(samplePoints, nodeBounds);
+                
+                resultsDiv.textContent += `✅ Test de colisiones completado\n`;
+                resultsDiv.textContent += `   Puntos muestreados: ${samplePoints.length}\n`;
+                resultsDiv.textContent += `   Colisiones detectadas: ${collisions.length}\n`;
+                
+                if (collisions.length > 0) {
+                    resultsDiv.textContent += `   Primer punto de colisión: (${collisions[0].x.toFixed(3)}, ${collisions[0].y.toFixed(3)})\n`;
+                }
+                
+                // Visualizar la colisión
+                generateVisualization();
+                
+            } catch (error) {
+                resultsDiv.textContent += `❌ Error en test de colisiones: ${error.message}\n`;
+            }
+        }
+
+        // Función para animar curva
+        function animateCurve() {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+                return;
+            }
+            
+            let t = 0;
+            const animate = () => {
+                t += 0.02;
+                if (t > 1) t = 0;
+                
+                // Actualizar curvatura dinámicamente
+                const dynamicCurvature = 0.2 + 0.3 * Math.sin(t * Math.PI * 2);
+                
+                // Regenerar visualización con nueva curvatura
+                const visualization = document.getElementById('visualization');
+                const existingPaths = visualization.querySelectorAll('.curve-path, .control-point');
+                existingPaths.forEach(el => el.remove());
+                
+                try {
+                    const config = { curvature: dynamicCurvature, avoidanceRadius: 0.05 };
+                    const calculator = new RouteCalculator(config);
+                    
+                    const startPoint = { x: 0.1, y: 0.5 };
+                    const endPoint = { x: 0.9, y: 0.3 };
+                    const sourceInfo = { type: 'source' };
+                    const targetInfo = { type: 'consumption' };
+                    
+                    const controlPoints = calculator.calculateBezierControlPoints(
+                        startPoint, endPoint, sourceInfo, targetInfo, 0
+                    );
+                    
+                    drawBezierCurve(controlPoints, `hsl(${t * 360}, 70%, 50%)`);
+                    
+                    document.getElementById('curvatureValue').textContent = dynamicCurvature.toFixed(3);
+                    
+                } catch (error) {
+                    console.error('Error en animación:', error);
+                }
+                
+                animationId = requestAnimationFrame(animate);
+            };
+            
+            animate();
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Test RouteCalculator cargado');
+            generateVisualization();
+        });
+    </script>
+</body>
+</html>

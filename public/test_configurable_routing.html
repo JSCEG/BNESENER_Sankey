@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Configurable Routing Parameters</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .control-group {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e0e0e0;
+        }
+        .control-group h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .slider-container {
+            margin: 10px 0;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .slider {
+            width: 100%;
+            margin: 5px 0;
+        }
+        .value-display {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+        .button.secondary {
+            background: #6c757d;
+        }
+        .button.success {
+            background: #28a745;
+        }
+        .button.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .metrics {
+            background: #e8f4f8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .metrics h3 {
+            margin-top: 0;
+        }
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            margin: 20px 0;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .test-result.passed {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .test-result.failed {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .config-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Test de Parámetros Configurables de Routing</h1>
+            <p>Prueba de controles dinámicos, fallbacks y monitoreo de rendimiento</p>
+        </div>
+
+        <!-- Controles de Usuario -->
+        <div class="test-section">
+            <h2>🎛️ Controles de Usuario</h2>
+            
+            <div class="controls">
+                <!-- Control de Curvatura -->
+                <div class="control-group">
+                    <h3>Curvatura</h3>
+                    <div class="slider-container">
+                        <label>Curvatura: <span class="value-display" id="curvature-value">0.3</span></label>
+                        <input type="range" id="curvature-slider" class="slider" min="0" max="1" step="0.05" value="0.3">
+                    </div>
+                    <div class="slider-container">
+                        <label>Paso de Curvatura: <span class="value-display" id="curvature-step-value">0.05</span></label>
+                        <input type="range" id="curvature-step-slider" class="slider" min="0.01" max="0.1" step="0.01" value="0.05">
+                    </div>
+                    <label>
+                        <input type="checkbox" id="adaptive-curvature" checked> Curvatura Adaptativa
+                    </label>
+                </div>
+
+                <!-- Control de Separación -->
+                <div class="control-group">
+                    <h3>Separación</h3>
+                    <div class="slider-container">
+                        <label>Separación de Enlaces: <span class="value-display" id="separation-value">0.02</span></label>
+                        <input type="range" id="separation-slider" class="slider" min="0.01" max="0.1" step="0.005" value="0.02">
+                    </div>
+                    <div class="slider-container">
+                        <label>Separación de Grupos: <span class="value-display" id="group-separation-value">0.05</span></label>
+                        <input type="range" id="group-separation-slider" class="slider" min="0.01" max="0.15" step="0.005" value="0.05">
+                    </div>
+                    <label>
+                        <input type="checkbox" id="adaptive-separation" checked> Separación Adaptativa
+                    </label>
+                </div>
+
+                <!-- Control de Evitación -->
+                <div class="control-group">
+                    <h3>Evitación</h3>
+                    <div class="slider-container">
+                        <label>Radio de Evitación: <span class="value-display" id="avoidance-value">0.05</span></label>
+                        <input type="range" id="avoidance-slider" class="slider" min="0.01" max="0.2" step="0.005" value="0.05">
+                    </div>
+                    <div class="slider-container">
+                        <label>Fuerza de Evitación: <span class="value-display" id="avoidance-strength-value">1.0</span></label>
+                        <input type="range" id="avoidance-strength-slider" class="slider" min="0.1" max="2.0" step="0.1" value="1.0">
+                    </div>
+                    <label>
+                        <input type="checkbox" id="smart-avoidance" checked> Evitación Inteligente
+                    </label>
+                </div>
+
+                <!-- Control de Rendimiento -->
+                <div class="control-group">
+                    <h3>Rendimiento</h3>
+                    <div class="slider-container">
+                        <label>Balance Rendimiento/Calidad: <span class="value-display" id="balance-value">0.5</span></label>
+                        <input type="range" id="balance-slider" class="slider" min="0" max="1" step="0.1" value="0.5">
+                        <small>0 = Máximo rendimiento, 1 = Máxima calidad</small>
+                    </div>
+                    <div>
+                        <label>Calidad Visual:</label>
+                        <select id="visual-quality">
+                            <option value="fast">Rápida</option>
+                            <option value="balanced" selected>Balanceada</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                    <label>
+                        <input type="checkbox" id="auto-optimization" checked> Auto-optimización
+                    </label>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="button" onclick="applyConfiguration()">Aplicar Configuración</button>
+                <button class="button secondary" onclick="resetToDefaults()">Reset a Defaults</button>
+                <button class="button success" onclick="exportConfiguration()">Exportar Config</button>
+                <button class="button warning" onclick="simulatePerformanceTest()">Simular Test Rendimiento</button>
+            </div>
+        </div>
+
+        <!-- Métricas de Rendimiento -->
+        <div class="test-section">
+            <h2>📊 Métricas de Rendimiento</h2>
+            <div class="metrics" id="performance-metrics">
+                <h3>Métricas Actuales</h3>
+                <div class="metric-item">
+                    <span>Cálculos Totales:</span>
+                    <span id="total-calculations">0</span>
+                </div>
+                <div class="metric-item">
+                    <span>Tiempo Promedio:</span>
+                    <span id="average-time">0ms</span>
+                </div>
+                <div class="metric-item">
+                    <span>Último Cálculo:</span>
+                    <span id="last-calculation">0ms</span>
+                </div>
+                <div class="metric-item">
+                    <span>Tasa de Aciertos de Caché:</span>
+                    <span id="cache-hit-rate">0%</span>
+                </div>
+                <div class="metric-item">
+                    <span>Uso de Fallback:</span>
+                    <span id="fallback-usage">0</span>
+                </div>
+            </div>
+            
+            <div id="recommendations"></div>
+        </div>
+
+        <!-- Configuración Actual -->
+        <div class="test-section">
+            <h2>⚙️ Configuración Actual</h2>
+            <div class="config-display" id="current-config"></div>
+        </div>
+
+        <!-- Tests Automatizados -->
+        <div class="test-section">
+            <h2>🧪 Tests Automatizados</h2>
+            <button class="button" onclick="runAutomatedTests()">Ejecutar Tests</button>
+            <div id="test-results"></div>
+        </div>
+
+        <!-- Log de Actividad -->
+        <div class="test-section">
+            <h2>📝 Log de Actividad</h2>
+            <div class="log" id="activity-log"></div>
+            <button class="button secondary" onclick="clearLog()">Limpiar Log</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/LinkRoutingManager.js"></script>
+    <script src="js/tests/ConfigurableRoutingTest.js"></script>
+    
+    <script>
+        // Variables globales
+        let routingManager = null;
+        let testRunner = null;
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeManager();
+            setupEventListeners();
+            updateDisplay();
+            log('Sistema inicializado correctamente');
+        });
+
+        function initializeManager() {
+            routingManager = new LinkRoutingManager({
+                performanceMonitoring: true,
+                autoOptimization: true,
+                fallbackEnabled: true,
+                timeoutFallback: true
+            });
+            
+            testRunner = new ConfigurableRoutingTest();
+        }
+
+        function setupEventListeners() {
+            // Sliders de curvatura
+            document.getElementById('curvature-slider').addEventListener('input', updateSliderValue);
+            document.getElementById('curvature-step-slider').addEventListener('input', updateSliderValue);
+            
+            // Sliders de separación
+            document.getElementById('separation-slider').addEventListener('input', updateSliderValue);
+            document.getElementById('group-separation-slider').addEventListener('input', updateSliderValue);
+            
+            // Sliders de evitación
+            document.getElementById('avoidance-slider').addEventListener('input', updateSliderValue);
+            document.getElementById('avoidance-strength-slider').addEventListener('input', updateSliderValue);
+            
+            // Slider de balance
+            document.getElementById('balance-slider').addEventListener('input', updateSliderValue);
+        }
+
+        function updateSliderValue(event) {
+            const slider = event.target;
+            const valueDisplay = document.getElementById(slider.id.replace('-slider', '-value'));
+            if (valueDisplay) {
+                valueDisplay.textContent = slider.value;
+            }
+        }
+
+        function applyConfiguration() {
+            const config = {
+                curvature: parseFloat(document.getElementById('curvature-slider').value),
+                curvatureStep: parseFloat(document.getElementById('curvature-step-slider').value),
+                adaptiveCurvature: document.getElementById('adaptive-curvature').checked,
+                
+                linkSeparation: parseFloat(document.getElementById('separation-slider').value),
+                groupSeparation: parseFloat(document.getElementById('group-separation-slider').value),
+                adaptiveSeparation: document.getElementById('adaptive-separation').checked,
+                
+                avoidanceRadius: parseFloat(document.getElementById('avoidance-slider').value),
+                avoidanceStrength: parseFloat(document.getElementById('avoidance-strength-slider').value),
+                smartAvoidance: document.getElementById('smart-avoidance').checked,
+                
+                visualQuality: document.getElementById('visual-quality').value,
+                autoOptimization: document.getElementById('auto-optimization').checked
+            };
+
+            const result = routingManager.updateConfig(config);
+            
+            if (result.updated) {
+                log('✅ Configuración aplicada exitosamente');
+                
+                // Aplicar balance de rendimiento/calidad
+                const balance = parseFloat(document.getElementById('balance-slider').value);
+                const balanceResult = routingManager.setPerformanceQualityBalance(balance);
+                
+                if (balanceResult.success) {
+                    log(`✅ Balance rendimiento/calidad aplicado: ${balance}`);
+                }
+            } else {
+                log('❌ Error aplicando configuración: ' + (result.error || 'Unknown error'));
+            }
+
+            updateDisplay();
+        }
+
+        function resetToDefaults() {
+            const result = routingManager.resetToDefaults();
+            
+            if (result.success) {
+                log('✅ Configuración reseteada a valores por defecto');
+                
+                // Actualizar controles UI
+                document.getElementById('curvature-slider').value = 0.3;
+                document.getElementById('curvature-step-slider').value = 0.05;
+                document.getElementById('separation-slider').value = 0.02;
+                document.getElementById('group-separation-slider').value = 0.05;
+                document.getElementById('avoidance-slider').value = 0.05;
+                document.getElementById('avoidance-strength-slider').value = 1.0;
+                document.getElementById('balance-slider').value = 0.5;
+                document.getElementById('visual-quality').value = 'balanced';
+                
+                // Actualizar displays de valores
+                document.querySelectorAll('.slider').forEach(slider => {
+                    updateSliderValue({ target: slider });
+                });
+                
+                updateDisplay();
+            } else {
+                log('❌ Error reseteando configuración');
+            }
+        }
+
+        function exportConfiguration() {
+            const configData = routingManager.exportConfiguration();
+            const jsonString = JSON.stringify(configData, null, 2);
+            
+            // Crear y descargar archivo
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `routing-config-${new Date().toISOString().slice(0, 19)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            log('✅ Configuración exportada');
+        }
+
+        async function simulatePerformanceTest() {
+            log('🔄 Iniciando simulación de test de rendimiento...');
+            
+            // Crear datos de test
+            const testLinks = [];
+            const testNodes = [];
+            
+            // Generar datos de test más complejos
+            for (let i = 0; i < 20; i++) {
+                testNodes.push({
+                    name: `Node ${i}`,
+                    x: Math.random(),
+                    y: Math.random()
+                });
+            }
+            
+            for (let i = 0; i < 30; i++) {
+                testLinks.push({
+                    source: Math.floor(Math.random() * 15),
+                    target: Math.floor(Math.random() * 15) + 5,
+                    value: Math.random() * 100
+                });
+            }
+
+            try {
+                const startTime = performance.now();
+                const routes = await routingManager.calculateRoutes(testLinks, testNodes);
+                const endTime = performance.now();
+                
+                log(`✅ Test completado en ${(endTime - startTime).toFixed(2)}ms`);
+                log(`📊 ${routes.length} rutas generadas`);
+                
+                updateDisplay();
+                
+            } catch (error) {
+                log(`❌ Error en test de rendimiento: ${error.message}`);
+            }
+        }
+
+        async function runAutomatedTests() {
+            log('🧪 Ejecutando tests automatizados...');
+            
+            const testResults = document.getElementById('test-results');
+            testResults.innerHTML = '<p>Ejecutando tests...</p>';
+            
+            try {
+                testRunner.setupTestManager();
+                
+                await testRunner.testConfigurationValidation();
+                await testRunner.testDynamicConfigUpdate();
+                await testRunner.testCurvatureControls();
+                await testRunner.testSeparationControls();
+                await testRunner.testAvoidanceControls();
+                await testRunner.testUserControls();
+                
+                const results = testRunner.getResults();
+                displayTestResults(results);
+                
+                log(`✅ Tests completados: ${results.summary.passed}/${results.summary.total} pasaron`);
+                
+            } catch (error) {
+                log(`❌ Error ejecutando tests: ${error.message}`);
+                testResults.innerHTML = `<p class="test-result failed">Error: ${error.message}</p>`;
+            }
+        }
+
+        function displayTestResults(results) {
+            const container = document.getElementById('test-results');
+            let html = `<h3>Resultados: ${results.summary.passed}/${results.summary.total} (${results.summary.percentage}%)</h3>`;
+            
+            results.results.forEach(result => {
+                const className = result.passed ? 'passed' : 'failed';
+                const icon = result.passed ? '✅' : '❌';
+                html += `<div class="test-result ${className}">
+                    ${icon} <strong>${result.name}</strong>: ${result.description}
+                </div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function updateDisplay() {
+            // Actualizar métricas
+            const metrics = routingManager.getPerformanceMetrics();
+            
+            document.getElementById('total-calculations').textContent = metrics.totalCalculations || 0;
+            document.getElementById('average-time').textContent = (metrics.averageCalculationTime || 0).toFixed(2) + 'ms';
+            document.getElementById('last-calculation').textContent = (metrics.lastCalculationTime || 0).toFixed(2) + 'ms';
+            
+            const cacheHitRate = metrics.totalCalculations > 0 ? 
+                ((metrics.cacheHitRate / metrics.totalCalculations) * 100).toFixed(1) : 0;
+            document.getElementById('cache-hit-rate').textContent = cacheHitRate + '%';
+            
+            document.getElementById('fallback-usage').textContent = metrics.fallbackUsage || 0;
+            
+            // Mostrar recomendaciones
+            const recommendationsDiv = document.getElementById('recommendations');
+            if (metrics.recommendations && metrics.recommendations.length > 0) {
+                let html = '<h4>Recomendaciones:</h4>';
+                metrics.recommendations.forEach(rec => {
+                    const severityClass = rec.severity === 'high' ? 'failed' : 'passed';
+                    html += `<div class="test-result ${severityClass}">
+                        <strong>${rec.type.toUpperCase()}</strong>: ${rec.message}
+                    </div>`;
+                });
+                recommendationsDiv.innerHTML = html;
+            } else {
+                recommendationsDiv.innerHTML = '<p>No hay recomendaciones en este momento.</p>';
+            }
+            
+            // Actualizar configuración actual
+            const configDisplay = document.getElementById('current-config');
+            configDisplay.textContent = JSON.stringify(routingManager.config, null, 2);
+        }
+
+        function log(message) {
+            const logDiv = document.getElementById('activity-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('activity-log').innerHTML = '';
+        }
+
+        // Actualizar display cada 5 segundos
+        setInterval(updateDisplay, 5000);
+    </script>
+</body>
+</html>

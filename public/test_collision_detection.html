@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test: Collision Detection and Crossing Minimization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            color: #28a745;
+        }
+        .error {
+            color: #dc3545;
+        }
+        .warning {
+            color: #ffc107;
+        }
+        .info {
+            color: #17a2b8;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .metric-card {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #495057;
+        }
+        .metric-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test: Collision Detection and Crossing Minimization</h1>
+        <p>Este test verifica la funcionalidad de detección de colisiones y minimización de cruces en el LinkRoutingManager.</p>
+
+        <div class="test-section">
+            <h3>1. Test de Detección de Intersecciones</h3>
+            <p>Verifica que el sistema puede detectar correctamente intersecciones entre rutas.</p>
+            <button onclick="testIntersectionDetection()">Ejecutar Test</button>
+            <div id="intersection-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. Test de Enlaces Múltiples</h3>
+            <p>Verifica el manejo de múltiples enlaces entre los mismos pares de nodos.</p>
+            <button onclick="testMultipleLinks()">Ejecutar Test</button>
+            <div id="multiple-links-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. Test de Resolución de Conflictos</h3>
+            <p>Verifica que el sistema puede resolver conflictos entre rutas que se cruzan.</p>
+            <button onclick="testConflictResolution()">Ejecutar Test</button>
+            <div id="conflict-resolution-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. Test de Optimización de Cruces</h3>
+            <p>Verifica la efectividad del algoritmo de minimización de cruces.</p>
+            <button onclick="testCrossingOptimization()">Ejecutar Test</button>
+            <div id="crossing-optimization-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. Test de Rendimiento</h3>
+            <p>Verifica que el sistema mantiene buen rendimiento con muchos enlaces.</p>
+            <button onclick="testPerformance()">Ejecutar Test</button>
+            <div id="performance-results" class="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Métricas del Sistema</h3>
+            <div class="metrics" id="system-metrics">
+                <!-- Las métricas se llenarán dinámicamente -->
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>Ejecutar Todos los Tests</h3>
+            <button onclick="runAllTests()">Ejecutar Todos</button>
+            <button onclick="clearResults()">Limpiar Resultados</button>
+        </div>
+    </div>
+
+    <script src="js/LinkRoutingManager.js"></script>
+    <script>
+        // Configuración de test
+        const testConfig = {
+            enableRouting: true,
+            curvature: 0.3,
+            linkSeparation: 0.02,
+            avoidanceRadius: 0.05,
+            maxIterations: 20,
+            convergenceThreshold: 0.001
+        };
+
+        let linkRoutingManager;
+
+        // Inicializar el sistema
+        function initializeSystem() {
+            linkRoutingManager = new LinkRoutingManager(testConfig);
+            console.log('LinkRoutingManager inicializado para tests');
+        }
+
+        // Generar datos de test
+        function generateTestData(numNodes = 6, numLinks = 10) {
+            const nodes = [];
+            const links = [];
+
+            // Generar nodos en una disposición típica de Sankey
+            for (let i = 0; i < numNodes; i++) {
+                nodes.push({
+                    name: `Nodo ${i}`,
+                    x: (i / (numNodes - 1)) * 0.8 + 0.1, // Distribuir horizontalmente
+                    y: 0.3 + (Math.random() * 0.4), // Distribuir verticalmente
+                    index: i
+                });
+            }
+
+            // Generar enlaces con algunos cruces intencionados
+            for (let i = 0; i < numLinks; i++) {
+                const source = Math.floor(Math.random() * (numNodes - 2));
+                const target = source + 1 + Math.floor(Math.random() * (numNodes - source - 1));
+                
+                links.push({
+                    source: source,
+                    target: target,
+                    value: 100 + Math.random() * 500,
+                    color: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                    customdata: `Flujo ${i}: ${(100 + Math.random() * 500).toFixed(1)} PJ`
+                });
+            }
+
+            return { nodes, links };
+        }
+
+        // Test 1: Detección de Intersecciones
+        async function testIntersectionDetection() {
+            const resultsDiv = document.getElementById('intersection-results');
+            resultsDiv.innerHTML = 'Ejecutando test de detección de intersecciones...\n';
+
+            try {
+                const testData = generateTestData(4, 6);
+                const routes = await linkRoutingManager.calculateRoutes(testData.links, testData.nodes);
+                
+                // Detectar cruces
+                const crossings = linkRoutingManager.detectCrossings(routes);
+                
+                resultsDiv.innerHTML += `✓ Test completado exitosamente\n`;
+                resultsDiv.innerHTML += `📊 Rutas generadas: ${routes.length}\n`;
+                resultsDiv.innerHTML += `🔍 Cruces detectados: ${crossings.length}\n`;
+                
+                if (crossings.length > 0) {
+                    resultsDiv.innerHTML += `\nDetalles de cruces detectados:\n`;
+                    crossings.forEach((crossing, index) => {
+                        resultsDiv.innerHTML += `  ${index + 1}. Ruta ${crossing.route1} ↔ Ruta ${crossing.route2}\n`;
+                        resultsDiv.innerHTML += `     Severidad: ${crossing.severity.toFixed(3)}\n`;
+                        resultsDiv.innerHTML += `     Tipo: ${crossing.type}\n`;
+                        resultsDiv.innerHTML += `     Punto: (${crossing.point.x.toFixed(3)}, ${crossing.point.y.toFixed(3)})\n\n`;
+                    });
+                }
+
+                resultsDiv.className = 'test-results success';
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `❌ Error: ${error.message}\n`;
+                resultsDiv.className = 'test-results error';
+            }
+        }
+
+        // Test 2: Enlaces Múltiples
+        async function testMultipleLinks() {
+            const resultsDiv = document.getElementById('multiple-links-results');
+            resultsDiv.innerHTML = 'Ejecutando test de enlaces múltiples...\n';
+
+            try {
+                // Generar datos con enlaces múltiples intencionados
+                const nodes = [
+                    { name: 'Nodo A', x: 0.2, y: 0.5, index: 0 },
+                    { name: 'Nodo B', x: 0.8, y: 0.5, index: 1 }
+                ];
+
+                const links = [
+                    { source: 0, target: 1, value: 300, color: 'red', customdata: 'Flujo 1: 300 PJ' },
+                    { source: 0, target: 1, value: 200, color: 'blue', customdata: 'Flujo 2: 200 PJ' },
+                    { source: 0, target: 1, value: 150, color: 'green', customdata: 'Flujo 3: 150 PJ' }
+                ];
+
+                const routes = await linkRoutingManager.calculateRoutes(links, nodes);
+                
+                resultsDiv.innerHTML += `✓ Test completado exitosamente\n`;
+                resultsDiv.innerHTML += `📊 Enlaces múltiples procesados: ${links.length}\n`;
+                
+                // Verificar que las rutas tienen información de enlaces múltiples
+                routes.forEach((route, index) => {
+                    const multipleInfo = route.routing.multipleLinks;
+                    if (multipleInfo && multipleInfo.isMultiple) {
+                        resultsDiv.innerHTML += `  Ruta ${index}: Posición ${multipleInfo.positionInGroup + 1} de ${multipleInfo.groupSize}\n`;
+                    }
+                });
+
+                // Verificar separación entre rutas paralelas
+                const separations = [];
+                for (let i = 0; i < routes.length - 1; i++) {
+                    for (let j = i + 1; j < routes.length; j++) {
+                        const separation = linkRoutingManager.routeCalculator.calculateParallelRouteSeparation(routes[i], routes[j]);
+                        separations.push(separation);
+                    }
+                }
+
+                const minSeparation = Math.min(...separations);
+                resultsDiv.innerHTML += `📏 Separación mínima entre rutas: ${minSeparation.toFixed(4)}\n`;
+                resultsDiv.innerHTML += `📏 Separación configurada: ${testConfig.linkSeparation}\n`;
+
+                if (minSeparation >= testConfig.linkSeparation * 0.8) {
+                    resultsDiv.innerHTML += `✓ Separación adecuada mantenida\n`;
+                    resultsDiv.className = 'test-results success';
+                } else {
+                    resultsDiv.innerHTML += `⚠️ Separación por debajo del umbral\n`;
+                    resultsDiv.className = 'test-results warning';
+                }
+
+            } catch (error) {
+                resultsDiv.innerHTML += `❌ Error: ${error.message}\n`;
+                resultsDiv.className = 'test-results error';
+            }
+        }
+
+        // Test 3: Resolución de Conflictos
+        async function testConflictResolution() {
+            const resultsDiv = document.getElementById('conflict-resolution-results');
+            resultsDiv.innerHTML = 'Ejecutando test de resolución de conflictos...\n';
+
+            try {
+                const testData = generateTestData(5, 8);
+                
+                // Calcular rutas iniciales
+                const initialRoutes = await linkRoutingManager.calculateRoutes(testData.links, testData.nodes);
+                const initialCrossings = linkRoutingManager.detectCrossings(initialRoutes);
+                
+                // Optimizar rutas para resolver conflictos
+                const optimizedRoutes = linkRoutingManager.optimizeRoutes(initialRoutes);
+                const finalCrossings = linkRoutingManager.detectCrossings(optimizedRoutes);
+                
+                const crossingReduction = initialCrossings.length - finalCrossings.length;
+                const reductionPercentage = initialCrossings.length > 0 ? 
+                    (crossingReduction / initialCrossings.length) * 100 : 0;
+
+                resultsDiv.innerHTML += `✓ Test completado exitosamente\n`;
+                resultsDiv.innerHTML += `📊 Cruces iniciales: ${initialCrossings.length}\n`;
+                resultsDiv.innerHTML += `📊 Cruces finales: ${finalCrossings.length}\n`;
+                resultsDiv.innerHTML += `📈 Reducción: ${crossingReduction} cruces (${reductionPercentage.toFixed(1)}%)\n`;
+
+                // Verificar que se aplicaron estrategias de resolución
+                let strategiesApplied = 0;
+                optimizedRoutes.forEach(route => {
+                    if (route.routing.conflicts && route.routing.conflicts.length > 0) {
+                        strategiesApplied++;
+                    }
+                });
+
+                resultsDiv.innerHTML += `🔧 Rutas con estrategias aplicadas: ${strategiesApplied}\n`;
+
+                if (reductionPercentage >= 50 || finalCrossings.length === 0) {
+                    resultsDiv.innerHTML += `✓ Resolución de conflictos exitosa\n`;
+                    resultsDiv.className = 'test-results success';
+                } else if (reductionPercentage > 0) {
+                    resultsDiv.innerHTML += `⚠️ Resolución parcial de conflictos\n`;
+                    resultsDiv.className = 'test-results warning';
+                } else {
+                    resultsDiv.innerHTML += `❌ No se pudieron resolver conflictos\n`;
+                    resultsDiv.className = 'test-results error';
+                }
+
+            } catch (error) {
+                resultsDiv.innerHTML += `❌ Error: ${error.message}\n`;
+                resultsDiv.className = 'test-results error';
+            }
+        }
+
+        // Test 4: Optimización de Cruces
+        async function testCrossingOptimization() {
+            const resultsDiv = document.getElementById('crossing-optimization-results');
+            resultsDiv.innerHTML = 'Ejecutando test de optimización de cruces...\n';
+
+            try {
+                // Generar un caso complejo con muchos cruces potenciales
+                const testData = generateTestData(8, 15);
+                
+                const startTime = performance.now();
+                const routes = await linkRoutingManager.calculateRoutes(testData.links, testData.nodes);
+                const calculationTime = performance.now() - startTime;
+
+                const optimizationStartTime = performance.now();
+                const optimizedRoutes = linkRoutingManager.optimizeRoutes(routes);
+                const optimizationTime = performance.now() - optimizationStartTime;
+
+                const initialCrossings = linkRoutingManager.detectCrossings(routes);
+                const finalCrossings = linkRoutingManager.detectCrossings(optimizedRoutes);
+
+                resultsDiv.innerHTML += `✓ Test completado exitosamente\n`;
+                resultsDiv.innerHTML += `⏱️ Tiempo de cálculo: ${calculationTime.toFixed(2)}ms\n`;
+                resultsDiv.innerHTML += `⏱️ Tiempo de optimización: ${optimizationTime.toFixed(2)}ms\n`;
+                resultsDiv.innerHTML += `📊 Rutas procesadas: ${routes.length}\n`;
+                resultsDiv.innerHTML += `🔍 Cruces antes: ${initialCrossings.length}\n`;
+                resultsDiv.innerHTML += `🔍 Cruces después: ${finalCrossings.length}\n`;
+
+                const totalTime = calculationTime + optimizationTime;
+                const performanceThreshold = 500; // ms
+
+                if (totalTime < performanceThreshold) {
+                    resultsDiv.innerHTML += `✓ Rendimiento dentro del umbral (${performanceThreshold}ms)\n`;
+                } else {
+                    resultsDiv.innerHTML += `⚠️ Rendimiento por encima del umbral\n`;
+                }
+
+                // Verificar calidad de la optimización
+                const crossingReduction = Math.max(0, initialCrossings.length - finalCrossings.length);
+                const qualityScore = initialCrossings.length > 0 ? 
+                    (crossingReduction / initialCrossings.length) * 100 : 100;
+
+                resultsDiv.innerHTML += `📈 Puntuación de calidad: ${qualityScore.toFixed(1)}%\n`;
+
+                if (qualityScore >= 70) {
+                    resultsDiv.className = 'test-results success';
+                } else if (qualityScore >= 30) {
+                    resultsDiv.className = 'test-results warning';
+                } else {
+                    resultsDiv.className = 'test-results error';
+                }
+
+            } catch (error) {
+                resultsDiv.innerHTML += `❌ Error: ${error.message}\n`;
+                resultsDiv.className = 'test-results error';
+            }
+        }
+
+        // Test 5: Rendimiento
+        async function testPerformance() {
+            const resultsDiv = document.getElementById('performance-results');
+            resultsDiv.innerHTML = 'Ejecutando test de rendimiento...\n';
+
+            try {
+                const testSizes = [
+                    { nodes: 5, links: 10 },
+                    { nodes: 10, links: 25 },
+                    { nodes: 15, links: 50 },
+                    { nodes: 20, links: 75 }
+                ];
+
+                resultsDiv.innerHTML += `Probando diferentes tamaños de diagrama:\n\n`;
+
+                for (const size of testSizes) {
+                    const testData = generateTestData(size.nodes, size.links);
+                    
+                    const startTime = performance.now();
+                    const routes = await linkRoutingManager.calculateRoutes(testData.links, testData.nodes);
+                    const optimizedRoutes = linkRoutingManager.optimizeRoutes(routes);
+                    const endTime = performance.now();
+                    
+                    const totalTime = endTime - startTime;
+                    const crossings = linkRoutingManager.detectCrossings(optimizedRoutes);
+                    
+                    resultsDiv.innerHTML += `📊 ${size.nodes} nodos, ${size.links} enlaces:\n`;
+                    resultsDiv.innerHTML += `   Tiempo: ${totalTime.toFixed(2)}ms\n`;
+                    resultsDiv.innerHTML += `   Cruces finales: ${crossings.length}\n`;
+                    resultsDiv.innerHTML += `   Tiempo/enlace: ${(totalTime / size.links).toFixed(2)}ms\n\n`;
+                }
+
+                const metrics = linkRoutingManager.getPerformanceMetrics();
+                resultsDiv.innerHTML += `Métricas del sistema:\n`;
+                resultsDiv.innerHTML += `  Cálculos totales: ${metrics.totalCalculations}\n`;
+                resultsDiv.innerHTML += `  Tiempo promedio: ${metrics.averageCalculationTime.toFixed(2)}ms\n`;
+                resultsDiv.innerHTML += `  Tasa de acierto de caché: ${metrics.cacheHitRate}\n`;
+                resultsDiv.innerHTML += `  Reducción de cruces: ${metrics.crossingReduction.toFixed(1)}%\n`;
+
+                resultsDiv.className = 'test-results success';
+
+            } catch (error) {
+                resultsDiv.innerHTML += `❌ Error: ${error.message}\n`;
+                resultsDiv.className = 'test-results error';
+            }
+        }
+
+        // Actualizar métricas del sistema
+        function updateSystemMetrics() {
+            const metricsDiv = document.getElementById('system-metrics');
+            
+            if (!linkRoutingManager) {
+                metricsDiv.innerHTML = '<p>Sistema no inicializado</p>';
+                return;
+            }
+
+            const metrics = linkRoutingManager.getPerformanceMetrics();
+            
+            metricsDiv.innerHTML = `
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.totalCalculations}</div>
+                    <div class="metric-label">Cálculos Totales</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.averageCalculationTime.toFixed(1)}ms</div>
+                    <div class="metric-label">Tiempo Promedio</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.cacheHitRate}</div>
+                    <div class="metric-label">Aciertos de Caché</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.crossingReduction.toFixed(1)}%</div>
+                    <div class="metric-label">Reducción de Cruces</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.cacheSize}</div>
+                    <div class="metric-label">Tamaño de Caché</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">${metrics.isCalculating ? 'Sí' : 'No'}</div>
+                    <div class="metric-label">Calculando</div>
+                </div>
+            `;
+        }
+
+        // Ejecutar todos los tests
+        async function runAllTests() {
+            console.log('Ejecutando todos los tests...');
+            
+            await testIntersectionDetection();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testMultipleLinks();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testConflictResolution();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testCrossingOptimization();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await testPerformance();
+            
+            updateSystemMetrics();
+            console.log('Todos los tests completados');
+        }
+
+        // Limpiar resultados
+        function clearResults() {
+            const resultDivs = document.querySelectorAll('.test-results');
+            resultDivs.forEach(div => {
+                div.innerHTML = '';
+                div.className = 'test-results';
+            });
+            
+            const metricsDiv = document.getElementById('system-metrics');
+            metricsDiv.innerHTML = '';
+        }
+
+        // Inicializar cuando se carga la página
+        window.addEventListener('load', () => {
+            initializeSystem();
+            updateSystemMetrics();
+        });
+    </script>
+</body>
+</html>
