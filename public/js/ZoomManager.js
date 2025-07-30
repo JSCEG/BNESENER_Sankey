@@ -42,6 +42,7 @@ class ZoomManager {
     const offsetY = e.clientY - rect.top;
     // Slightly larger zoom steps for a snappier feel
     const factor = e.deltaY < 0 ? 1.2 : 0.8;
+
     this.zoomAt(offsetX, offsetY, factor);
   }
 
@@ -111,6 +112,7 @@ class ZoomManager {
     return Math.hypot(dx, dy);
   }
 
+
   constrain() {
     const containerWidth = this.container.clientWidth;
     const containerHeight = this.container.clientHeight;
@@ -124,6 +126,7 @@ class ZoomManager {
 
   applyTransform() {
     this.constrain();
+
     const transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
     this.target.style.transform = transform;
   }
