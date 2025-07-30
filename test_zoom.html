@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZoomManager Test</title>
+    <style>
+        #test-div {
+            width: 800px;
+            height: 600px;
+            border: 2px solid #ccc;
+            background: #f0f0f0;
+            margin: 20px;
+            position: relative;
+        }
+        .test-content {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .controls {
+            margin: 20px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button onclick="testZoomIn()">Zoom In</button>
+        <button onclick="testZoomOut()">Zoom Out</button>
+        <button onclick="testReset()">Reset</button>
+        <span id="zoom-level">Zoom: 100%</span>
+    </div>
+    
+    <div id="test-div">
+        <div class="test-content">
+            <h2>ZoomManager Test</h2>
+            <p>This is a test of the ZoomManager functionality.</p>
+            <p>Try:</p>
+            <ul>
+                <li>Mouse wheel to zoom</li>
+                <li>Ctrl + mouse wheel for precision zoom</li>
+                <li>Double-click to zoom to area</li>
+                <li>Buttons above for programmatic zoom</li>
+                <li>Keyboard shortcuts: +, -, Escape</li>
+            </ul>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="public/css/styles.css">
+    <script src="public/js/ZoomControls.js"></script>
+    <script src="public/js/ZoomManager.js"></script>
+    <script>
+        let zoomManager;
+        
+        // Initialize ZoomManager
+        document.addEventListener('DOMContentLoaded', function() {
+            const testDiv = document.getElementById('test-div');
+            zoomManager = new ZoomManager(testDiv, {
+                showControls: true,
+                enableWheelZoom: true,
+                enableDoubleClickZoom: true,
+                enableKeyboardShortcuts: true
+            });
+            
+            // Listen for zoom events
+            testDiv.addEventListener('zoomchange', function(event) {
+                const zoomLevel = Math.round(event.detail.currentZoom * 100);
+                document.getElementById('zoom-level').textContent = `Zoom: ${zoomLevel}%`;
+                console.log('Zoom changed:', event.detail);
+            });
+        });
+        
+        function testZoomIn() {
+            if (zoomManager) zoomManager.zoomIn();
+        }
+        
+        function testZoomOut() {
+            if (zoomManager) zoomManager.zoomOut();
+        }
+        
+        function testReset() {
+            if (zoomManager) zoomManager.resetZoom();
+        }
+    </script>
+</body>
+</html>
