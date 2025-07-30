@@ -1,6 +1,14 @@
 const yearSelector = document.getElementById("year-selector");
 const sankeyDiv = document.getElementById("sankey-diagram");
 const zoomWrapperDiv = document.getElementById("zoom-wrapper");
+
+// Allow Node environment to load dependencies
+if (typeof LinkRouter === "undefined" && typeof require !== "undefined") {
+  var LinkRouter = require("./LinkRouter.js");
+  var ZoomManager = require("./ZoomManager.js");
+  var InfoManager = require("./InfoManager.js");
+}
+
 let dataManager = null;
 let styleManager = null;
 let layoutEngine = null;
@@ -10,6 +18,16 @@ let popupManager = null;
 let exportManager = null;
 let columnLabelsManager = null;
 let zoomManager = null;
+
+let linkRouter = null;
+let linkHierarchy = null;
+
+const linkRoutingConfig = {
+  enabled: true,
+  curvature: 0.3,
+  separation: 0.02,
+};
+
 
 // --- Focus highlighting state ---
 let baseNodeColors = [];
@@ -3605,6 +3623,23 @@ function updateSankey(year) {
     }
   });
 
+  if (!linkRouter) {
+    linkRouter = new LinkRouter(linkRoutingConfig);
+  } else {
+    linkRouter.enabled = linkRoutingConfig.enabled !== false;
+  }
+
+  const routed = linkRouter.route(
+    { source, target, value, linkColors, linkCustomdata },
+    nodeX,
+  );
+  source = routed.source;
+  target = routed.target;
+  value = routed.value;
+  linkColors = routed.linkColors;
+  linkCustomdata = routed.linkCustomdata;
+  linkHierarchy = linkRouter.getHierarchy();
+
   const data = {
     type: "sankey",
     orientation: "h",
@@ -3628,7 +3663,9 @@ function updateSankey(year) {
       color: linkColors,
       customdata: linkCustomdata,
       hovertemplate: "%{customdata}<extra></extra>",
-      curvature: 0,
+
+      curvature: linkRouter.getCurvature(),
+
     },
   };
 
