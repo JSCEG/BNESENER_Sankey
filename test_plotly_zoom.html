@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Plotly Zoom Integration</title>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #test-diagram {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        .test-controls {
+            margin: 20px 0;
+        }
+        .test-controls button {
+            margin: 5px;
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-controls button:hover {
+            background: #0056b3;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Plotly Zoom Integration Test</h1>
+    <p>This page tests the ZoomManager integration with Plotly Sankey diagrams.</p>
+    
+    <div class="test-controls">
+        <button onclick="testZoomIn()">Zoom In</button>
+        <button onclick="testZoomOut()">Zoom Out</button>
+        <button onclick="testResetZoom()">Reset Zoom</button>
+        <button onclick="testDoubleClick()">Simulate Double Click</button>
+        <button onclick="testInteractions()">Test Interactions</button>
+    </div>
+    
+    <div id="test-diagram"></div>
+    
+    <div class="test-results" id="test-results">
+        <h3>Test Results:</h3>
+        <div id="results-content">Ready to test...</div>
+    </div>
+
+    <script src="public/js/ZoomControls.js"></script>
+    <script src="public/js/ZoomManager.js"></script>
+    <script>
+        let zoomManager;
+        let testDiagram;
+
+        // Create a simple Sankey diagram for testing
+        function createTestDiagram() {
+            const data = {
+                type: "sankey",
+                orientation: "h",
+                node: {
+                    pad: 15,
+                    thickness: 20,
+                    line: { color: "black", width: 0.5 },
+                    label: ["Source A", "Source B", "Target A", "Target B", "Target C"],
+                    color: ["blue", "green", "red", "orange", "purple"],
+                    x: [0.1, 0.1, 0.9, 0.9, 0.9],
+                    y: [0.1, 0.9, 0.1, 0.5, 0.9]
+                },
+                link: {
+                    source: [0, 1, 0, 1, 1],
+                    target: [2, 3, 3, 4, 2],
+                    value: [10, 15, 5, 10, 8],
+                    color: ["rgba(0,0,255,0.3)", "rgba(0,255,0,0.3)", "rgba(0,0,255,0.3)", "rgba(0,255,0,0.3)", "rgba(0,255,0,0.3)"]
+                }
+            };
+
+            const layout = {
+                title: "Test Sankey Diagram",
+                font: { size: 12 },
+                margin: { l: 10, r: 10, t: 50, b: 10 }
+            };
+
+            const config = {
+                displaylogo: false,
+                responsive: true
+            };
+
+            return Plotly.newPlot('test-diagram', [data], layout, config);
+        }
+
+        // Initialize test
+        function initializeTest() {
+            createTestDiagram().then(() => {
+                testDiagram = document.getElementById('test-diagram');
+                
+                // Initialize ZoomManager
+                zoomManager = new ZoomManager(testDiagram, {
+                    showControls: true,
+                    enableWheelZoom: true,
+                    enableDoubleClickZoom: true,
+                    enableKeyboardShortcuts: true,
+                    smoothTransitions: true
+                });
+                
+                logResult('ZoomManager initialized successfully');
+                logResult('Plotly capabilities analyzed: ' + JSON.stringify(zoomManager.plotlyCapabilities));
+            }).catch(error => {
+                logResult('Error creating test diagram: ' + error.message);
+            });
+        }
+
+        // Test functions
+        function testZoomIn() {
+            if (zoomManager) {
+                const previousZoom = zoomManager.getCurrentZoom();
+                zoomManager.zoomIn();
+                const newZoom = zoomManager.getCurrentZoom();
+                logResult(`Zoom In: ${previousZoom.toFixed(2)} → ${newZoom.toFixed(2)}`);
+            }
+        }
+
+        function testZoomOut() {
+            if (zoomManager) {
+                const previousZoom = zoomManager.getCurrentZoom();
+                zoomManager.zoomOut();
+                const newZoom = zoomManager.getCurrentZoom();
+                logResult(`Zoom Out: ${previousZoom.toFixed(2)} → ${newZoom.toFixed(2)}`);
+            }
+        }
+
+        function testResetZoom() {
+            if (zoomManager) {
+                const previousZoom = zoomManager.getCurrentZoom();
+                zoomManager.resetZoom();
+                const newZoom = zoomManager.getCurrentZoom();
+                logResult(`Reset Zoom: ${previousZoom.toFixed(2)} → ${newZoom.toFixed(2)}`);
+            }
+        }
+
+        function testDoubleClick() {
+            if (zoomManager) {
+                const event = new MouseEvent('dblclick', {
+                    clientX: 400,
+                    clientY: 300,
+                    bubbles: true
+                });
+                testDiagram.dispatchEvent(event);
+                logResult('Double click event simulated');
+            }
+        }
+
+        function testInteractions() {
+            if (zoomManager) {
+                const results = zoomManager.testZoomedInteractions();
+                logResult('Interaction test results: ' + JSON.stringify(results));
+            }
+        }
+
+        function logResult(message) {
+            const resultsContent = document.getElementById('results-content');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsContent.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeTest);
+    </script>
+</body>
+</html>

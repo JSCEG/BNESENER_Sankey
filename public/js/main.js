@@ -3626,6 +3626,7 @@ function updateSankey(year) {
 
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
+
       // Save base colors and link mappings for focus mode
       baseNodeColors = [...nodeColors];
       baseLinkColors = [...linkColors];
@@ -3657,13 +3658,16 @@ function updateSankey(year) {
       };
       document.addEventListener("click", blankClickHandler);
 
+
       if (!zoomManager) {
         zoomManager = new ZoomManager(zoomWrapperDiv, {
           target: sankeyDiv,
           minScale: 1,
         });
+
       } else {
         zoomManager.reset();
+
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {

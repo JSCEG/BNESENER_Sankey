@@ -119,10 +119,11 @@ class ZoomManager {
     }
     // Otherwise allow free panning. Additional bounds could be applied here
     // if desired, but unrestricted movement feels more natural when zoomed in.
-  }
+
 
   applyTransform() {
     this.constrain();
+
     const transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
     this.target.style.transform = transform;
   }
