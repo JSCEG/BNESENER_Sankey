@@ -17,30 +17,26 @@ body {
   padding: 20px;
 }
 
-/* Header styles */
-.main-header {
-  width: 100%;
-  max-width: 1200px;
-  margin-bottom: 30px;
-  text-align: center;
+body.info-open {
+  overflow: hidden;
 }
 
-.header-content {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
 
-.main-header h1 {
-  font-size: 2.5rem;
+/* Title and info styles */
+.main-title {
+  font-size: 2rem;
   font-weight: 300;
   color: #34495e;
-  margin: 0 0 10px 0;
+  margin: 0;
   letter-spacing: -0.5px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.title-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
 }
 
 .header-subtitle {
@@ -185,12 +181,24 @@ select:focus {
   width: 100%;
 }
 
-#sankey-diagram {
+#zoom-wrapper {
   width: 100%;
   height: 85vh;
   min-height: 600px;
   border-radius: 12px;
   overflow: hidden;
+  touch-action: none;
+  transform-origin: 0 0;
+  cursor: grab;
+}
+
+#zoom-wrapper.dragging {
+  cursor: grabbing;
+}
+
+#sankey-diagram {
+  width: 100%;
+  height: 100%;
 }
 
 /* Responsive design */
@@ -216,9 +224,9 @@ select:focus {
     padding: 15px;
   }
 
-  #sankey-diagram {
+  #zoom-wrapper {
     height: 75vh;
-    min-height: 500px;
+    min-height: 400px;
   }
 }
 
@@ -236,9 +244,9 @@ select:focus {
     padding: 12px;
   }
 
-  #sankey-diagram {
+  #zoom-wrapper {
     height: 70vh;
-    min-height: 450px;
+    min-height: 320px;
   }
 
   select {
@@ -420,6 +428,17 @@ select:focus {
   background: #0056b3;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.reset-btn {
+  background: #17a2b8;
+  color: white;
+}
+
+.reset-btn:hover {
+  background: #138496;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
 }
 
 .export-btn:disabled {
@@ -739,21 +758,15 @@ select:focus {
  Info Panel Styles */
 .info-panel {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  z-index: 2000;
+  inset: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  z-index: 2000;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
-  padding: 20px;
-  overflow-y: auto;
+  transition: opacity 0.3s ease;
 }
 
 .info-panel.visible {
@@ -762,26 +775,19 @@ select:focus {
 }
 
 .info-content {
-  background: white;
-  border-radius: 16px;
-  max-width: 900px;
-  width: 100%;
-  max-height: 90vh;
+  background: #ffffff;
+  width: 400px;
+  max-width: 90%;
+  height: 100%;
   overflow-y: auto;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
   position: relative;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: infoSlideIn 0.4s ease-out;
 }
 
-@keyframes infoSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.info-panel.visible .info-content {
+  transform: translateX(0);
 }
 
 .info-close-btn {
@@ -970,10 +976,12 @@ select:focus {
 /* Responsive adjustments for info panel */
 @media (max-width: 768px) {
   .info-panel {
-    padding: 10px;
+    padding: 0;
   }
-  
+
   .info-content {
+    width: 100%;
+    max-width: 100%;
     max-height: 95vh;
   }
   
@@ -994,12 +1002,8 @@ select:focus {
     grid-template-columns: 1fr;
   }
   
-  .main-header h1 {
-    font-size: 2rem;
-  }
-  
-  .header-content {
-    padding: 20px;
+  .main-title {
+    font-size: 1.8rem;
   }
   
   .controls-container {
@@ -1018,8 +1022,8 @@ select:focus {
 }
 
 @media (max-width: 480px) {
-  .main-header h1 {
-    font-size: 1.8rem;
+  .main-title {
+    font-size: 1.6rem;
   }
   
   .header-subtitle {
@@ -1031,6 +1035,11 @@ select:focus {
     font-size: 0.9rem;
   }
   
+  .info-content {
+    width: 100%;
+    max-width: 100%;
+  }
+
   .info-sections {
     padding: 15px;
     padding-top: 45px;
@@ -1051,6 +1060,9 @@ select:focus {
 
 /* Dark mode support for info panel */
 @media (prefers-color-scheme: dark) {
+  .info-panel {
+    background: rgba(44, 62, 80, 0.4);
+  }
   .info-content {
     background: #2c3e50;
     color: #ecf0f1;
@@ -1131,12 +1143,7 @@ select:focus {
     color: #ecf0f1;
   }
   
-  .main-header .header-content {
-    background: rgba(44, 62, 80, 0.95);
-    border: 1px solid rgba(236, 240, 241, 0.1);
-  }
-  
-  .main-header h1 {
+  .main-title {
     color: #ecf0f1;
   }
   
@@ -1179,7 +1186,6 @@ select:focus {
 /* Print styles */
 @media print {
   .info-panel,
-  .main-header,
   .controls-section {
     display: none;
   }
