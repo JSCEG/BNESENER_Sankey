@@ -40,7 +40,6 @@ class ZoomManager {
     const rect = this.container.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-
     // Slightly larger zoom steps for a snappier feel
     const factor = e.deltaY < 0 ? 1.2 : 0.8;
 
@@ -113,7 +112,21 @@ class ZoomManager {
     return Math.hypot(dx, dy);
   }
 
+
+  constrain() {
+    const containerWidth = this.container.clientWidth;
+    const containerHeight = this.container.clientHeight;
+    const targetWidth = this.target.clientWidth * this.scale;
+    const targetHeight = this.target.clientHeight * this.scale;
+    const minX = Math.min(0, containerWidth - targetWidth);
+    const minY = Math.min(0, containerHeight - targetHeight);
+    this.translateX = Math.min(Math.max(this.translateX, minX), 0);
+    this.translateY = Math.min(Math.max(this.translateY, minY), 0);
+  }
+
   applyTransform() {
+    this.constrain();
+
     const transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
     this.target.style.transform = transform;
   }
