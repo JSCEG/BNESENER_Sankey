@@ -1,5 +1,6 @@
 const yearSelector = document.getElementById("year-selector");
 const sankeyDiv = document.getElementById("sankey-diagram");
+const zoomWrapperDiv = document.getElementById("zoom-wrapper");
 let dataManager = null;
 let styleManager = null;
 let layoutEngine = null;
@@ -8,6 +9,7 @@ let linkManager = null;
 let popupManager = null;
 let exportManager = null;
 let columnLabelsManager = null;
+let zoomManager = null;
 
 // Minimum link thickness added to each value after logarithmic scaling
 const MIN_LINK_SIZE = 0.25;
@@ -434,6 +436,12 @@ function clearAllLabels() {
 // Initialize export controls when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   initializeExportControls();
+  const resetBtn = document.getElementById("reset-view-btn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (zoomManager) zoomManager.reset();
+    });
+  }
 });
 
 // Función para actualizar el diagrama de Sankey (Etapa 1.7: Añadir Salidas Completas)
@@ -3847,6 +3855,12 @@ function updateSankey(year) {
 
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
+      if (!zoomManager) {
+        zoomManager = new ZoomManager(zoomWrapperDiv, {
+          target: sankeyDiv,
+          minScale: 1,
+        });
+      }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {
         // Usar setTimeout para asegurar que el diagrama esté completamente renderizado
