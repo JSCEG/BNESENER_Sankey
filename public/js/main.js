@@ -1,5 +1,6 @@
 const yearSelector = document.getElementById("year-selector");
 const sankeyDiv = document.getElementById("sankey-diagram");
+const zoomWrapperDiv = document.getElementById("zoom-wrapper");
 let dataManager = null;
 let styleManager = null;
 let layoutEngine = null;
@@ -8,6 +9,7 @@ let linkManager = null;
 let popupManager = null;
 let exportManager = null;
 let columnLabelsManager = null;
+let zoomManager = null;
 
 // Minimum link thickness added to each value after logarithmic scaling
 const MIN_LINK_SIZE = 0.25;
@@ -434,6 +436,13 @@ function clearAllLabels() {
 // Initialize export controls when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   initializeExportControls();
+  const resetBtn = document.getElementById("reset-view-btn");
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      if (zoomManager) zoomManager.reset();
+      if (yearSelector) updateSankey(yearSelector.value);
+    });
+  }
 });
 
 // Función para actualizar el diagrama de Sankey (Etapa 1.7: Añadir Salidas Completas)
@@ -473,6 +482,10 @@ function updateSankey(year) {
 
     const nodeIndex = labels.length;
     nodeMap.set(name, nodeIndex);
+    const plainName = name.split("<br>")[0].trim();
+    if (!nodeMap.has(plainName)) {
+      nodeMap.set(plainName, nodeIndex);
+    }
 
     // Si se proporciona un valor, agregarlo al nombre con salto de línea
     let nodeLabel = name;
@@ -3239,258 +3252,15 @@ function updateSankey(year) {
     });
   }
 
-  // Enlaces de energéticos primarios a Exportación
-  if (
-    coquizadorasyhornosNodeData &&
-    ofertaInternaBrutaFullData &&
-    ofertaInternaBrutaFullData["Nodos Hijo"]
-  ) {
-    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData[
-      "Nodos Hijo"
-    ].filter((child) => child.tipo === "Energía Primaria");
-
-    primaryEnergeticsInOIB.forEach((energetic) => {
-      const energeticName = energetic["Nodo Hijo"];
-      const energeticValueToExportacion = dataManager.getEnergeticValue(
-        "Exportación",
-        energeticName,
-        year,
-      );
-      console.log(
-        `[DEBUG - Flujo Exportación] ${energeticName}: ${energeticValueToExportacion} `,
-      );
-      if (
-        energeticValueToExportacion !== null &&
-        Math.abs(energeticValueToExportacion) > 0
-      ) {
-        const linkColor =
-          styleManager.getEnergyColor(energeticName) || energetic.color;
-        console.log(
-          `[DEBUG - Enlace Exportación]Energético: ${energeticName}, Color de enlace: ${linkColor} `,
-        );
-        source.push(energeticNodesMap.get(energeticName));
-        target.push(nodeMap.get("Exportación"));
-        value.push(Math.log10(Math.abs(energeticValueToExportacion) + 1));
-        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-        linkCustomdata.push(
-          popupManager.generateLinkPopup(
-            energeticName,
-            energeticValueToExportacion,
-            energeticName,
-            "Exportación",
-            linkColor,
-            year,
-            { flowType: "primary_demand" },
-          ),
-        );
-      }
-    });
-  }
-
-  // Enlaces de energéticos primarios a Energía No Aprovechada
-  if (
-    energiaNoAprovechadaNodeData &&
-    ofertaInternaBrutaFullData &&
-    ofertaInternaBrutaFullData["Nodos Hijo"]
-  ) {
-    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData[
-      "Nodos Hijo"
-    ].filter((child) => child.tipo === "Energía Primaria");
-
-    primaryEnergeticsInOIB.forEach((energetic) => {
-      const energeticName = energetic["Nodo Hijo"];
-      const energeticValueToNoAprovechada = dataManager.getEnergeticValue(
-        "Energía No Aprovechada",
-        energeticName,
-        year,
-      );
-      console.log(
-        `[DEBUG - Flujo Energía No Aprovechada] ${energeticName}: ${energeticValueToNoAprovechada} `,
-      );
-      if (
-        energeticValueToNoAprovechada !== null &&
-        Math.abs(energeticValueToNoAprovechada) > 0
-      ) {
-        const linkColor =
-          styleManager.getEnergyColor(energeticName) || energetic.color;
-        console.log(
-          `[DEBUG - Enlace Energía No Aprovechada]Energético: ${energeticName}, Color de enlace: ${linkColor} `,
-        );
-        source.push(energeticNodesMap.get(energeticName));
-        target.push(nodeMap.get("Energía No Aprovechada"));
-        value.push(Math.log10(Math.abs(energeticValueToNoAprovechada) + 1));
-        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-        linkCustomdata.push(
-          popupManager.generateLinkPopup(
-            energeticName,
-            energeticValueToNoAprovechada,
-            energeticName,
-            "Energía No Aprovechada",
-            linkColor,
-            year,
-            { flowType: "primary_demand" },
-          ),
-        );
-      }
-    });
-  }
-
-  // Enlaces de energéticos primarios a Coquizadoras y Hornos
-  if (
-    coquizadorasyhornosNodeData &&
-    ofertaInternaBrutaFullData &&
-    ofertaInternaBrutaFullData["Nodos Hijo"]
-  ) {
-    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData[
-      "Nodos Hijo"
-    ].filter((child) => child.tipo === "Energía Primaria");
-
-    primaryEnergeticsInOIB.forEach((energetic) => {
-      const energeticName = energetic["Nodo Hijo"];
-      const energeticValueToExportacion = dataManager.getEnergeticValue(
-        "Coquizadoras y Hornos",
-        energeticName,
-        year,
-      );
-      console.log(
-        `[DEBUG - Flujo Coquizadoras y Hornos] ${energeticName}: ${energeticValueToExportacion} `,
-      );
-      if (
-        energeticValueToExportacion !== null &&
-        Math.abs(energeticValueToExportacion) > 0
-      ) {
-        const linkColor =
-          styleManager.getEnergyColor(energeticName) || energetic.color;
-        console.log(
-          `[DEBUG - Enlace Coquizadoras y Hornos]Energético: ${energeticName}, Color de enlace: ${linkColor} `,
-        );
-        source.push(energeticNodesMap.get(energeticName));
-        target.push(nodeMap.get("Coquizadoras y Hornos"));
-        value.push(Math.log10(Math.abs(energeticValueToExportacion) + 1));
-        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-        linkCustomdata.push(
-          popupManager.generateLinkPopup(
-            energeticName,
-            energeticValueToExportacion,
-            energeticName,
-            "Coquizadoras y Hornos",
-            linkColor,
-            year,
-            { flowType: "primary_demand" },
-          ),
-        );
-      }
-    });
-  }
-
-  // Enlaces de energéticos primarios a Plantas de Gas y Fraccionadoras
-  if (
-    plantasdegasyfraccionadorasNodeData &&
-    ofertaInternaBrutaFullData &&
-    ofertaInternaBrutaFullData["Nodos Hijo"]
-  ) {
-    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData[
-      "Nodos Hijo"
-    ].filter((child) => child.tipo === "Energía Primaria");
-
-    primaryEnergeticsInOIB.forEach((energetic) => {
-      const energeticName = energetic["Nodo Hijo"];
-      const energeticValueToExportacion = dataManager.getEnergeticValue(
-        "Plantas de Gas y Fraccionadoras",
-        energeticName,
-        year,
-      );
-      console.log(
-        `[DEBUG - Flujo Plantas de Gas y Fraccionadoras] ${energeticName}: ${energeticValueToExportacion} `,
-      );
-      if (
-        energeticValueToExportacion !== null &&
-        Math.abs(energeticValueToExportacion) > 0
-      ) {
-        const linkColor =
-          styleManager.getEnergyColor(energeticName) || energetic.color;
-        console.log(
-          `[DEBUG - Enlace Plantas de Gas y Fraccionadoras]Energético: ${energeticName}, Color de enlace: ${linkColor} `,
-        );
-        source.push(energeticNodesMap.get(energeticName));
-        target.push(nodeMap.get("Plantas de Gas y Fraccionadoras"));
-        value.push(Math.log10(Math.abs(energeticValueToExportacion) + 1));
-        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-        linkCustomdata.push(
-          popupManager.generateLinkPopup(
-            energeticName,
-            energeticValueToExportacion,
-            energeticName,
-            "Plantas de Gas y Fraccionadoras",
-            linkColor,
-            year,
-            { flowType: "primary_demand" },
-          ),
-        );
-      }
-    });
-  }
-
-  // Enlaces de energéticos primarios a Refinerías y Despuntadoras
-  if (
-    refinerasydespuntadorasNodeData &&
-    ofertaInternaBrutaFullData &&
-    ofertaInternaBrutaFullData["Nodos Hijo"]
-  ) {
-    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData[
-      "Nodos Hijo"
-    ].filter((child) => child.tipo === "Energía Primaria");
-
-    primaryEnergeticsInOIB.forEach((energetic) => {
-      const energeticName = energetic["Nodo Hijo"];
-      const energeticValueToRefinerasydespuntadoras =
-        dataManager.getEnergeticValue(
-          "Refinerías y Despuntadoras",
-          energeticName,
-          year,
-        );
-      console.log(
-        `[DEBUG - Flujo Refinerías y Despuntadoras] ${energeticName}: ${energeticValueToRefinerasydespuntadoras} `,
-      );
-      if (
-        energeticValueToRefinerasydespuntadoras !== null &&
-        Math.abs(energeticValueToRefinerasydespuntadoras) > 0
-      ) {
-        const linkColor =
-          styleManager.getEnergyColor(energeticName) || energetic.color;
-        console.log(
-          `[DEBUG - Enlace Refinerías y Despuntadoras]Energético: ${energeticName}, Color de enlace: ${linkColor} `,
-        );
-        source.push(energeticNodesMap.get(energeticName));
-        target.push(nodeMap.get("Refinerías y Despuntadoras"));
-        value.push(
-          Math.log10(Math.abs(energeticValueToRefinerasydespuntadoras) + 1),
-        );
-        linkColors.push(styleManager.hexToRgba(linkColor, 0.5));
-        linkCustomdata.push(
-          popupManager.generateLinkPopup(
-            energeticName,
-            energeticValueToRefinerasydespuntadoras,
-            energeticName,
-            "Refinerías y Despuntadoras",
-            linkColor,
-            year,
-            { flowType: "primary_demand" },
-          ),
-        );
-      }
-    });
-  }
-
   // Enlaces de energéticos primarios a Centrales Eléctricas
   if (
     centraleselectricasNodeData &&
     ofertaInternaBrutaFullData &&
     ofertaInternaBrutaFullData["Nodos Hijo"]
   ) {
-    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData[
-      "Nodos Hijo"
-    ].filter((child) => child.tipo === "Energía Primaria");
+    const primaryEnergeticsInOIB = ofertaInternaBrutaFullData["Nodos Hijo"].filter(
+      (child) => child.tipo === "Energía Primaria",
+    );
 
     primaryEnergeticsInOIB.forEach((energetic) => {
       const energeticName = energetic["Nodo Hijo"];
@@ -3531,7 +3301,6 @@ function updateSankey(year) {
       }
     });
   }
-  //OJO
 
   // Enlaces desde Coquizadoras y Hornos a Centrales Eléctricas (solo secundarios que realmente existen en Coquizadoras)
   if (coquizadorasyhornosNodeData && centraleselectricasNodeData) {
@@ -3804,6 +3573,7 @@ function updateSankey(year) {
   const data = {
     type: "sankey",
     orientation: "h",
+    arrangement: "perpendicular",
     node: {
       pad: 100,
       thickness: 10,
@@ -3823,6 +3593,7 @@ function updateSankey(year) {
       color: linkColors,
       customdata: linkCustomdata,
       hovertemplate: "%{customdata}<extra></extra>",
+      curvature: 0,
     },
   };
 
@@ -3847,6 +3618,14 @@ function updateSankey(year) {
 
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
+      if (!zoomManager) {
+        zoomManager = new ZoomManager(zoomWrapperDiv, {
+          target: sankeyDiv,
+          minScale: 1,
+        });
+      } else {
+        zoomManager.reset();
+      }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {
         // Usar setTimeout para asegurar que el diagrama esté completamente renderizado
