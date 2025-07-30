@@ -925,8 +925,10 @@ select:focus {
   width: 450px;
   max-width: 90%;
   height: 100%;
+
   display: flex;
   flex-direction: column;
+
   box-shadow: -4px 0 16px rgba(0, 0, 0, 0.2);
   transform: translateX(100%);
   transition: transform 0.3s ease;
@@ -1113,6 +1115,7 @@ select:focus {
   .modal-footer button {
     flex: 1 1 45%;
   }
+
 }
 
 @media (max-width: 480px) {
@@ -1164,6 +1167,7 @@ select:focus {
   .modal-footer button {
     width: 100%;
   }
+
 }
 
 /* Dark mode support for info panel */
