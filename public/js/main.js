@@ -3713,13 +3713,13 @@ function updateSankey(year) {
         zoomManager.reset();
 
       }
-      // Renderizar etiquetas de columnas después de que el diagrama esté listo
-      if (columnLabelsManager && columnLabelsManager.isEnabled()) {
-        // Usar setTimeout para asegurar que el diagrama esté completamente renderizado
-        setTimeout(() => {
+      // Renderizar etiquetas de columnas y aplicar fondos a las etiquetas de nodo
+      setTimeout(() => {
+        if (columnLabelsManager && columnLabelsManager.isEnabled()) {
           columnLabelsManager.renderLabels(sankeyDiv);
-        }, 100);
-      }
+        }
+        addNodeLabelBackgrounds();
+      }, 100);
     })
     .catch((error) => {
       console.error("Error al renderizar el diagrama de Sankey:", error);
@@ -3763,5 +3763,37 @@ function resetHighlight() {
   Plotly.restyle(sankeyDiv, {
     "node.color": [baseNodeColors],
     "link.color": [baseLinkColors],
+  });
+}
+
+// Añade un rectángulo de fondo a cada etiqueta de nodo para mejorar la legibilidad
+function addNodeLabelBackgrounds() {
+  const svg = sankeyDiv.querySelector('svg');
+  if (!svg) return;
+
+  // Seleccionar etiquetas de texto de nodos
+  const texts = svg.querySelectorAll('g.node text');
+  texts.forEach((text) => {
+    if (
+      text.previousSibling &&
+      text.previousSibling.classList &&
+      text.previousSibling.classList.contains('node-label-bg')
+    ) {
+      return;
+    }
+
+    const bbox = text.getBBox();
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('class', 'node-label-bg');
+    rect.setAttribute('x', bbox.x - 2);
+    rect.setAttribute('y', bbox.y - 1);
+    rect.setAttribute('width', bbox.width + 4);
+    rect.setAttribute('height', bbox.height + 2);
+    rect.setAttribute('rx', 2);
+    rect.setAttribute('ry', 2);
+    rect.setAttribute('fill', 'rgba(255, 255, 255, 0.8)');
+    rect.setAttribute('stroke', 'rgba(0,0,0,0.1)');
+    rect.setAttribute('stroke-width', '1');
+    text.parentNode.insertBefore(rect, text);
   });
 }

@@ -1303,6 +1303,14 @@ select:focus {
   }
 }
 
+/* Fondo para etiquetas de nodos */
+.node-label-bg {
+  fill: rgba(255, 255, 255, 0.8);
+  stroke: rgba(0, 0, 0, 0.1);
+  stroke-width: 1;
+  rx: 2px;
+}
+
 /* Accessibility improvements */
 .info-toggle-btn:focus,
 .info-close-btn:focus,
