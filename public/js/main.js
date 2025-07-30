@@ -3623,8 +3623,10 @@ function updateSankey(year) {
           target: sankeyDiv,
           minScale: 1,
         });
+
       } else {
         zoomManager.reset();
+
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {
