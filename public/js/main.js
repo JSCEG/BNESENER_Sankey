@@ -177,32 +177,49 @@ function initializeExportControls() {
   const exportConfigBtn = document.getElementById("export-config-btn");
   const exportPngBtn = document.getElementById("export-png-btn");
   const exportSvgBtn = document.getElementById("export-svg-btn");
-  const exportModal = document.getElementById("export-modal");
+  const exportPanel = document.getElementById("export-panel");
   const exportProgressModal = document.getElementById("export-progress-modal");
-  const closeBtn = document.querySelector(".close");
+  const closeBtn = document.getElementById("config-close-btn");
   const saveConfigBtn = document.getElementById("save-config-btn");
   const cancelConfigBtn = document.getElementById("cancel-config-btn");
+
+  function hideExportPanel() {
+    exportPanel.classList.remove("visible");
+    exportPanel.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("info-open");
+  }
 
   // Open configuration modal
   exportConfigBtn.addEventListener("click", () => {
     loadConfigToModal();
-    exportModal.style.display = "block";
+    exportPanel.classList.add("visible");
+    exportPanel.setAttribute("aria-hidden", "false");
+    document.body.classList.add("info-open");
   });
 
   // Close modal events
   closeBtn.addEventListener("click", () => {
-    exportModal.style.display = "none";
+    hideExportPanel();
   });
 
   cancelConfigBtn.addEventListener("click", () => {
-    exportModal.style.display = "none";
+    hideExportPanel();
   });
 
   // Close modal when clicking outside
-  window.addEventListener("click", (event) => {
-    if (event.target === exportModal) {
-      exportModal.style.display = "none";
+  exportPanel.addEventListener("click", (event) => {
+    if (event.target === exportPanel) {
+      hideExportPanel();
     }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && exportPanel.classList.contains("visible")) {
+      hideExportPanel();
+    }
+  });
+
+  exportProgressModal.addEventListener("click", (event) => {
     if (event.target === exportProgressModal) {
       exportProgressModal.style.display = "none";
     }
@@ -211,7 +228,7 @@ function initializeExportControls() {
   // Save configuration
   saveConfigBtn.addEventListener("click", () => {
     saveConfigFromModal();
-    exportModal.style.display = "none";
+    hideExportPanel();
   });
 
   // Export PNG
