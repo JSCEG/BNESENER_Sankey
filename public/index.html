@@ -54,17 +54,22 @@
             <button id="export-png-btn" class="export-btn png-btn" aria-label="Exportar como PNG">
               📷 PNG
             </button>
-            <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
+          <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
               📄 SVG
-            </button>
-          </div>
+          </button>
+          <button id="reset-view-btn" class="export-btn reset-btn" aria-label="Restablecer vista">
+            🔄 Restablecer
+          </button>
+        </div>
         </div>
       </section>
 
       <!-- Diagram Section -->
       <section class="diagram-section">
         <div class="diagram-container">
-          <div id="sankey-diagram" role="img" aria-label="Diagrama de Sankey del Balance Nacional de Energía"></div>
+          <div id="zoom-wrapper" class="zoom-wrapper">
+            <div id="sankey-diagram" role="img" aria-label="Diagrama de Sankey del Balance Nacional de Energía"></div>
+          </div>
         </div>
       </section>
     </main>
@@ -175,6 +180,7 @@
     <script src="js/PopupManager.js"></script>
     <script src="js/ExportManager.js"></script>
     <script src="js/ColumnLabelsManager.js"></script>
+    <script src="js/ZoomManager.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
