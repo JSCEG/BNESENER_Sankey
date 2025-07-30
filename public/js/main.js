@@ -440,6 +440,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.reset();
+
+      if (yearSelector) updateSankey(yearSelector.value);
+
     });
   }
 });
@@ -3621,6 +3624,9 @@ function updateSankey(year) {
           target: sankeyDiv,
           minScale: 1,
         });
+
+      } else {
+        zoomManager.reset();
 
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
