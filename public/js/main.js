@@ -440,7 +440,9 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.reset();
+
       if (yearSelector) updateSankey(yearSelector.value);
+
     });
   }
 });
@@ -3302,6 +3304,7 @@ function updateSankey(year) {
     });
   }
 
+
   // Enlaces desde Coquizadoras y Hornos a Centrales Eléctricas (solo secundarios que realmente existen en Coquizadoras)
   if (coquizadorasyhornosNodeData && centraleselectricasNodeData) {
     // Obtenemos los hijos secundarios que realmente existen en Coquizadoras
@@ -3621,8 +3624,10 @@ function updateSankey(year) {
           target: sankeyDiv,
           minScale: 1,
         });
+
       } else {
         zoomManager.reset();
+
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {
