@@ -230,7 +230,7 @@ select:focus {
 
   #zoom-wrapper {
     height: 75vh;
-    min-height: 500px;
+    min-height: 400px;
   }
 }
 
@@ -250,7 +250,7 @@ select:focus {
 
   #zoom-wrapper {
     height: 70vh;
-    min-height: 450px;
+    min-height: 320px;
   }
 
   select {

@@ -3856,7 +3856,12 @@ function updateSankey(year) {
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
       if (!zoomManager) {
-        zoomManager = new ZoomManager(zoomWrapperDiv, { target: sankeyDiv });
+
+        zoomManager = new ZoomManager(zoomWrapperDiv, {
+          target: sankeyDiv,
+          minScale: 1,
+        });
+
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {

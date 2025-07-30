@@ -3,7 +3,8 @@ class ZoomManager {
     this.container = container;
     this.target = options.target || container;
     this.scale = 1;
-    this.minScale = options.minScale || 0.5;
+    // Prevent zooming out below the initial size unless explicitly specified
+    this.minScale = options.minScale || 1;
     this.maxScale = options.maxScale || 3;
     this.translateX = 0;
     this.translateY = 0;
@@ -39,7 +40,10 @@ class ZoomManager {
     const rect = this.container.getBoundingClientRect();
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
-    const factor = e.deltaY < 0 ? 1.1 : 0.9;
+
+    // Slightly larger zoom steps for a snappier feel
+    const factor = e.deltaY < 0 ? 1.2 : 0.8;
+
     this.zoomAt(offsetX, offsetY, factor);
   }
 
