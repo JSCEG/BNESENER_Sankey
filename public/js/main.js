@@ -481,6 +481,10 @@ function updateSankey(year) {
 
     const nodeIndex = labels.length;
     nodeMap.set(name, nodeIndex);
+    const plainName = name.split("<br>")[0].trim();
+    if (!nodeMap.has(plainName)) {
+      nodeMap.set(plainName, nodeIndex);
+    }
 
     // Si se proporciona un valor, agregarlo al nombre con salto de línea
     let nodeLabel = name;
@@ -3297,7 +3301,6 @@ function updateSankey(year) {
     });
   }
 
-  //OJO
 
   // Enlaces desde Coquizadoras y Hornos a Centrales Eléctricas (solo secundarios que realmente existen en Coquizadoras)
   if (coquizadorasyhornosNodeData && centraleselectricasNodeData) {
