@@ -440,9 +440,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.reset();
-
       if (yearSelector) updateSankey(yearSelector.value);
-
     });
   }
 });
@@ -3303,7 +3301,6 @@ function updateSankey(year) {
       }
     });
   }
-
 
   // Enlaces desde Coquizadoras y Hornos a Centrales Eléctricas (solo secundarios que realmente existen en Coquizadoras)
   if (coquizadorasyhornosNodeData && centraleselectricasNodeData) {
