@@ -17,10 +17,10 @@ body {
   padding: 20px;
 }
 
+
 body.info-open {
   overflow: hidden;
 }
-
 
 /* Title and info styles */
 .main-title {

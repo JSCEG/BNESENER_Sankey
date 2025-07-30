@@ -1,12 +1,14 @@
 const yearSelector = document.getElementById("year-selector");
 const sankeyDiv = document.getElementById("sankey-diagram");
 const zoomWrapperDiv = document.getElementById("zoom-wrapper");
+
 // Allow Node environment to load dependencies
 if (typeof LinkRouter === "undefined" && typeof require !== "undefined") {
   var LinkRouter = require("./LinkRouter.js");
   var ZoomManager = require("./ZoomManager.js");
   var InfoManager = require("./InfoManager.js");
 }
+
 let dataManager = null;
 let styleManager = null;
 let layoutEngine = null;
@@ -16,6 +18,7 @@ let popupManager = null;
 let exportManager = null;
 let columnLabelsManager = null;
 let zoomManager = null;
+
 let linkRouter = null;
 let linkHierarchy = null;
 
@@ -24,6 +27,7 @@ const linkRoutingConfig = {
   curvature: 0.3,
   separation: 0.02,
 };
+
 
 // --- Focus highlighting state ---
 let baseNodeColors = [];
@@ -459,14 +463,17 @@ function clearAllLabels() {
 document.addEventListener("DOMContentLoaded", () => {
   initializeExportControls();
   const resetBtn = document.getElementById("reset-view-btn");
+
   const zoomInBtn = document.getElementById("zoom-in-btn");
   const zoomOutBtn = document.getElementById("zoom-out-btn");
+
   if (resetBtn) {
     resetBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.reset();
       if (yearSelector) updateSankey(yearSelector.value);
     });
   }
+
   if (zoomInBtn) {
     zoomInBtn.addEventListener("click", () => {
       if (zoomManager) zoomManager.zoomIn();
@@ -488,6 +495,7 @@ document.addEventListener("DOMContentLoaded", () => {
       zoomManager.zoomOut();
     }
   });
+
 });
 
 // Función para actualizar el diagrama de Sankey (Etapa 1.7: Añadir Salidas Completas)
@@ -3655,7 +3663,9 @@ function updateSankey(year) {
       color: linkColors,
       customdata: linkCustomdata,
       hovertemplate: "%{customdata}<extra></extra>",
+
       curvature: linkRouter.getCurvature(),
+
     },
   };
 
@@ -3680,6 +3690,7 @@ function updateSankey(year) {
 
   Plotly.newPlot(sankeyDiv, [data], layout, config)
     .then(() => {
+
       // Save base colors and link mappings for focus mode
       baseNodeColors = [...nodeColors];
       baseLinkColors = [...linkColors];
@@ -3711,13 +3722,16 @@ function updateSankey(year) {
       };
       document.addEventListener("click", blankClickHandler);
 
+
       if (!zoomManager) {
         zoomManager = new ZoomManager(zoomWrapperDiv, {
           target: sankeyDiv,
           minScale: 1,
         });
+
       } else {
         zoomManager.reset();
+
       }
       // Renderizar etiquetas de columnas después de que el diagrama esté listo
       if (columnLabelsManager && columnLabelsManager.isEnabled()) {

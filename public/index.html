@@ -32,6 +32,7 @@
       <!-- Controls Section -->
       <section class="controls-section">
         <div class="controls-container">
+
           <div class="title-info">
             <h1 class="main-title">Balance Nacional de Energía de México</h1>
             <button id="info-toggle-btn" class="info-toggle-btn" aria-label="Mostrar información">
@@ -39,6 +40,7 @@
             </button>
           </div>
           <p class="header-subtitle">Visualización interactiva del flujo energético nacional</p>
+
           <div class="control-group">
             <label for="year-selector" class="control-label">Año:</label>
             <select id="year-selector" class="year-selector" aria-label="Seleccionar año"></select>
@@ -55,12 +57,14 @@
           <button id="export-svg-btn" class="export-btn svg-btn" aria-label="Exportar como SVG">
               📄 SVG
           </button>
+
           <button id="zoom-in-btn" class="export-btn zoom-btn" aria-label="Acercar">
             🔍➕
           </button>
           <button id="zoom-out-btn" class="export-btn zoom-btn" aria-label="Alejar">
             🔍➖
           </button>
+
           <button id="reset-view-btn" class="export-btn reset-btn" aria-label="Restablecer vista">
             🔄 Restablecer
           </button>
@@ -184,7 +188,9 @@
     <script src="js/PopupManager.js"></script>
     <script src="js/ExportManager.js"></script>
     <script src="js/ColumnLabelsManager.js"></script>
+
     <script src="js/LinkRouter.js"></script>
+
     <script src="js/ZoomManager.js"></script>
     <script src="js/main.js"></script>
   </body>
