@@ -461,6 +461,56 @@ select:focus {
   box-shadow: none;
 }
 
+/* Animation Controls */
+.animation-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.animation-btn {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  color: white;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.animation-btn:hover {
+  background: linear-gradient(135deg, #8e44ad, #732d91);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(155, 89, 182, 0.4);
+}
+
+.animation-btn.active {
+  background: linear-gradient(135deg, #27ae60, #229954);
+  border-color: #2ecc71;
+  animation: particle-glow 2s ease-in-out infinite alternate;
+}
+
+.animation-btn.active:hover {
+  background: linear-gradient(135deg, #229954, #1e8449);
+  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+}
+
+@keyframes particle-glow {
+  0% {
+    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+  }
+  100% {
+    box-shadow: 0 6px 25px rgba(39, 174, 96, 0.6);
+  }
+}
+
+/* Particle overlay styles */
+.sankey-particles {
+  pointer-events: none;
+}
+
+.sankey-particle {
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+}
+
 /* Modal Styles */
 .modal {
   display: none;
