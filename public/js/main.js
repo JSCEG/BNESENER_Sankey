@@ -10,6 +10,7 @@ let popupManager = null;
 let exportManager = null;
 let columnLabelsManager = null;
 let zoomManager = null;
+let particleAnimationManager = null;
 
 // --- Focus highlighting state ---
 let baseNodeColors = [];
@@ -132,6 +133,21 @@ fetch("datos_energia_completo.json")
           );
         } catch (error) {
           console.error("Error inicializando ExportManager:", error);
+        }
+
+        // Inicializar ParticleAnimationManager después de que Plotly esté listo
+        try {
+          particleAnimationManager = new ParticleAnimationManager(sankeyDiv, {
+            particleCount: 80,
+            particleSize: 2.5,
+            animationSpeed: 1,
+            enabled: false,
+            particleOpacity: 0.7,
+            respawnDelay: 60
+          });
+          console.log("ParticleAnimationManager inicializado correctamente");
+        } catch (error) {
+          console.error("Error inicializando ParticleAnimationManager:", error);
         }
       }, 1000);
     } catch (error) {
@@ -458,9 +474,44 @@ function clearAllLabels() {
   }
 }
 
+// Initialize particle animation controls
+function initializeParticleControls() {
+  const toggleParticlesBtn = document.getElementById("toggle-particles-btn");
+
+  if (!toggleParticlesBtn) {
+    console.warn("Particle toggle button not found");
+    return;
+  }
+
+  toggleParticlesBtn.addEventListener("click", () => {
+    if (!particleAnimationManager) {
+      console.warn("ParticleAnimationManager not initialized yet");
+      return;
+    }
+
+    const isEnabled = particleAnimationManager.toggleAnimation();
+    
+    // Update button appearance
+    if (isEnabled) {
+      toggleParticlesBtn.classList.add("active");
+      toggleParticlesBtn.setAttribute("aria-label", "Desactivar animación de partículas");
+      toggleParticlesBtn.innerHTML = "✨ Partículas ON";
+      console.log("Animación de partículas activada");
+    } else {
+      toggleParticlesBtn.classList.remove("active");
+      toggleParticlesBtn.setAttribute("aria-label", "Activar animación de partículas");
+      toggleParticlesBtn.innerHTML = "✨ Partículas";
+      console.log("Animación de partículas desactivada");
+    }
+  });
+
+  console.log("Controles de animación de partículas inicializados");
+}
+
 // Initialize export controls when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   initializeExportControls();
+  initializeParticleControls();
   const resetBtn = document.getElementById("reset-view-btn");
 
   const zoomInBtn = document.getElementById("zoom-in-btn");
